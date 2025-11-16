@@ -1,4 +1,9 @@
 #include "Windows.h"
+#include <chrono>
+#include "string.h"
+#pragma comment(lib,"shell32")
+
+using namespace std;
 
 //стурктура где храняться данные о windows окне
 struct
@@ -14,6 +19,25 @@ struct
 	//определяет размер экрана в вашей сиситеме
 	int width = GetSystemMetrics(SM_CXSCREEN), height = GetSystemMetrics(SM_CYSCREEN);
 } window;
+
+class ChronoTimer
+{
+public:
+	ChronoTimer() {
+		BeginFrame = chrono::steady_clock::now();
+	}
+
+	float FrameTimer()
+	{
+		return chrono::duration<float>(chrono::steady_clock::now() - BeginFrame).count();
+	}
+	void ResetTimerFrame()
+	{
+		BeginFrame = chrono::steady_clock::now();
+	}
+private:
+	chrono::steady_clock::time_point BeginFrame;
+}Timer;
 
 //обработка потока сообщений
 static LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -98,22 +122,188 @@ void InitApp()
 	window.dev_cont = GetDC(window.hWnd);
 	window.contx = CreateCompatibleDC(window.dev_cont);
 	SelectObject(window.contx, CreateCompatibleBitmap(window.dev_cont, window.width, window.height));
+
+	SetConsoleOutputCP(1251);
+	SetConsoleCP(1251);
+	ShellExecute(0, "open", "https://docs.google.com/forms/d/e/1FAIpQLScWQMsOvlFoq9vQm_OywhujJZSwYVG58vPFjwKTx886W7khpQ/viewform", NULL, NULL, SW_SHOWDEFAULT);
+}
+
+void StartSite()
+{
+	Sleep(400);
+	keybd_event(0x74, VkKeyScan(0x74), NULL, NULL);
+	Sleep(3000);
+	keybd_event(0x74, VkKeyScan(0x74), NULL, NULL);
+	Sleep(3000);
+	keybd_event(0x09, VkKeyScan(0x09), NULL, NULL);
+	Sleep(30);
+	keybd_event(0x09, VkKeyScan(0x09), NULL, NULL);
+	Sleep(30);
+	keybd_event(0x09, VkKeyScan(0x09), NULL, NULL);
+	Sleep(30);
+}
+
+void NextQuestion()
+{
+	Sleep(30);
+	keybd_event(0x09, VkKeyScan(0x09), NULL, NULL);
+}
+
+void RandСhoice()
+{
+	srand(Timer.FrameTimer());
+	int R = rand() % 10;
+
+	if (R == 0)
+		R = 1;
+
+	for (int i = 0; i < R; i++)
+	{
+		Sleep(16);
+		keybd_event(0x28, VkKeyScan(0x28), NULL, NULL);
+	}
+}
+
+void Variant(int v)
+{
+	for (int ii = 0; ii < v; ii++)
+	{
+		NextQuestion();
+		srand(Timer.FrameTimer() + ii);
+		int R = rand() % 10;
+
+		if (R == 0)
+			R = 1;
+
+		if (R % 2)
+		{
+			keybd_event(0x20, VkKeyScan(0x20), NULL, NULL);
+		}
+	}
+}
+
+void CopyWord()
+{
+	const wchar_t* output1 = L"Пиццу";
+	const wchar_t* output2 = L"Мясные";
+	const wchar_t* output3 = L"Выпечку";
+	const wchar_t* output4 = L"Десерты";
+	const wchar_t* output5 = L"Вегетарианские";
+
+		srand(Timer.FrameTimer());
+		int R = rand() % 5;
+
+		if (R == 0)
+			R = 1;
+
+		if (R == 1)
+		{
+			const size_t len = (wcslen(output1) + 1) * sizeof(wchar_t);
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+			memcpy(GlobalLock(hMem), output1, len);
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT, hMem);
+			CloseClipboard();
+		}
+		if (R == 2)
+		{
+			const size_t len = (wcslen(output2) + 1) * sizeof(wchar_t);
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+			memcpy(GlobalLock(hMem), output2, len);
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT, hMem);
+			CloseClipboard();
+		}
+		if (R == 3)
+		{
+			const size_t len = (wcslen(output3) + 1) * sizeof(wchar_t);
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+			memcpy(GlobalLock(hMem), output3, len);
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT, hMem);
+			CloseClipboard();
+		}
+		if (R == 4)
+		{
+			const size_t len = (wcslen(output4) + 1) * sizeof(wchar_t);
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+			memcpy(GlobalLock(hMem), output4, len);
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT, hMem);
+			CloseClipboard();
+		}
+		if (R == 5)
+		{
+			const size_t len = (wcslen(output5) + 1) * sizeof(wchar_t);
+			HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
+			memcpy(GlobalLock(hMem), output5, len);
+			GlobalUnlock(hMem);
+			OpenClipboard(0);
+			EmptyClipboard();
+			SetClipboardData(CF_UNICODETEXT, hMem);
+			CloseClipboard();
+		}
+
+}
+
+
+void pastWord()
+{
+	mouse_event(MOUSEEVENTF_RIGHTDOWN, NULL, NULL, 0, 0);
+	mouse_event(MOUSEEVENTF_RIGHTUP, NULL, NULL, 0, 0);
+}
+
+void pastWord2()
+{
+	mouse_event(MOUSEEVENTF_LEFTDOWN, NULL, NULL, 0, 0);
+	mouse_event(MOUSEEVENTF_LEFTUP, NULL, NULL, 0, 0);
+
+};
+
+void MoveCur(int x,int y)
+{
+	SetCursorPos(x, y);
+}
+
+void Questions(int n)
+{
+	for (int i = 0; i < n; i++)
+	{
+		if (i != 4)
+		{
+		RandСhoice();
+		NextQuestion();
+		}
+		else
+		{
+			CopyWord();
+			MoveCur(window.width/2, (window.height / 2)+10);
+			pastWord();
+			MoveCur(window.width / 2+40, (window.height / 2) + 153);
+			pastWord2();
+		}
+
+		NextQuestion();
+
+	}
 }
 
 //обновление приложения
 void UpdateApp()
 {
-
-
-
-
-
-
-
-
-
-
-
+	StartSite();
+	Questions(10);
+	Sleep(20);
+ 	keybd_event(0x20, VkKeyScan(0x20), NULL, NULL);
+	Sleep(2000);
 }
 
 //обработка команд устройств ввода
@@ -164,9 +354,6 @@ int CALLBACK WinMain(
 
 		UpdateImage();
 		UpdateApp();
-
-		//задержка обновления
-		Sleep(16);
 	}
 	return 0;
 }
