@@ -68,6 +68,16 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LibraryPath>C:\Users\4224\source\repos\wordlol\MyUltraTools\MyUltraTools\Libraries\DirectX\Lib;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>C:\Users\4224\source\repos\wordlol\MyUltraTools\MyUltraTools\Libraries\DirectX\Include;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\4224\source\repos\wordlol\MyUltraTools\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LibraryPath>C:\Users\4224\source\repos\wordlol\MyUltraTools\MyUltraTools\Libraries\DirectX\Lib;$(LibraryPath)</LibraryPath>
+    <ExecutablePath>C:\Users\4224\source\repos\wordlol\MyUltraTools\MyUltraTools\Libraries\DirectX\Include;$(ExecutablePath)</ExecutablePath>
+    <IncludePath>C:\Users\4224\source\repos\wordlol\MyUltraTools\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -75,6 +85,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -90,9 +101,10 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp23</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>

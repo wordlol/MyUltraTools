@@ -1,14 +1,104 @@
-#include <Windows.h>
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dx11.lib")
+#pragma comment(lib, "d3dx10.lib")
 
-// название нашего окна
+#include <windows.h>
+#include <d3d11.h>
+#include <d3dx11.h>
+#include <d3dx10.h>
+#include <xnamath.h>
+
 LPCSTR WndClassName = "3D REDACTOR";
 HWND hWND = NULL;
 
-// размер окна
 const int Wight = 800;
 const int Heignt = 800;
 
-// создаем обратный вызов для сообщений
+// new_
+//1
+IDXGISwapChain* SwapChain;
+ID3D11Device* d3d11Device;
+ID3D11DeviceContext* d3d11DevCon;
+ID3D11RenderTargetView* renderTargetView;
+
+float red = 0.0f;
+float green = 0.0f;
+float blue = 0.0f;
+int colormodr = 1;
+int colormodg = 1;
+int colormodb = 1;
+//2
+bool InitializeDirect3dApp(HINSTANCE hInstance) {
+	HRESULT hr;
+
+	DXGI_MODE_DESC bufferDesc;
+	ZeroMemory(&bufferDesc, sizeof(DXGI_MODE_DESC));
+
+	bufferDesc.Width = Wight;
+	bufferDesc.Height = Heignt;
+	bufferDesc.RefreshRate.Numerator = 60;
+	bufferDesc.RefreshRate.Denominator = 1;
+	bufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	bufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+	bufferDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
+	
+
+	DXGI_SWAP_CHAIN_DESC swapChainDesc;
+	ZeroMemory(&swapChainDesc, sizeof(DXGI_SWAP_CHAIN_DESC));
+
+	swapChainDesc.BufferDesc = bufferDesc;
+	swapChainDesc.SampleDesc.Count = 1;
+	swapChainDesc.SampleDesc.Quality = 0;
+	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+	swapChainDesc.BufferCount = 1;
+	swapChainDesc.OutputWindow = hWND;
+	swapChainDesc.Windowed = TRUE;
+	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+
+
+	hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL,
+		D3D11_SDK_VERSION, &swapChainDesc, &SwapChain, &d3d11Device, NULL, &d3d11DevCon);
+
+	ID3D11Texture2D* BackBuffer;
+	hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&BackBuffer);
+	hr = d3d11Device->CreateRenderTargetView(BackBuffer, NULL, &renderTargetView);
+	BackBuffer->Release();
+
+	d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, NULL);
+	return true;
+};
+
+void RealeaseObject() {
+	SwapChain->Release();
+	d3d11Device->Release();
+	d3d11DevCon->Release();
+};
+
+bool InitScene() { return true; };
+
+void UpdateScene() {
+		red += colormodr * 0.00005f;
+		green += colormodg * 0.00002f;
+		blue += colormodb * 0.00001f;
+
+		if (red >= 1.0f || red <= 0.0f)
+			colormodr *= -1;
+		if (green >= 1.0f || green <= 0.0f)
+			colormodg *= -1;
+		if (blue >= 1.0f || blue <= 0.0f)
+			colormodb *= -1;
+};
+
+void DrawScene() {
+	D3DXCOLOR bgColor(red, green, blue, 1.0f);
+
+	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
+
+	SwapChain->Present(0, 0);
+};
+//3
+// new-
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	switch (msg)
@@ -29,7 +119,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 };
 
-//иницилизация окна
 bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, bool windowed)
 {
 	WNDCLASSEX wc;
@@ -75,7 +164,6 @@ bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, 
 	return true;
 };
 
-// цикл сообщений
 int MassegeLoop() {
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
@@ -92,15 +180,14 @@ int MassegeLoop() {
 		}
 		else
 		{
+			UpdateScene();
+			DrawScene();
 
-
-			//gamecode
 		}
 	}
 		return (int)msg.wParam;
 };
 
-// вход в программу
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE rhinstance, LPSTR lpstr, int nshowcmd)
 {
 	if (!InitializeWindow(hinstance, nshowcmd, Wight, Heignt, true))
@@ -109,6 +196,20 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE rhinstance, LPSTR lpstr, int n
 		return 0;
 	}
 
+	if (!InitializeDirect3dApp(hinstance))
+	{
+		MessageBox(0, "DIRECT3D Create - error", "Error", MB_OK);
+		return 0;
+	}
+
+	if (!InitScene())
+	{
+		MessageBox(0, "Scene Create - error", "Error", MB_OK);
+		return 0;
+	}
+
 	MassegeLoop();
+	RealeaseObject();
+
 	return 0;
 }
