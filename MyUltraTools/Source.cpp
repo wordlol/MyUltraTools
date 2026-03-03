@@ -1,172 +1,114 @@
-#include "Windows.h"
+#include <Windows.h>
 
-//стурктура где храняться данные о windows окне
-struct
-{
-	//дескрипторы, контейнеры и буфферы для windows
-	RECT rc;
-	HINSTANCE hIns;
-	HWND hWnd;
-	HDC dev_cont, contx;
-	MSG msg;
-	BOOL gbool = true;
+// название нашего окна
+LPCSTR WndClassName = "3D REDACTOR";
+HWND hWND = NULL;
 
-	//определяет размер экрана в вашей сиситеме
-	int width = GetSystemMetrics(SM_CXSCREEN), height = GetSystemMetrics(SM_CYSCREEN);
-} window;
+// размер окна
+const int Wight = 800;
+const int Heignt = 800;
 
-//обработка потока сообщений
-static LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
+// создаем обратный вызов для сообщений
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	switch (msg)
 	{
-	case WM_CLOSE:
-		PostQuitMessage(0);
-		break;
-	default:
-		return DefWindowProc(hWnd, msg, wParam, lParam);
+		case WM_KEYDOWN:
+			if (wparam == VK_ESCAPE)
+			{
+				if (MessageBox(0, "Are you sure you want to exit?",
+					"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
+					DestroyWindow(hwnd);
+			}
+			return 0;
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			return 0;
 	}
+
+	return DefWindowProc(hwnd, msg, wparam, lparam);
 };
 
-//создания windows окна
-void InitWindow()
+//иницилизация окна
+bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, bool windowed)
 {
-	//имя класса окна
-	const char* NameClass = "Window";
+	WNDCLASSEX wc;
+	wc.cbSize = sizeof(WNDCLASSEX);
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc = WndProc;
+	wc.cbClsExtra = NULL;
+	wc.cbWndExtra = NULL;
+	wc.hInstance = hinstance;
+	wc.hIcon = LoadIcon(NULL,IDI_WINLOGO);
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 2);
+	wc.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
+	wc.lpszMenuName = NULL;
+	wc.lpszClassName = WndClassName;
+	
+	if (!RegisterClassEx(&wc))
+	{
+		MessageBox(NULL, "ERROR REGISTER WINDOW", "Error", MB_OK);
+		return false;
+	}
 
-	//размер окна
-	window.rc = { 0,0,window.width,window.height
-	};
-
-	//учет размера
-	AdjustWindowRect(&window.rc, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
-
-	//дескриптор класса окна
-	WNDCLASSEX wc = { 0 };
-	wc.cbSize = sizeof(wc);
-	wc.lpszClassName = NameClass;
-	wc.hInstance = window.hIns;
-	wc.lpfnWndProc = &WindowProc;
-
-	//регистрация класса окна
-	auto NameClassId = RegisterClassEx(&wc);
-
-	//деструктор окна
-	window.hWnd = CreateWindowEx(
+	hWND = CreateWindowEx(
 		NULL,
-		MAKEINTATOM(NameClassId),
-		"practicum5",
-		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		window.rc.right - window.rc.left,
-		window.rc.bottom - window.rc.top,
-		NULL,
-		NULL,
-		window.hIns,
+		WndClassName,
+		"3D REDACTOR",
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		Wight, Heignt,
+		NULL, NULL,
+		hinstance,
 		NULL
 	);
 
-	//показ окна
-	ShowWindow(window.hWnd, SW_SHOW);
-}
-
-//отрисовка изображений .bmp
-void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall)
-{
-	HBITMAP hbm, hOldbm;
-	HDC hMemDC;
-	BITMAP bm;
-
-	hMemDC = CreateCompatibleDC(hDC);
-	hOldbm = (HBITMAP)SelectObject(hMemDC, hBitmapBall);
-
-	if (hOldbm)
+	if (!hWND)
 	{
-		GetObject(hBitmapBall, sizeof(BITMAP), (LPSTR)&bm);
-		StretchBlt(hDC, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-		SelectObject(hMemDC, hOldbm);
+		MessageBox(NULL, "ERROR CREATE WINDOW", "Error", MB_OK | MB_ICONERROR);
+		return false;
 	}
 
-	DeleteDC(hMemDC);
-}
+	ShowWindow(hWND, ShowWind);
+	UpdateWindow(hWND);
+	return true;
+};
 
-//загрузка модулей приложения
-void InitApp()
-{
-	//создание и иниализация контекста устройсва и девайс устройства
-	window.dev_cont = GetDC(window.hWnd);
-	window.contx = CreateCompatibleDC(window.dev_cont);
-	SelectObject(window.contx, CreateCompatibleBitmap(window.dev_cont, window.width, window.height));
-}
+// цикл сообщений
+int MassegeLoop() {
+	MSG msg;
+	ZeroMemory(&msg, sizeof(msg));
 
-//обновление приложения
-void UpdateApp()
-{
-
-
-
-
-
-
-
-
-
-
-
-}
-
-//обработка команд устройств ввода
-void UpdateKeyCode()
-{
-	//выход из приложения на ESC
-	if (GetAsyncKeyState(VK_ESCAPE))
+	while (true)
 	{
-		window.msg.message = WM_QUIT;
-	}
-}
-
-//обновление изображений
-void UpdateImage()
-{
-	BitBlt(window.dev_cont, 0, 0, window.width, window.height, window.contx, 0, 0, SRCCOPY);
-	//отрисовка заднего фона
-	ShowBitmap(window.contx, 0, 0, window.width, window.height, (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE));
-}
-
-//вход в программу
-int CALLBACK WinMain(
-	HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpCmdLine,
-	int nShowCmd)
-{
-	InitWindow();
-	InitApp();
-
-	//основной цикл обновления приложения
-	while (window.gbool)
-	{
-		//обработка соощений для окна
-		while (PeekMessage(&window.msg, NULL, 0, 0, PM_REMOVE))
+		if(PeekMessage(&msg, NULL,0,0,PM_REMOVE))
 		{
-			UpdateKeyCode();
-
-			//отбработка сообщений
-			if (window.msg.message == WM_QUIT)
-			{
-				window.gbool = false;
+			if (msg.message == WM_QUIT)
 				break;
-			}
-			TranslateMessage(&window.msg);
-			DispatchMessage(&window.msg);
+
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
 		}
+		else
+		{
 
-		UpdateImage();
-		UpdateApp();
 
-		//задержка обновления
-		Sleep(16);
+			//gamecode
+		}
 	}
+		return (int)msg.wParam;
+};
+
+// вход в программу
+int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE rhinstance, LPSTR lpstr, int nshowcmd)
+{
+	if (!InitializeWindow(hinstance, nshowcmd, Wight, Heignt, true))
+	{
+		MessageBox(0, "Window Create - error", "Error", MB_OK);
+		return 0;
+	}
+
+	MassegeLoop();
 	return 0;
 }
