@@ -19,4 +19,10 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="ps_ef.fx">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="vs_ef.fx" />
+  </ItemGroup>
 </Project>
