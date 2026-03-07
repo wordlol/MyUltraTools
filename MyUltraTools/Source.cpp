@@ -67,7 +67,6 @@ bool InitializeDirect3dApp(HINSTANCE hInstance) {
 	return true;
 };
 
-//new_
 ID3D11Buffer* triangleVertBuffer;
 ID3D11VertexShader* VS;
 ID3D11PixelShader* PS;
@@ -75,21 +74,30 @@ ID3D10Blob* VS_Buffer;
 ID3D10Blob* PS_Buffer;
 ID3D11InputLayout* VertLayout;
 
+//new_
 struct Vertex
 {
 	Vertex() {};
-	Vertex(float x, float y, float z) : pos(x, y, z) {}
+	Vertex(float x, float y, float z,
+		float r, float g, float b, float a
+		) : pos(x, y, z), color(r,g,b,a) {}
 
 	XMFLOAT3 pos;
+	XMFLOAT4 color;
 };
+//new-
 
 bool InitScene() { 
-	
+//new_	
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0},
+
 	};
 	UINT numElement = ARRAYSIZE(layout);
+//new-
+
 
 	hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
 	hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
@@ -100,14 +108,14 @@ bool InitScene() {
 	d3d11DevCon->VSSetShader(VS, 0, 0);
 	d3d11DevCon->PSSetShader(PS, 0, 0);
 	
-
+//new_	
 	Vertex v[] =
 	{
-		Vertex( 0.0f,  0.5f,  0.5f),
-		Vertex( 0.5f, -0.5f,  0.5f),
-		Vertex(-0.5f, -0.5f,  0.5f),
+		Vertex( 0.0f,  0.5f,  0.5f,1.0f,0.0f,0.0f,1.0f),
+		Vertex( 0.5f, -0.5f,  0.5f,0.0f,1.0f,0.0f,1.0f),
+		Vertex(-0.5f, -0.5f,  0.5f,0.0f,0.0f,1.0f,1.0f),
 	};
-	
+//new-
 
 	D3D11_BUFFER_DESC vertexBufferDecs;
 	ZeroMemory(&vertexBufferDecs, sizeof(D3D11_BUFFER_DESC));
@@ -159,7 +167,6 @@ void DrawScene() {
 
 	SwapChain->Present(0, 0);
 };
-//new-
 
 void CleanUp() {
 	SwapChain->Release();
