@@ -418,6 +418,7 @@ bool InitScene() {
 	return true; 
 };
 
+
 void DrawScene() {
 	if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
 	{
@@ -431,25 +432,6 @@ void DrawScene() {
 	//UpdateViewObj(cube1World);
 	UpdateViewObj(cube2World);
 	SwapChain->Present(0, 0);
-};
-
-void CleanUp() {
-	SwapChain->Release();
-	d3d11Device->Release();
-	d3d11DevCon->Release();
-	SquareVertexBuffer->Release();
-	SquareIndexBuffer->Release();
-	VS->Release();
-	PS->Release();
-	VS_Buffer->Release();
-	PS_Buffer->Release();
-	VertLayout->Release();
-	depthStencilView->Release();
-	depthStencilBuffer->Release();
-	cbPerObjectBuffer->Release();
-	WireFrame->Release();
-	CubesTexture->Release();
-	CubesTexSamplerState->Release();
 };
 
 void UpdateScene() {
@@ -490,6 +472,26 @@ void UpdateScene() {
 
 		//Set cube2's world space matrix
 		cube2World = Rotation * Scale;
+};
+
+
+void CleanUp() {
+	SwapChain->Release();
+	d3d11Device->Release();
+	d3d11DevCon->Release();
+	SquareVertexBuffer->Release();
+	SquareIndexBuffer->Release();
+	VS->Release();
+	PS->Release();
+	VS_Buffer->Release();
+	PS_Buffer->Release();
+	VertLayout->Release();
+	depthStencilView->Release();
+	depthStencilBuffer->Release();
+	cbPerObjectBuffer->Release();
+	WireFrame->Release();
+	CubesTexture->Release();
+	CubesTexSamplerState->Release();
 };
 
 // Window app
