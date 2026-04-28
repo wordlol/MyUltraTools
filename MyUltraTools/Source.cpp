@@ -28,6 +28,8 @@ ID3D10Blob* PS_Buffer;
 ID3D11InputLayout* VertLayout;
 ID3D11Buffer* cbPerObjectBuffer;
 ID3D11RasterizerState* WireFrame;
+ID3D11ShaderResourceView* CubesTexture;
+ID3D11SamplerState* CubesTexSamplerState;
 
 ID3D11DepthStencilView* depthStencilView;
 ID3D11Texture2D* depthStencilBuffer;
@@ -74,17 +76,44 @@ int colormodr = 1;
 int colormodg = 1;
 int colormodb = 1;
 
-struct Vertex
+struct VertexCol
 {
-	Vertex() {};
-	Vertex(float x, float y, float z,
+	VertexCol() {};
+	VertexCol(float x, float y, float z,
 		float r, float g, float b, float a) : pos(x, y, z), color(r,g,b,a) {}
 
 	XMFLOAT3 pos;
 	XMFLOAT4 color;
 };
+struct VertexTex
+{
+	VertexTex() {};
+	VertexTex(float x, float y, float z, 
+		float u, float v) : pos(x, y, z), texCoord(u,v) {
+	}
 
+	XMFLOAT3 pos;
+	XMFLOAT2 texCoord;
+};
 
+void InitImageTexture()
+{
+	hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
+		NULL, NULL, &CubesTexture, NULL);
+
+	D3D11_SAMPLER_DESC sampDesc;
+	ZeroMemory(&sampDesc, sizeof(sampDesc));
+	sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+	sampDesc.MinLOD = 0;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	hr = d3d11Device->CreateSamplerState(&sampDesc, &CubesTexSamplerState);
+
+}
 void InitRasterized()
 {
 	D3D11_RASTERIZER_DESC wfdesc;
@@ -108,23 +137,57 @@ void InitShaders()
 }
 void InitVertexBuffer()
 {
-	Vertex v[] =
+	/*VertexCol v[] =
 	{
-		Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-		Vertex(-1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f),
-		Vertex(+1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f),
-		Vertex(+1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-		Vertex(-1.0f, -1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f),
-		Vertex(-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-		Vertex(+1.0f, +1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
-		Vertex(+1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+		VertexCol(-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+		VertexCol(-1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f),
+		VertexCol(+1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f),
+		VertexCol(+1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
+		VertexCol(-1.0f, -1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f),
+		VertexCol(-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
+		VertexCol(+1.0f, +1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
+		VertexCol(+1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+	};*/
+
+	VertexTex v[] =
+	{
+		// Front Face
+		VertexTex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
+		VertexTex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
+		VertexTex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
+		VertexTex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
+		// Back Face
+		VertexTex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f),
+		VertexTex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f),
+		VertexTex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f),
+		VertexTex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f),
+		// Top Face
+		VertexTex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f),
+		VertexTex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f),
+		VertexTex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f),
+		VertexTex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f),
+		// Bottom Face
+		VertexTex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
+		VertexTex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
+		VertexTex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f),
+		VertexTex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f),
+		// Left Face
+		VertexTex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f),
+		VertexTex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f),
+		VertexTex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
+		VertexTex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
+		// Right Face
+		VertexTex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
+		VertexTex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
+		VertexTex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f),
+		VertexTex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f),
 	};
 
 
 	D3D11_BUFFER_DESC vertexBufferDecs;
 	ZeroMemory(&vertexBufferDecs, sizeof(D3D11_BUFFER_DESC));
 	vertexBufferDecs.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDecs.ByteWidth = sizeof(Vertex) * 8;
+	vertexBufferDecs.ByteWidth = sizeof(VertexTex) * 24;
 	vertexBufferDecs.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDecs.CPUAccessFlags = 0;
 	vertexBufferDecs.MiscFlags = 0;
@@ -136,7 +199,7 @@ void InitVertexBuffer()
 	hr = d3d11Device->CreateBuffer(&vertexBufferDecs, &vertexBufferData, &SquareVertexBuffer);
 
 
-	UINT stride = sizeof(Vertex);
+	UINT stride = sizeof(VertexTex);
 	UINT offset = 0;
 	d3d11DevCon->IASetVertexBuffers(0, 1, &SquareVertexBuffer, &stride, &offset);
 
@@ -144,30 +207,57 @@ void InitVertexBuffer()
 }
 void InitIndexBuffer()
 {
+
+	//DWORD indices[] = {
+	//	// front face
+	//	0, 1, 2,
+	//	0, 2, 3,
+
+	//	// back face
+	//	4, 6, 5,
+	//	4, 7, 6,
+
+	//	// left face
+	//	4, 5, 1,
+	//	4, 1, 0,
+
+	//	// right face
+	//	3, 2, 6,
+	//	3, 6, 7,
+
+	//	// top face
+	//	1, 5, 6,
+	//	1, 6, 2,
+
+	//	// bottom face
+	//	4, 0, 3,
+	//	4, 3, 7
+	//};
+
 	DWORD indices[] = {
-		// front face
-		0, 1, 2,
-		0, 2, 3,
+		// Front Face
+		0,  1,  2,
+		0,  2,  3,
 
-		// back face
-		4, 6, 5,
-		4, 7, 6,
+		// Back Face
+		4,  5,  6,
+		4,  6,  7,
 
-		// left face
-		4, 5, 1,
-		4, 1, 0,
+		// Top Face
+		8,  9, 10,
+		8, 10, 11,
 
-		// right face
-		3, 2, 6,
-		3, 6, 7,
+		// Bottom Face
+		12, 13, 14,
+		12, 14, 15,
 
-		// top face
-		1, 5, 6,
-		1, 6, 2,
+		// Left Face
+		16, 17, 18,
+		16, 18, 19,
 
-		// bottom face
-		4, 0, 3,
-		4, 3, 7
+		// Right Face
+		20, 21, 22,
+		20, 22, 23
 	};
 
 	D3D11_BUFFER_DESC indexBufferDecs;
@@ -190,6 +280,7 @@ void InitLayoutModel()
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
+		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
 		{"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0},
 	};
 	UINT numElement = ARRAYSIZE(layout);
@@ -265,6 +356,9 @@ void UpdateViewObj(XMMATRIX cubeWorld)
 	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
+	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
+	d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
+
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 }
 
@@ -310,7 +404,8 @@ bool InitializeDirect3dApp(HINSTANCE hInstance) {
 };
 
 bool InitScene() { 
-	InitRasterized();
+	//InitRasterized();
+	InitImageTexture();
 	InitConstBuffer();
 	InitCamera();
 	InitShaders();
@@ -331,10 +426,10 @@ void DrawScene() {
 
 	D3DXCOLOR bgColor(red, 0.0f, 0.0f, 0.0f);
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
-	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);//<-- new
-	UpdateViewObj(cube1World);
-	UpdateViewObj(cube2World);
+	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 
+	//UpdateViewObj(cube1World);
+	UpdateViewObj(cube2World);
 	SwapChain->Present(0, 0);
 };
 
@@ -353,6 +448,8 @@ void CleanUp() {
 	depthStencilBuffer->Release();
 	cbPerObjectBuffer->Release();
 	WireFrame->Release();
+	CubesTexture->Release();
+	CubesTexSamplerState->Release();
 };
 
 void UpdateScene() {
@@ -368,7 +465,7 @@ void UpdateScene() {
 			colormodb *= -1;
 
 		//Keep the cubes rotating
-		rot += .0005f;
+		rot += .0001f;
 		if (rot > 6.28f)
 			rot = 0.0f;
 
@@ -389,7 +486,7 @@ void UpdateScene() {
 
 		//Define cube2's world space matrix
 		Rotation = XMMatrixRotationAxis(rotaxis2, -rot);
-		Scale = XMMatrixScaling(1.1f, 1.1f, 1.1f);
+		Scale = XMMatrixScaling(1.7f, 1.7f, 1.7f);
 
 		//Set cube2's world space matrix
 		cube2World = Rotation * Scale;

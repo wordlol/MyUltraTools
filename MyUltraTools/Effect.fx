@@ -3,17 +3,22 @@ cbuffer cbPerObject
     float4x4 WVP;
 };
 
+Texture2D ObjTexture;
+SamplerState ObjSamplerState;
+
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
+    float2 TexCoord : TEXCOORD;
     float4 Color : COLOR;
 };
 
-VS_OUTPUT VS(float4 inPos : POSITION, float4 inColor : COLOR)
+VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float4 inColor : COLOR)
 {
     VS_OUTPUT output;
 
     output.Pos = mul(inPos, WVP);
+    output.TexCoord = inTexCoord;
     output.Color = inColor;
 
     return output;
@@ -21,5 +26,6 @@ VS_OUTPUT VS(float4 inPos : POSITION, float4 inColor : COLOR)
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
-    return input.Color;
+    //return input.Color;
+    return ObjTexture.Sample(ObjSamplerState, input.TexCoord);
 }
