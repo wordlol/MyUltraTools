@@ -27,6 +27,7 @@ ID3D10Blob* VS_Buffer;
 ID3D10Blob* PS_Buffer;
 ID3D11InputLayout* VertLayout;
 ID3D11Buffer* cbPerObjectBuffer;
+ID3D11RasterizerState* WireFrame;
 
 ID3D11DepthStencilView* depthStencilView;
 ID3D11Texture2D* depthStencilBuffer;
@@ -84,7 +85,16 @@ struct Vertex
 };
 
 
-
+void InitRasterized()
+{
+	D3D11_RASTERIZER_DESC wfdesc;
+	ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+	wfdesc.FillMode = D3D11_FILL_WIREFRAME;
+	wfdesc.CullMode = D3D11_CULL_NONE;
+	wfdesc.AntialiasedLineEnable = TRUE;
+	hr = d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
+	d3d11DevCon->RSSetState(WireFrame);
+}
 void InitShaders()
 {
 	hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
@@ -300,6 +310,7 @@ bool InitializeDirect3dApp(HINSTANCE hInstance) {
 };
 
 bool InitScene() { 
+	InitRasterized();
 	InitConstBuffer();
 	InitCamera();
 	InitShaders();
@@ -341,6 +352,7 @@ void CleanUp() {
 	depthStencilView->Release();
 	depthStencilBuffer->Release();
 	cbPerObjectBuffer->Release();
+	WireFrame->Release();
 };
 
 void UpdateScene() {
