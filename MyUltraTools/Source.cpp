@@ -33,6 +33,7 @@ ID3D11SamplerState* CubesTexSamplerState;
 ID3D11BlendState* Transparency;
 ID3D11RasterizerState* CCWcullMode;
 ID3D11RasterizerState* CWcullMode;
+ID3D11RasterizerState* noCull;
 
 ID3D11DepthStencilView* depthStencilView;
 ID3D11Texture2D* depthStencilBuffer;
@@ -101,7 +102,7 @@ struct VertexTex
 
 void InitImageTexture()
 {
-	hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
+	hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block2.png",
 		NULL, NULL, &CubesTexture, NULL);
 
 	D3D11_SAMPLER_DESC sampDesc;
@@ -381,11 +382,19 @@ void InitModBlending()
 
 	cmdesc.FrontCounterClockwise = false;
 	hr = d3d11Device->CreateRasterizerState(&cmdesc, &CWcullMode);
+
+
+	D3D11_RASTERIZER_DESC rastDesc;
+	ZeroMemory(&rastDesc, sizeof(D3D11_RASTERIZER_DESC));
+	rastDesc.FillMode = D3D11_FILL_SOLID;
+	rastDesc.CullMode = D3D11_CULL_NONE;
+
+	d3d11Device->CreateRasterizerState(&rastDesc, &noCull);
 }
 
 void UpdateBlend()
 {
-	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
+	float blendFactor[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 
 	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
 
@@ -410,9 +419,11 @@ void UpdateViewObj(XMMATRIX cubeWorld)
 	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 
-	d3d11DevCon->RSSetState(CCWcullMode);
+	//d3d11DevCon->RSSetState(CCWcullMode);
+	d3d11DevCon->RSSetState(NULL);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
-	d3d11DevCon->RSSetState(CWcullMode);
+	//d3d11DevCon->RSSetState(CWcullMode);
+	d3d11DevCon->RSSetState(noCull);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 }
 
@@ -584,6 +595,7 @@ void CleanUp() {
 	Transparency->Release();
 	CCWcullMode->Release();
 	CWcullMode->Release();
+	noCull->Release();
 };
 
 // Window app
