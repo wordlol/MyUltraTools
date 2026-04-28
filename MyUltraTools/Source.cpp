@@ -30,6 +30,9 @@ ID3D11Buffer* cbPerObjectBuffer;
 ID3D11RasterizerState* WireFrame;
 ID3D11ShaderResourceView* CubesTexture;
 ID3D11SamplerState* CubesTexSamplerState;
+ID3D11BlendState* Transparency;
+ID3D11RasterizerState* CCWcullMode;
+ID3D11RasterizerState* CWcullMode;
 
 ID3D11DepthStencilView* depthStencilView;
 ID3D11Texture2D* depthStencilBuffer;
@@ -343,6 +346,79 @@ void InitCamera()
 	camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
 	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)Wight / (float)Heignt, 1.0f, 1000.0f);
 }
+void InitBlendMaterial()
+{
+	D3D11_BLEND_DESC blendDesc;
+	ZeroMemory(&blendDesc, sizeof(blendDesc));
+
+	D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+	ZeroMemory(&rtbd, sizeof(rtbd));
+
+	rtbd.BlendEnable = true;
+	rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
+	rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+	rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.RenderTarget[0] = rtbd;
+
+	d3d11Device->CreateBlendState(&blendDesc, &Transparency);
+}
+void InitModBlending()
+{
+	D3D11_RASTERIZER_DESC cmdesc;
+	ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+
+	cmdesc.FillMode = D3D11_FILL_SOLID;
+	cmdesc.CullMode = D3D11_CULL_BACK;
+
+	cmdesc.FrontCounterClockwise = true;
+	hr = d3d11Device->CreateRasterizerState(&cmdesc, &CCWcullMode);
+
+	cmdesc.FrontCounterClockwise = false;
+	hr = d3d11Device->CreateRasterizerState(&cmdesc, &CWcullMode);
+}
+
+void UpdateBlend()
+{
+	float blendFactor[] = { 0.75f, 0.75f, 0.75f, 1.0f };
+
+	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
+
+	d3d11DevCon->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
+
+
+	//XMVECTOR cubePos = XMVectorZero();
+
+	//cubePos = XMVector3TransformCoord(cubePos, cube1World);
+
+	//float distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
+	//float distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
+	//float distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
+
+	//float cube1Dist = distX * distX + distY * distY + distZ * distZ;
+
+	//cubePos = XMVectorZero();
+
+	//cubePos = XMVector3TransformCoord(cubePos, cube2World);
+
+	//distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
+	//distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
+	//distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
+
+	//float cube2Dist = distX * distX + distY * distY + distZ * distZ;
+
+	///*if (cube1Dist < cube2Dist)
+	//{
+	//	XMMATRIX tempMatrix = cube1World;
+	//	cube1World = cube2World;
+	//	cube2World = tempMatrix;
+	//}*/
+}
 void UpdateViewObj(XMMATRIX cubeWorld)
 {
 	camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
@@ -350,6 +426,8 @@ void UpdateViewObj(XMMATRIX cubeWorld)
 	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	World = XMMatrixIdentity();
+
+	UpdateBlend();
 
 	WVP = cubeWorld * camView * camProjection;
 	cbPerObj.WVP = XMMatrixTranspose(WVP);
@@ -359,9 +437,45 @@ void UpdateViewObj(XMMATRIX cubeWorld)
 	d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 
+	d3d11DevCon->RSSetState(CCWcullMode);
+	d3d11DevCon->DrawIndexed(36, 0, 0);
+	d3d11DevCon->RSSetState(CWcullMode);
 	d3d11DevCon->DrawIndexed(36, 0, 0);
 }
 
+void DistRender()
+{
+	XMVECTOR cubePos = XMVectorZero();
+
+	cubePos = XMVector3TransformCoord(cubePos, cube1World);
+
+	float distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
+	float distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
+	float distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
+
+	float cube1Dist = distX * distX + distY * distY + distZ * distZ;
+
+	cubePos = XMVectorZero();
+
+	cubePos = XMVector3TransformCoord(cubePos, cube2World);
+
+	distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
+	distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
+	distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
+
+	float cube2Dist = distX * distX + distY * distY + distZ * distZ;
+
+	if (cube1Dist-15 < cube2Dist)
+	{
+		UpdateViewObj(cube2World);
+		UpdateViewObj(cube1World);
+	}
+	else
+	{
+		UpdateViewObj(cube1World);
+		UpdateViewObj(cube2World);
+	}
+}
 
 bool InitializeDirect3dApp(HINSTANCE hInstance) {
 
@@ -404,6 +518,8 @@ bool InitializeDirect3dApp(HINSTANCE hInstance) {
 };
 
 bool InitScene() { 
+	InitBlendMaterial();
+	InitModBlending();
 	//InitRasterized();
 	InitImageTexture();
 	InitConstBuffer();
@@ -429,8 +545,8 @@ void DrawScene() {
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 
-	//UpdateViewObj(cube1World);
-	UpdateViewObj(cube2World);
+	DistRender();
+
 	SwapChain->Present(0, 0);
 };
 
@@ -492,6 +608,9 @@ void CleanUp() {
 	WireFrame->Release();
 	CubesTexture->Release();
 	CubesTexSamplerState->Release();
+	Transparency->Release();
+	CCWcullMode->Release();
+	CWcullMode->Release();
 };
 
 // Window app
