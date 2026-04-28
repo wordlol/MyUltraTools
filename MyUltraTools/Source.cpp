@@ -291,16 +291,6 @@ void RenderText(std::wstring text)
 
 	d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
 
-	WVP = XMMatrixIdentity();
-	cbPerObj.WVP = XMMatrixTranspose(WVP);
-	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
-	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-	d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
-	d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
-
-	d3d11DevCon->RSSetState(CWcullMode);
-
-	d3d11DevCon->DrawIndexed(6, 0, 0);
 }
 
 void InitImageTexture()
@@ -668,7 +658,19 @@ void DistRender()
 		UpdateViewObj(cube2World);
 	}
 }
+void Text()
+{
+	WVP = XMMatrixIdentity();
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+	d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
+	d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 
+	d3d11DevCon->RSSetState(CWcullMode);
+
+	d3d11DevCon->DrawIndexed(6, 0, 0);
+};
 
 bool InitScene() { 
 	InitD2DScreenTexture();
@@ -684,6 +686,8 @@ bool InitScene() {
 	InitLayoutModel();
 	d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	InitViewPort();
+
+	RenderText(L"   Hello World!!!");
 	return true; 
 };
 void DrawScene() {
@@ -691,13 +695,18 @@ void DrawScene() {
 	{
 	InitShaders();
 	}
+	if (GetAsyncKeyState('T'))
+	{
+		RenderText(L"      UPDATE");
+	}
 
 	D3DXCOLOR bgColor(red, 0.0f, 0.0f, 0.0f);
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 
 	DistRender();
-	RenderText(L"   Hello World!!!");
+	
+	Text();
 	SwapChain->Present(0, 0);
 };
 void UpdateScene() {
