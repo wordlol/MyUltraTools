@@ -104,6 +104,48 @@ int colormodr = 1;
 int colormodg = 1;
 int colormodb = 1;
 
+
+double countsPerSecond = 0.0;
+__int64 CounterStart = 0;
+
+int frameCount = 0;
+int fps = 0;
+
+__int64 frameTimeOld = 0;
+double frameTime;
+
+void StartTimer()
+{
+	LARGE_INTEGER frequencyCount;
+	QueryPerformanceFrequency(&frequencyCount);
+
+	countsPerSecond = double(frequencyCount.QuadPart);
+
+	QueryPerformanceCounter(&frequencyCount);
+	CounterStart = frequencyCount.QuadPart;
+}
+double GetTime()
+{
+	LARGE_INTEGER currentTime;
+	QueryPerformanceCounter(&currentTime);
+	return double(currentTime.QuadPart - CounterStart) / countsPerSecond;
+}
+double GetFrameTime()
+{
+	LARGE_INTEGER currentTime;
+	__int64 tickCount;
+	QueryPerformanceCounter(&currentTime);
+
+	tickCount = currentTime.QuadPart - frameTimeOld;
+	frameTimeOld = currentTime.QuadPart;
+
+	if (tickCount < 0.0f)
+		tickCount = 0.0f;
+
+	return float(tickCount) / countsPerSecond;
+}
+
+
 struct VertexCol
 {
 	VertexCol() {};
@@ -255,7 +297,7 @@ void InitD2DScreenTexture() {
 
 	d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 }
-void RenderText(std::wstring text)
+void InitText(std::wstring text, int inInt)
 {
 	keyedMutex11->ReleaseSync(0);
 
@@ -266,7 +308,7 @@ void RenderText(std::wstring text)
 	D2DRenderTarget->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
 
 	std::wostringstream printString;
-	printString << text;
+	printString << text << inInt;;
 	printText = printString.str();
 
 	D2D1_COLOR_F FontColor = D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f);
@@ -290,7 +332,6 @@ void RenderText(std::wstring text)
 	keyedMutex11->AcquireSync(1, 5);
 
 	d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
-
 }
 
 void InitImageTexture()
@@ -686,18 +727,13 @@ bool InitScene() {
 	InitLayoutModel();
 	d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	InitViewPort();
-
-	RenderText(L"   Hello World!!!");
 	return true; 
 };
 void DrawScene() {
+
 	if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
 	{
 	InitShaders();
-	}
-	if (GetAsyncKeyState('T'))
-	{
-		RenderText(L"      UPDATE");
 	}
 
 	D3DXCOLOR bgColor(red, 0.0f, 0.0f, 0.0f);
@@ -705,11 +741,11 @@ void DrawScene() {
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 
 	DistRender();
-	
+	InitText(L"   FPS: ", fps);
 	Text();
 	SwapChain->Present(0, 0);
 };
-void UpdateScene() {
+void UpdateScene(double time) {
 		red += colormodr * 0.00005f;
 		green += colormodg * 0.00002f;
 		blue += colormodb * 0.00001f;
@@ -722,7 +758,7 @@ void UpdateScene() {
 			colormodb *= -1;
 
 		//Keep the cubes rotating
-		rot += .0005f;
+		rot += 1.0f * time;
 		if (rot > 6.28f)
 			rot = 0.0f;
 
@@ -928,8 +964,17 @@ int MassegeLoop() {
 		}
 		else
 		{
-			
-			UpdateScene();
+			frameCount++;
+			if (GetTime() > 1.0f)
+			{
+				fps = frameCount;
+				frameCount = 0;
+				StartTimer();
+			}
+
+			frameTime = GetFrameTime();
+
+			UpdateScene(frameTime);
 			DrawScene();
 		}
 	}
