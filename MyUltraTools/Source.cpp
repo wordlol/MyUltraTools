@@ -26,9 +26,34 @@ ID3D11PixelShader* PS;
 ID3D10Blob* VS_Buffer;
 ID3D10Blob* PS_Buffer;
 ID3D11InputLayout* VertLayout;
+ID3D11Buffer* cbPerObjectBuffer;
 
 ID3D11DepthStencilView* depthStencilView;
 ID3D11Texture2D* depthStencilBuffer;
+
+//матрицы
+XMMATRIX WVP;
+XMMATRIX World;
+XMMATRIX camView;
+XMMATRIX camProjection;
+
+XMVECTOR camPosition;
+XMVECTOR camTarget;
+XMVECTOR camUp;
+
+XMMATRIX XMMatrixPerspectiveFovLH
+(
+	FLOAT FovAngleY,
+	FLOAT AspectRatio,
+	FLOAT NearZ,
+	FLOAT FarZ
+);
+
+struct cbPerObject
+{
+	XMMATRIX  WVP;
+};
+cbPerObject cbPerObj;
 
 HRESULT hr;
 
@@ -143,7 +168,6 @@ void InitViewPort()
 
 	d3d11DevCon->RSSetViewports(1, &viewport);
 }
-//new_
 void InitDepth() 
 {
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
@@ -163,7 +187,41 @@ void InitDepth()
 	d3d11Device->CreateTexture2D(&depthStencilDesc, NULL, &depthStencilBuffer);
 	d3d11Device->CreateDepthStencilView(depthStencilBuffer, NULL, &depthStencilView);
 }
-//new-
+void InitConstBuffer()
+{
+	D3D11_BUFFER_DESC cbbd;
+	ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
+
+	cbbd.Usage = D3D11_USAGE_DEFAULT;
+	cbbd.ByteWidth = sizeof(cbPerObject);
+	cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cbbd.CPUAccessFlags = 0;
+	cbbd.MiscFlags = 0;
+
+	hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
+}
+void InitCamera()
+{
+	camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
+	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+	camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)Wight / (float)Heignt, 1.0f, 1000.0f);
+}
+void UpdateCamera()
+{
+	camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
+	camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	World = XMMatrixIdentity();
+	WVP = World * camView * camProjection;
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
+	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+}
+
 
 bool InitializeDirect3dApp(HINSTANCE hInstance) {
 
@@ -206,7 +264,8 @@ bool InitializeDirect3dApp(HINSTANCE hInstance) {
 };
 
 bool InitScene() { 
-
+	InitConstBuffer();
+	InitCamera();
 	InitShaders();
 	InitVertexBuffer();
 	InitIndexBuffer();
@@ -218,10 +277,15 @@ bool InitScene() {
 };
 
 void DrawScene() {
-	D3DXCOLOR bgColor(red, 0.0f, 0.0f, 0.0f);
+	if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
+	{
+	InitShaders();
+	}
 
+	D3DXCOLOR bgColor(red, 0.0f, 0.0f, 0.0f);
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);//<-- new
+	UpdateCamera();
 	d3d11DevCon->DrawIndexed(6, 0, 0);
 	SwapChain->Present(0, 0);
 };
@@ -239,6 +303,7 @@ void CleanUp() {
 	VertLayout->Release();
 	depthStencilView->Release();
 	depthStencilBuffer->Release();
+	cbPerObjectBuffer->Release();
 };
 
 void UpdateScene() {
