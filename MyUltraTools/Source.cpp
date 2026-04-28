@@ -391,33 +391,6 @@ void UpdateBlend()
 
 	d3d11DevCon->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
 
-
-	//XMVECTOR cubePos = XMVectorZero();
-
-	//cubePos = XMVector3TransformCoord(cubePos, cube1World);
-
-	//float distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
-	//float distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
-	//float distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
-
-	//float cube1Dist = distX * distX + distY * distY + distZ * distZ;
-
-	//cubePos = XMVectorZero();
-
-	//cubePos = XMVector3TransformCoord(cubePos, cube2World);
-
-	//distX = XMVectorGetX(cubePos) - XMVectorGetX(camPosition);
-	//distY = XMVectorGetY(cubePos) - XMVectorGetY(camPosition);
-	//distZ = XMVectorGetZ(cubePos) - XMVectorGetZ(camPosition);
-
-	//float cube2Dist = distX * distX + distY * distY + distZ * distZ;
-
-	///*if (cube1Dist < cube2Dist)
-	//{
-	//	XMMATRIX tempMatrix = cube1World;
-	//	cube1World = cube2World;
-	//	cube2World = tempMatrix;
-	//}*/
 }
 void UpdateViewObj(XMMATRIX cubeWorld)
 {
