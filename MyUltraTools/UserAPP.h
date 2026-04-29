@@ -3,9 +3,9 @@
 //Управление сценой
 
 void UpdateScene(double time) {
-	red += colormodr * 0.00008f;
+	/*red += colormodr * 0.00008f;
 	green += colormodg * 0.00005f;
-	blue += colormodb * 0.00001f;
+	blue += colormodb * 0.00001f;*/
 
 	if (red >= 1.0f || red <= 0.0f)
 		colormodr *= -1;
@@ -23,10 +23,10 @@ void UpdateScene(double time) {
 	cubeWorld = XMMatrixIdentity();
 
 	//Define cube1's world space matrix
-	XMVECTOR rotaxis = XMVectorSet(0.2f, 0.4f, 0.0f, 0.0f);
+	XMVECTOR rotaxis = XMVectorSet(0.0f, 0.2f, 0.0f, 0.0f);
 	Rotation = XMMatrixRotationAxis(rotaxis, rot);
-	Translation = XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-	Scale = XMMatrixScaling(2.2f, 3.2f, 1.2f);
+	Translation = XMMatrixTranslation(1.0f, 0.1f, 0.2f);
+	Scale = XMMatrixScaling(1.f, 1.f, 1.f);
 
 	cubeWorld = Translation * Rotation * Scale;
 };

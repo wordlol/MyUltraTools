@@ -9,6 +9,16 @@ void UpdateBlend()
 	d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
 	d3d11DevCon->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
 }
+void UpdateLight()
+{
+	XMVECTOR lightVector = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
+	lightVector = XMVector3TransformCoord(lightVector, cubeWorld);
+
+	light.pos.x = XMVectorGetX(lightVector);
+	light.pos.y = XMVectorGetY(lightVector);
+	light.pos.z = XMVectorGetZ(lightVector);
+}
 void UpdateViewObj(XMMATRIX cubeWorld)
 {
 	camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
@@ -45,10 +55,13 @@ void DrawScene() {
 	D3DXCOLOR bgColor(red, green, blue, 0.0f);
 	d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 	d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
+	
 
+	UpdateLight();
 	UpdateBlend();
 	UpdateViewObj(cubeWorld);
 	InitText(L"   FPS: ", fps);
+
 
 	SwapChain->Present(0, 0);
 };

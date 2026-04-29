@@ -52,15 +52,17 @@ void InitText(std::wstring text, int inInt)
 
 	d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
 
+	//d3d11DevCon->PSSetShader(D2D_PS, 0, 0);
+
 	WVP = XMMatrixIdentity();
-	cbPerObj.WVP = XMMatrixTranspose(WVP);
 	cbPerObj.World = XMMatrixTranspose(WVP);
+	cbPerObj.WVP = XMMatrixTranspose(WVP);
 	d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
 	d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
 	d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 
-	//d3d11DevCon->RSSetState(CWcullMode);
+	d3d11DevCon->RSSetState(CWcullMode);
 
 	d3d11DevCon->DrawIndexed(6, 0, 0);
 }
@@ -93,11 +95,14 @@ void InitRasterized()
 }
 void InitShaders()
 {
+	
 	hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
 	hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
+	hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "D2D_PS", "ps_5_0", 0, 0, 0, &D2D_PS_Buffer, 0, 0);
 
 	d3d11Device->CreateVertexShader(VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), NULL, &VS);
 	d3d11Device->CreatePixelShader(PS_Buffer->GetBufferPointer(), PS_Buffer->GetBufferSize(), NULL, &PS);
+	d3d11Device->CreatePixelShader(D2D_PS_Buffer->GetBufferPointer(), D2D_PS_Buffer->GetBufferSize(), NULL, &D2D_PS);
 
 	d3d11DevCon->VSSetShader(VS, 0, 0);
 	d3d11DevCon->PSSetShader(PS, 0, 0);
@@ -280,18 +285,11 @@ void InitIndexBuffer()
 }
 void InitLayoutModel()
 {
-	/*D3D11_INPUT_ELEMENT_DESC layout[] =
-	{
-		{"POSITION",0,DXGI_FORMAT_R32G32B32_FLOAT,0,0,D3D11_INPUT_PER_VERTEX_DATA,0},
-		{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		{"COLOR",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,12,D3D11_INPUT_PER_VERTEX_DATA,0},
-	};*/
-
 	D3D11_INPUT_ELEMENT_DESC layout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR"   , 1, DXGI_FORMAT_R32G32B32_FLOAT,    0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0}
+		{ "NORMAL"   , 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
 	};
 
 	UINT numElement = ARRAYSIZE(layout);
@@ -459,7 +457,7 @@ void InitD2DScreenTexture() {
 
 	d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 }
-void InitLight()
+void InitSunLight()
 {
 	light.dir = XMFLOAT3(0.25f, 0.5f, -1.0f);
 	light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
@@ -469,6 +467,18 @@ void InitLight()
 	d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &constbuffPerFrame, 0, 0);
 	d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
 }
+void InitPointLight()
+{
+	light.pos = XMFLOAT3(1.0f, 1.0f, -1.0f);
+	light.range = 100.0f;
+	light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
+	light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+	light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+	constbuffPerFrame.light = light;
+	d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &constbuffPerFrame, 0, 0);
+	d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
+}
+
 
 
 bool InitD2D_D3D101_DWrite(IDXGIAdapter1* Adapter) {
@@ -626,7 +636,8 @@ bool InitScene() {
 	InitShaders();
 	InitVertexBuffer();
 	InitIndexBuffer();
-	InitLight();
+	//InitSunLight();
+	InitPointLight();
 
 	InitLayoutModel();
 	d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

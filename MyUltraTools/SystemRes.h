@@ -18,6 +18,8 @@
 #include <sstream>
 #include <dwrite.h>
 
+
+
 //OPENSPACE
 IDXGISwapChain* SwapChain;
 ID3D11Device* d3d11Device;
@@ -54,6 +56,8 @@ IDWriteFactory* DWriteFactory;
 IDWriteTextFormat* TextFormat;
 std::wstring printText;
 ID3D11Buffer* cbPerFrameBuffer;
+ID3D11PixelShader* D2D_PS;
+ID3D10Blob* D2D_PS_Buffer;
 
 void CleanAPP() {
 	SwapChain->Release();
@@ -87,6 +91,8 @@ void CleanAPP() {
 	TextFormat->Release();
 	d2dTexture->Release();
 	cbPerFrameBuffer->Release();
+	D2D_PS->Release();
+	D2D_PS_Buffer->Release();
 };
 
 LPCSTR WndClassName = "3D REDACTOR";
@@ -125,7 +131,11 @@ struct Light
 		ZeroMemory(this, sizeof(Light));
 	}
 	XMFLOAT3 dir;
-	float pad;
+	float pad1;
+	XMFLOAT3 pos;
+	float range;
+	XMFLOAT3 att;
+	float pad2;
 	XMFLOAT4 ambient;
 	XMFLOAT4 diffuse;
 }light;
