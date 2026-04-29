@@ -143,6 +143,13 @@
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">VS</EntryPointName>
     </FxCompile>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="DirectEngine.h" />
+    <ClInclude Include="SystemRes.h" />
+    <ClInclude Include="UserAPP.h" />
+    <ClInclude Include="DirectAPP.h" />
+    <ClInclude Include="WindowAPP.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
