@@ -41,40 +41,40 @@ VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 norma
     return output;
 }
 
-float4 PS(VS_OUTPUT input) : SV_TARGET
-{
-    input.normal = normalize(input.normal);
+//float4 PS(VS_OUTPUT input) : SV_TARGET
+//{
+//    input.normal = normalize(input.normal);
 
-    float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
+//    float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
     
-    clip(diffuse.a - .25);
+//    clip(diffuse.a - .25);
 
-    float3 finalColor = float3(0.0f, 0.0f, 0.0f);
+//    float3 finalColor = float3(0.0f, 0.0f, 0.0f);
     
-    float3 lightToPixelVec = light.pos - input.worldPos;
+//    float3 lightToPixelVec = light.pos - input.worldPos;
         
-    float d = length(lightToPixelVec);
+//    float d = length(lightToPixelVec);
     
-    float3 finalAmbient = diffuse * light.ambient;
+//    float3 finalAmbient = diffuse * light.ambient;
 
-    if (d > light.range)
-        return float4(finalAmbient, diffuse.a);
+//    if (d > light.range)
+//        return float4(finalAmbient, diffuse.a);
         
-    lightToPixelVec /= d;
+//    lightToPixelVec /= d;
     
-    float howMuchLight = dot(lightToPixelVec, input.normal);
+//    float howMuchLight = dot(lightToPixelVec, input.normal);
 
-    if (howMuchLight > 0.0f)
-    {
-        finalColor += howMuchLight * diffuse * light.diffuse;
+//    if (howMuchLight > 0.0f)
+//    {
+//        finalColor += howMuchLight * diffuse * light.diffuse;
         
-        finalColor /= light.att[0] + (light.att[1] * d) + (light.att[2] * (d * d));
-    }
+//        finalColor /= light.att[0] + (light.att[1] * d) + (light.att[2] * (d * d));
+//    }
         
-    finalColor = saturate(finalColor + finalAmbient);
+//    finalColor = saturate(finalColor + finalAmbient);
     
-    return float4(finalColor, diffuse.a);
-}
+//    return float4(finalColor, diffuse.a);
+//}
 
 float4 D2D_PS(VS_OUTPUT input) : SV_TARGET
 {
@@ -85,18 +85,18 @@ float4 D2D_PS(VS_OUTPUT input) : SV_TARGET
     return diffuse;
 }
 
-//float4 PS(VS_OUTPUT input) : SV_TARGET
-//{
-//    input.normal = normalize(input.normal);
+float4 PS(VS_OUTPUT input) : SV_TARGET
+{
+    input.normal = normalize(input.normal);
 
-//    float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-//    clip(diffuse.a - .25);
-//    float3 finalColor;
+    float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
+    clip(diffuse.a - .25);
+    float3 finalColor;
 
-//    finalColor = diffuse * light.ambient;
-//    finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);
-//    return float4(finalColor, diffuse.a);
-//}
+    finalColor = diffuse * light.ambient;
+    finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);
+    return float4(finalColor, diffuse.a);
+}
 
 //float4 PS(VS_OUTPUT input) : SV_TARGET
 //{

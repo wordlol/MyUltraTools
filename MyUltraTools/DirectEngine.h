@@ -289,7 +289,7 @@ private:
 	}
 	void InitImageTexture()
 	{
-		hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block2.png",
+		hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
 			NULL, NULL, &CubesTexture, NULL);
 
 		D3D11_SAMPLER_DESC sampDesc;
@@ -553,12 +553,13 @@ private:
 	}
 	void InitCamera()
 	{
-		camPosition = XMVectorSet(0.0f, 3.0f, -8.0f, 0.0f);
+		camPosition = XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f);
 		camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 		camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
-		camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, (float)Wight / (float)Heignt, 1.0f, 1000.0f);
+
+		camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, 1600./1400., 1.0f, 1000.0f);
 	}
 	void InitModBlending()
 	{
@@ -607,8 +608,8 @@ private:
 	}
 	void InitSunLight()
 	{
-		light.dir = XMFLOAT3(0.25f, 0.5f, -1.0f);
-		light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		constbuffPerFrame.light = light;
@@ -668,56 +669,69 @@ private:
 		//d3d11DevCon->RSSetState(noCull);
 		d3d11DevCon->DrawIndexed(36, 0, 0);
 	}
+	void UpdateCamera()
+	{
+		camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
+		camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+		camTarget = XMVector3Normalize(camTarget);
+
+		/*XMMATRIX RotateYTempMatrix;
+		RotateYTempMatrix = XMMatrixRotationY(camYaw);*/
+
+		camRight = XMVector3TransformCoord(DefaultRight, camRotationMatrix);
+		camUp = XMVector3TransformCoord(camUp, camRotationMatrix);
+		camForward = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+
+		camPosition += moveLeftRight * camRight;
+		camPosition += moveBackForward * camForward;
+
+		camTarget = camPosition + camTarget;
+
+		camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+	}
 	void DetectInput(double time) {
 
 		DIMOUSESTATE mouseCurrState;
+
 		BYTE keyboardState[256];
 
 		DIKeyboard->Acquire();
 		DIMouse->Acquire();
-		
+
 		DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseCurrState);
+
 		DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
 
+		if (keyboardState[DIK_ESCAPE] & 0x80)
+			PostMessage(hWND, WM_DESTROY, 0, 0);
 
+		float speed = 15.0f * time;
+		
 		if (keyboardState[DIK_A] & 0x80)
 		{
-			roty -= 2.0f * time;
+			moveLeftRight -= speed;
 		}
 		if (keyboardState[DIK_D] & 0x80)
 		{
-			roty += 2.0f * time;
+			moveLeftRight += speed;
 		}
 		if (keyboardState[DIK_W] & 0x80)
 		{
-			rotx += 2.0f * time;
+			moveBackForward += speed;
 		}
 		if (keyboardState[DIK_S] & 0x80)
 		{
-			rotx -= 2.0f * time;
+			moveBackForward -= speed;
 		}
-		if (mouseCurrState.lX != mouseLastState.lX)
+		if ((mouseCurrState.lX != mouseLastState.lX) || (mouseCurrState.lY != mouseLastState.lY))
 		{
-			scaleX -= (mouseCurrState.lX * 0.004f);
+			camYaw += mouseLastState.lX * 0.001f;
+			camPitch += mouseCurrState.lY * 0.001f;
+
+			mouseLastState = mouseCurrState;
 		}
-		if (mouseCurrState.lY != mouseLastState.lY)
-		{
-			scaleY -= (mouseCurrState.lY * 0.004f);
-		}
 
-		/*if (rotx > 6.28)
-			rotx -= 6.28;
-		else if (rotx < 0)
-			rotx = 6.28 + rotx;
-
-		if (rotz > 6.28)
-			rotz -= 6.28;
-		else if (rotz < 0)
-			rotz = 6.28 + rotz;*/
-
-		mouseLastState = mouseCurrState;
 	};
-
 public:
 	bool GetHR;
 
@@ -738,9 +752,9 @@ public:
 		InitModBlending();
 		InitImageTexture();
 		InitCamera();
-		InitPointLight();
+		//InitPointLight();
 		//InitRasterized();
-		//InitSunLight();
+		InitSunLight();
 		InitLayoutModel();
 		d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		InitViewPort();
@@ -773,20 +787,11 @@ public:
 
 		SwapChain->Present(0, 0);
 	}
+
 	void UpdateScene(double time)
 	{
 		DetectInput(time);
-		/*red += colormodr * 0.00008f;
-		green += colormodg * 0.00005f;
-		blue += colormodb * 0.00001f;*/
-
-		if (red >= 1.0f || red <= 0.0f)
-			colormodr *= -1;
-		if (green >= 1.0f || green <= 0.0f)
-			colormodg *= -1;
-		if (blue >= 1.0f || blue <= 0.0f)
-			colormodb *= -1;
-
+		UpdateCamera();
 		UpdateLight();
 
 		//Keep the cubes rotating
@@ -802,16 +807,16 @@ public:
 		XMVECTOR rotayis = XMVectorSet(0.0f, 1.f, 0.0f, 0.0f);
 		XMVECTOR rotazis = XMVectorSet(0.0f, 0.0f, 1.f, 0.0f);
 
-		Rotationx = XMMatrixRotationAxis(rotaxis, scaleY);
+		Rotationx = XMMatrixRotationAxis(rotaxis, 0);
 		Rotationy = XMMatrixRotationAxis(rotayis, 0);
-		Rotationz = XMMatrixRotationAxis(rotayis, scaleX);
+		Rotationz = XMMatrixRotationAxis(rotayis, 0);
 
-		Translation = XMMatrixTranslation(rotx, 0, -roty);
+		Translation = XMMatrixTranslation(0, -2, 0);
 
 
-		Scale = XMMatrixScaling(1.f, 1.f, 1.f);
+		Scale = XMMatrixScaling(20.f, 1.f, 20.f);
 
-		cubeWorld = Translation * Rotationx * Rotationy * Rotationz * Scale;
+		cubeWorld = Translation * Scale;
 	}
 
 
@@ -819,6 +824,8 @@ public:
 
 
 	void CleanAPP() {
+		SwapChain->SetFullscreenState(false, NULL);
+		PostMessage(hWND, WM_DESTROY, 0, 0);
 		SwapChain->Release();
 		d3d11Device->Release();
 		d3d11DevCon->Release();

@@ -24,8 +24,8 @@
 //OPENSPACE
 LPCSTR WndClassName = "3D REDACTOR";
 HWND hWND = NULL;
-const int Wight = 800;
-const int Heignt = 800;
+const int Wight = 1600;
+const int Heignt = 1400;
 HRESULT hr;
 
 
@@ -104,6 +104,22 @@ float rotx = 0;
 float roty = 0;
 float scaleX = 1.0f;
 float scaleY = 1.0f;
+
+
+XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+
+XMMATRIX camRotationMatrix;
+XMMATRIX groundWorld;
+
+float moveLeftRight = 0.0f;
+float moveBackForward = 0.0f;
+
+float camYaw = 0.0f;
+float camPitch = 0.0f;
 
 
 struct VertexCol
