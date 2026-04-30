@@ -189,6 +189,29 @@ private:
 
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 	}
+	bool InitDirectInput(HINSTANCE hInstance) {
+		hr = DirectInput8Create(hInstance,
+			DIRECTINPUT_VERSION,
+			IID_IDirectInput8,
+			(void**)&DirectInput,
+			NULL);
+		
+		hr = DirectInput->CreateDevice(GUID_SysKeyboard,
+			&DIKeyboard,
+			NULL);
+
+		hr = DirectInput->CreateDevice(GUID_SysMouse,
+			&DIMouse,
+			NULL);
+
+		hr = DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+		hr = DIKeyboard->SetCooperativeLevel(hWND, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+
+		hr = DIMouse->SetDataFormat(&c_dfDIMouse);
+		hr = DIMouse->SetCooperativeLevel(hWND, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
+
+		return true;
+	}
 private:
 	void InitConstBuffer()
 	{
@@ -594,7 +617,7 @@ private:
 	}
 	void InitPointLight()
 	{
-		light.pos = XMFLOAT3(1.0f, 1.0f, -1.0f);
+		light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
 		light.range = 100.0f;
 		light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
 		light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
@@ -645,7 +668,55 @@ private:
 		//d3d11DevCon->RSSetState(noCull);
 		d3d11DevCon->DrawIndexed(36, 0, 0);
 	}
+	void DetectInput(double time) {
 
+		DIMOUSESTATE mouseCurrState;
+		BYTE keyboardState[256];
+
+		DIKeyboard->Acquire();
+		DIMouse->Acquire();
+		
+		DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseCurrState);
+		DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
+
+
+		if (keyboardState[DIK_A] & 0x80)
+		{
+			roty -= 2.0f * time;
+		}
+		if (keyboardState[DIK_D] & 0x80)
+		{
+			roty += 2.0f * time;
+		}
+		if (keyboardState[DIK_W] & 0x80)
+		{
+			rotx += 2.0f * time;
+		}
+		if (keyboardState[DIK_S] & 0x80)
+		{
+			rotx -= 2.0f * time;
+		}
+		if (mouseCurrState.lX != mouseLastState.lX)
+		{
+			scaleX -= (mouseCurrState.lX * 0.004f);
+		}
+		if (mouseCurrState.lY != mouseLastState.lY)
+		{
+			scaleY -= (mouseCurrState.lY * 0.004f);
+		}
+
+		/*if (rotx > 6.28)
+			rotx -= 6.28;
+		else if (rotx < 0)
+			rotx = 6.28 + rotx;
+
+		if (rotz > 6.28)
+			rotz -= 6.28;
+		else if (rotz < 0)
+			rotz = 6.28 + rotz;*/
+
+		mouseLastState = mouseCurrState;
+	};
 
 public:
 	bool GetHR;
@@ -654,6 +725,7 @@ public:
 	{
 		GetHR = InitializeDirect3dApp(hInstance);
 		InitD2DScreenTexture();
+		InitDirectInput(hInstance);
 	};
 	
 	bool CreateScene()
@@ -703,6 +775,7 @@ public:
 	}
 	void UpdateScene(double time)
 	{
+		DetectInput(time);
 		/*red += colormodr * 0.00008f;
 		green += colormodg * 0.00005f;
 		blue += colormodb * 0.00001f;*/
@@ -725,12 +798,20 @@ public:
 		cubeWorld = XMMatrixIdentity();
 
 		//Define cube1's world space matrix
-		XMVECTOR rotaxis = XMVectorSet(0.0f, 0.2f, 0.0f, 0.0f);
-		Rotation = XMMatrixRotationAxis(rotaxis, rot);
-		Translation = XMMatrixTranslation(1.0f, 0.1f, 0.2f);
+		XMVECTOR rotaxis = XMVectorSet(1.f, 0.0f, 0.0f, 0.0f);
+		XMVECTOR rotayis = XMVectorSet(0.0f, 1.f, 0.0f, 0.0f);
+		XMVECTOR rotazis = XMVectorSet(0.0f, 0.0f, 1.f, 0.0f);
+
+		Rotationx = XMMatrixRotationAxis(rotaxis, scaleY);
+		Rotationy = XMMatrixRotationAxis(rotayis, 0);
+		Rotationz = XMMatrixRotationAxis(rotayis, scaleX);
+
+		Translation = XMMatrixTranslation(rotx, 0, -roty);
+
+
 		Scale = XMMatrixScaling(1.f, 1.f, 1.f);
 
-		cubeWorld = Translation * Rotation * Scale;
+		cubeWorld = Translation * Rotationx * Rotationy * Rotationz * Scale;
 	}
 
 
@@ -771,6 +852,10 @@ public:
 		cbPerFrameBuffer->Release();
 		D2D_PS->Release();
 		D2D_PS_Buffer->Release();
+
+		DIKeyboard->Unacquire();
+		DIMouse->Unacquire();
+		DirectInput->Release();
 	};
 		
 private:
@@ -811,4 +896,9 @@ private:
 	ID3D11Buffer* cbPerFrameBuffer;
 	ID3D11PixelShader* D2D_PS;
 	ID3D10Blob* D2D_PS_Buffer;
+
+	IDirectInputDevice8* DIKeyboard;
+	IDirectInputDevice8* DIMouse;
+	DIMOUSESTATE mouseLastState;
+	LPDIRECTINPUT8 DirectInput;
 };

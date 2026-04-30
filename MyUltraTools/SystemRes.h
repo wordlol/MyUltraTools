@@ -6,6 +6,8 @@
 #pragma comment (lib, "DXGI.lib")
 #pragma comment (lib, "D2D1.lib")
 #pragma comment (lib, "dwrite.lib")
+#pragma comment (lib, "dinput8.lib")
+#pragma comment (lib, "dxguid.lib")
 
 #include <windows.h>
 #include <d3d11.h>
@@ -17,6 +19,7 @@
 #include <D2D1.h>
 #include <sstream>
 #include <dwrite.h>
+#include <dinput.h>
 
 //OPENSPACE
 LPCSTR WndClassName = "3D REDACTOR";
@@ -73,7 +76,9 @@ struct cbPerFrame
 XMMATRIX cubeWorld;
 
 
-XMMATRIX Rotation;
+XMMATRIX Rotationx;
+XMMATRIX Rotationy;
+XMMATRIX Rotationz;
 XMMATRIX Scale;
 XMMATRIX Translation;
 float rot = 0.01f;
@@ -93,6 +98,13 @@ int frameCount = 0;
 int fps = 0;
 __int64 frameTimeOld = 0;
 double frameTime;
+
+
+float rotx = 0;
+float roty = 0;
+float scaleX = 1.0f;
+float scaleY = 1.0f;
+
 
 struct VertexCol
 {
