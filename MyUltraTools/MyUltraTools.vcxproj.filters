@@ -31,12 +31,6 @@
     <ClInclude Include="SystemRes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UserAPP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="DirectAPP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="WindowAPP.h">
       <Filter>Header Files</Filter>
     </ClInclude>

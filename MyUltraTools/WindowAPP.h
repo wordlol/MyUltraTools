@@ -1,5 +1,5 @@
 #pragma once
-#include "DirectAPP.h"
+#include "DirectEngine.h"
 
 
 // Window app
@@ -68,7 +68,7 @@ bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, 
 	return true;
 };
 
-int MassegeLoop() {
+int MassegeLoop(D3DEX D3DEX_) {
 	MSG msg;
 	ZeroMemory(&msg, sizeof(msg));
 
@@ -94,8 +94,8 @@ int MassegeLoop() {
 
 			frameTime = GetFrameTime();
 
-			UpdateScene(frameTime);
-			DrawScene();
+			D3DEX_.UpdateGraphic();
+			D3DEX_.UpdateScene(frameTime);
 		}
 	}
 	return (int)msg.wParam;
