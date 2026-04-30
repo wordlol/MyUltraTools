@@ -23,7 +23,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 };
 
-bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, bool windowed)
+bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, bool Windowed)
 {
 	WNDCLASSEX wc;
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -37,34 +37,34 @@ bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, 
 	wc.hbrBackground = (HBRUSH)(COLOR_WINDOW + 2);
 	wc.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
 	wc.lpszMenuName = NULL;
-	wc.lpszClassName = WndClassName;
+	wc.lpszClassName = Window.WndClassName;
 
 	if (!RegisterClassEx(&wc))
 	{
-		MessageBox(NULL, "ERROR REGISTER WINDOW", "Error", MB_OK);
+		MessageBox(NULL, "ERROR REGISTER Window", "Error", MB_OK);
 		return false;
 	}
 
-	hWND = CreateWindowEx(
+	Window.hWND = CreateWindowEx(
 		NULL,
-		WndClassName,
+		Window.WndClassName,
 		"3D REDACTOR",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		Wight, Heignt,
+		Window.Wight, Window.Heignt,
 		NULL, NULL,
 		hinstance,
 		NULL
 	);
 
-	if (!hWND)
+	if (!Window.hWND)
 	{
-		MessageBox(NULL, "ERROR CREATE WINDOW", "Error", MB_OK | MB_ICONERROR);
+		MessageBox(NULL, "ERROR CREATE Window", "Error", MB_OK | MB_ICONERROR);
 		return false;
 	}
 
-	ShowWindow(hWND, ShowWind);
-	UpdateWindow(hWND);
+	ShowWindow(Window.hWND, ShowWind);
+	UpdateWindow(Window.hWND);
 	return true;
 };
 
@@ -84,18 +84,18 @@ int MassegeLoop(D3DEX D3DEX_) {
 		}
 		else
 		{
-			frameCount++;
-			if (GetTime() > 1.0f)
+			Timer.frameCount++;
+			if (Timer.GetTime() > 1.0f)
 			{
-				fps = frameCount;
-				frameCount = 0;
-				StartTimer();
+				Timer.fps = Timer.frameCount;
+				Timer.frameCount = 0;
+				Timer.StartTimer();
 			}
 
-			frameTime = GetFrameTime();
+			Timer.frameTime = Timer.GetFrameTime();
 
 			D3DEX_.UpdateGraphic();
-			D3DEX_.UpdateScene(frameTime);
+			D3DEX_.UpdateScene(Timer.frameTime);
 		}
 	}
 	return (int)msg.wParam;

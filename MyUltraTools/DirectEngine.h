@@ -1,21 +1,206 @@
 #pragma once
-#include "SystemRes.h"
-//Добавляем новые возможности для движка
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dx11.lib")
+#pragma comment(lib, "d3dx10.lib")
+#pragma comment (lib, "D3D10_1.lib")
+#pragma comment (lib, "DXGI.lib")
+#pragma comment (lib, "D2D1.lib")
+#pragma comment (lib, "dwrite.lib")
+#pragma comment (lib, "dinput8.lib")
+#pragma comment (lib, "dxguid.lib")
+
+#include <Windows.h>
+#include <d3d11.h>
+#include <d3dx11.h>
+#include <d3dx10.h>
+#include <xnamath.h>
+#include <D3D10_1.h>
+#include <DXGI.h>
+#include <D2D1.h>
+#include <sstream>
+#include <dwrite.h>
+#include <dinput.h>
+
+struct {
+	HWND hWND = NULL;
+	HRESULT hr;
+	int Wight = GetSystemMetrics(SM_CXSCREEN)/2;
+	int	Heignt = GetSystemMetrics(SM_CYSCREEN)/2;
+	LPCSTR WndClassName = "3D REDACTOR";
+}Window;
+
+struct {
+	DIMOUSESTATE mouseLastState;
+	LPDIRECTINPUT8 DirectInput;
+}ControlInput;
+
+struct {
+	XMMATRIX camView;
+	XMMATRIX camProjection;
+	XMVECTOR camPosition;
+	XMVECTOR camTarget;
+
+	XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+
+	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	XMMATRIX camRotationMatrix;
+}Camera;
+
+struct {
+	XMMATRIX WVP;
+	XMMATRIX World;
+}WorldPos;
+
+struct {
+	double countsPerSecond = 0.0;
+	__int64 CounterStart = 0;
+	int frameCount = 0;
+	int fps = 0;
+	__int64 frameTimeOld = 0;
+	double frameTime;
+
+	void StartTimer()
+	{
+		LARGE_INTEGER frequencyCount;
+		QueryPerformanceFrequency(&frequencyCount);
+
+		Timer.countsPerSecond = double(frequencyCount.QuadPart);
+
+		QueryPerformanceCounter(&frequencyCount);
+		Timer.CounterStart = frequencyCount.QuadPart;
+	}
+	double GetTime()
+	{
+		LARGE_INTEGER currentTime;
+		QueryPerformanceCounter(&currentTime);
+		return double(currentTime.QuadPart - Timer.CounterStart) / Timer.countsPerSecond;
+	}
+	double GetFrameTime()
+	{
+		LARGE_INTEGER currentTime;
+		__int64 tickCount;
+		QueryPerformanceCounter(&currentTime);
+
+		tickCount = currentTime.QuadPart - Timer.frameTimeOld;
+		Timer.frameTimeOld = currentTime.QuadPart;
+
+		if (tickCount < 0.0f)
+			tickCount = 0.0f;
+
+		return float(tickCount) / Timer.countsPerSecond;
+	}
+}Timer;
+
+struct {
+	float rotx = 0;
+	float roty = 0;
+	float rotz = 0;
+	float scaleX = 1.0f;
+	float scaleY = 1.0f;
+	float scaleZ = 1.0f;
+	float moveLeftRight = 0.0f;
+	float moveBackForward = 0.0f;
+	float moveUpDown = 0.0f;
+	float camYaw = 0.0f;
+	float camPitch = 0.0f;
+	float camRoll = 0.0f;
+}Movment;
+
+struct PROP {
+	XMMATRIX ResultOBJ;
+	XMMATRIX Rotationx;
+	XMMATRIX Rotationy;
+	XMMATRIX Rotationz;
+	XMMATRIX Scale;
+	XMMATRIX Translation;
+	float red = 0.0f;
+	float green = 0.0f;
+	float blue = 0.0f;
+	int colormodr = 1;
+	int colormodg = 1;
+	int colormodb = 1;
+}Property;
+struct Light{
+		Light()
+		{
+			ZeroMemory(this, sizeof(Light));
+		}
+		XMFLOAT3 dir;
+		float pad1;
+		XMFLOAT3 pos;
+		float range;
+		XMFLOAT3 att;
+		float pad2;
+		XMFLOAT4 ambient;
+		XMFLOAT4 diffuse;
+};
+struct VertexCol
+{
+	VertexCol() {};
+	VertexCol(float x, float y, float z,
+		float r, float g, float b, float a) : pos(x, y, z), color(r, g, b, a) {
+	}
+
+	XMFLOAT3 pos;
+	XMFLOAT4 color;
+};
+struct VertexTex
+{
+	VertexTex() {};
+	VertexTex(float x, float y, float z,
+		float u, float v) : pos(x, y, z), texCoord(u, v) {
+	}
+
+	XMFLOAT3 pos;
+	XMFLOAT2 texCoord;
+};
+struct VertexNormal
+{
+	VertexNormal() {}
+	VertexNormal(float x, float y, float z,
+		float u, float v,
+		float nx, float ny, float nz)
+		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {
+	}
+
+	XMFLOAT3 pos;
+	XMFLOAT2 texCoord;
+	XMFLOAT3 normal;
+};
+
+struct {
+	struct cbPerObject
+	{
+		XMMATRIX  WVP;
+		XMMATRIX  World;
+	}cbPerObj;
+	struct cbPerFrame
+	{
+		Light  light;
+	}constbuffPerFrame;
+}Cbuffers;
+
+
 
 class D3DEX
 {
 private:
 	bool InitD2D_D3D101_DWrite(IDXGIAdapter1* Adapter) {
 
-		hr = D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_DEBUG | D3D10_CREATE_DEVICE_BGRA_SUPPORT,
+		Window.hr = D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_DEBUG | D3D10_CREATE_DEVICE_BGRA_SUPPORT,
 			D3D10_FEATURE_LEVEL_9_3, D3D10_1_SDK_VERSION, &d3d101Device);
 
 		D3D11_TEXTURE2D_DESC sharedTexDesc;
 
 		ZeroMemory(&sharedTexDesc, sizeof(sharedTexDesc));
 
-		sharedTexDesc.Width = Wight;
-		sharedTexDesc.Height = Heignt;
+		sharedTexDesc.Width = Window.Wight;
+		sharedTexDesc.Height = Window.Heignt;
 		sharedTexDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
 		sharedTexDesc.MipLevels = 1;
 		sharedTexDesc.ArraySize = 1;
@@ -24,27 +209,27 @@ private:
 		sharedTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
 		sharedTexDesc.MiscFlags = D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
 
-		hr = d3d11Device->CreateTexture2D(&sharedTexDesc, NULL, &sharedTex11);
+		d3d11Device->CreateTexture2D(&sharedTexDesc, NULL, &sharedTex11);
 
-		hr = sharedTex11->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&keyedMutex11);
+		sharedTex11->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&keyedMutex11);
 
 		IDXGIResource* sharedResource10;
 		HANDLE sharedHandle10;
 
-		hr = sharedTex11->QueryInterface(__uuidof(IDXGIResource), (void**)&sharedResource10);
+		sharedTex11->QueryInterface(__uuidof(IDXGIResource), (void**)&sharedResource10);
 
-		hr = sharedResource10->GetSharedHandle(&sharedHandle10);
+		sharedResource10->GetSharedHandle(&sharedHandle10);
 
 		sharedResource10->Release();
 
 		IDXGISurface1* sharedSurface10;
 
-		hr = d3d101Device->OpenSharedResource(sharedHandle10, __uuidof(IDXGISurface1), (void**)(&sharedSurface10));
+		d3d101Device->OpenSharedResource(sharedHandle10, __uuidof(IDXGISurface1), (void**)(&sharedSurface10));
 
-		hr = sharedSurface10->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&keyedMutex10);
+		sharedSurface10->QueryInterface(__uuidof(IDXGIKeyedMutex), (void**)&keyedMutex10);
 
 		ID2D1Factory* D2DFactory;
-		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), (void**)&D2DFactory);
+		D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, __uuidof(ID2D1Factory), (void**)&D2DFactory);
 
 		D2D1_RENDER_TARGET_PROPERTIES renderTargetProperties;
 
@@ -53,17 +238,16 @@ private:
 		renderTargetProperties.type = D2D1_RENDER_TARGET_TYPE_HARDWARE;
 		renderTargetProperties.pixelFormat = D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED);
 
-		hr = D2DFactory->CreateDxgiSurfaceRenderTarget(sharedSurface10, &renderTargetProperties, &D2DRenderTarget);
+		D2DFactory->CreateDxgiSurfaceRenderTarget(sharedSurface10, &renderTargetProperties, &D2DRenderTarget);
 
 		sharedSurface10->Release();
 		D2DFactory->Release();
 
-		hr = D2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 0.0f, 1.0f), &Brush);
+		D2DRenderTarget->CreateSolidColorBrush(D2D1::ColorF(1.0f, 1.0f, 0.0f, 1.0f), &Brush);
 
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory),
-			reinterpret_cast<IUnknown**>(&DWriteFactory));
+		DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&DWriteFactory));
 
-		hr = DWriteFactory->CreateTextFormat(
+		DWriteFactory->CreateTextFormat(
 			L"Algerian",
 			NULL,
 			DWRITE_FONT_WEIGHT_REGULAR,
@@ -74,8 +258,8 @@ private:
 			&TextFormat
 		);
 
-		hr = TextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
-		hr = TextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+		TextFormat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_LEADING);
+		TextFormat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
 
 		d3d101Device->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_POINTLIST);
 		return true;
@@ -85,8 +269,8 @@ private:
 		DXGI_MODE_DESC bufferDesc;
 		ZeroMemory(&bufferDesc, sizeof(DXGI_MODE_DESC));
 
-		bufferDesc.Width = Wight;
-		bufferDesc.Height = Heignt;
+		bufferDesc.Width = Window.Wight;
+		bufferDesc.Height = Window.Heignt;
 		bufferDesc.RefreshRate.Numerator = 60;
 		bufferDesc.RefreshRate.Denominator = 1;
 		bufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -102,7 +286,7 @@ private:
 		swapChainDesc.SampleDesc.Quality = 0;
 		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		swapChainDesc.BufferCount = 1;
-		swapChainDesc.OutputWindow = hWND;
+		swapChainDesc.OutputWindow = Window.hWND;
 		swapChainDesc.Windowed = TRUE;
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
@@ -185,30 +369,30 @@ private:
 
 		ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 		vertexBufferData.pSysMem = v;
-		hr = d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &d2dVertBuffer);
+		d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &d2dVertBuffer);
 
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 	}
 	bool InitDirectInput(HINSTANCE hInstance) {
-		hr = DirectInput8Create(hInstance,
+		DirectInput8Create(hInstance,
 			DIRECTINPUT_VERSION,
 			IID_IDirectInput8,
-			(void**)&DirectInput,
+			(void**)&ControlInput.DirectInput,
 			NULL);
 		
-		hr = DirectInput->CreateDevice(GUID_SysKeyboard,
+		ControlInput.DirectInput->CreateDevice(GUID_SysKeyboard,
 			&DIKeyboard,
 			NULL);
 
-		hr = DirectInput->CreateDevice(GUID_SysMouse,
+		ControlInput.DirectInput->CreateDevice(GUID_SysMouse,
 			&DIMouse,
 			NULL);
 
-		hr = DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
-		hr = DIKeyboard->SetCooperativeLevel(hWND, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+		DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+		DIKeyboard->SetCooperativeLevel(Window.hWND, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 
-		hr = DIMouse->SetDataFormat(&c_dfDIMouse);
-		hr = DIMouse->SetCooperativeLevel(hWND, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
+		DIMouse->SetDataFormat(&c_dfDIMouse);
+		DIMouse->SetCooperativeLevel(Window.hWND, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 
 		return true;
 	}
@@ -219,23 +403,23 @@ private:
 		ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
 
 		cbbd.Usage = D3D11_USAGE_DEFAULT;
-		cbbd.ByteWidth = sizeof(cbPerObject);
+		cbbd.ByteWidth = sizeof(Cbuffers.cbPerObj);
 		cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		cbbd.CPUAccessFlags = 0;
 		cbbd.MiscFlags = 0;
 
-		hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
+		d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
 
 
 		ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
 
 		cbbd.Usage = D3D11_USAGE_DEFAULT;
-		cbbd.ByteWidth = sizeof(cbPerFrame);
+		cbbd.ByteWidth = sizeof(Cbuffers.constbuffPerFrame);
 		cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 		cbbd.CPUAccessFlags = 0;
 		cbbd.MiscFlags = 0;
 
-		hr = d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerFrameBuffer);
+		d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerFrameBuffer);
 	}
 	void RenderText(std::wstring text, int inInt)
 	{
@@ -255,7 +439,7 @@ private:
 
 		Brush->SetColor(FontColor);
 
-		D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, Wight, Heignt);
+		D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, Window.Wight, Window.Heignt);
 
 		D2DRenderTarget->DrawText(
 			printText.c_str(),
@@ -275,10 +459,10 @@ private:
 
 		//d3d11DevCon->PSSetShader(D2D_PS, 0, 0);
 
-		WVP = XMMatrixIdentity();
-		cbPerObj.World = XMMatrixTranspose(WVP);
-		cbPerObj.WVP = XMMatrixTranspose(WVP);
-		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+		WorldPos.WVP = XMMatrixIdentity();
+		Cbuffers.cbPerObj.World = XMMatrixTranspose(WorldPos.WVP);
+		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
+		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
 		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 		d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
 		d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
@@ -289,7 +473,7 @@ private:
 	}
 	void InitImageTexture()
 	{
-		hr = D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
+		D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
 			NULL, NULL, &CubesTexture, NULL);
 
 		D3D11_SAMPLER_DESC sampDesc;
@@ -302,7 +486,7 @@ private:
 		sampDesc.MinLOD = 0;
 		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
-		hr = d3d11Device->CreateSamplerState(&sampDesc, &CubesTexSamplerState);
+		d3d11Device->CreateSamplerState(&sampDesc, &CubesTexSamplerState);
 	}
 	void InitRasterized()
 	{
@@ -311,15 +495,15 @@ private:
 		wfdesc.FillMode = D3D11_FILL_WIREFRAME;
 		wfdesc.CullMode = D3D11_CULL_NONE;
 		wfdesc.AntialiasedLineEnable = TRUE;
-		hr = d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
+		d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
 		d3d11DevCon->RSSetState(WireFrame);
 	}
 	void InitShaders()
 	{
 
-		hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
-		hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
-		hr = D3DX11CompileFromFileA("Effect.fx", 0, 0, "D2D_PS", "ps_5_0", 0, 0, 0, &D2D_PS_Buffer, 0, 0);
+		D3DX11CompileFromFileA("Effect.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
+		D3DX11CompileFromFileA("Effect.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
+		D3DX11CompileFromFileA("Effect.fx", 0, 0, "D2D_PS", "ps_5_0", 0, 0, 0, &D2D_PS_Buffer, 0, 0);
 
 		d3d11Device->CreateVertexShader(VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), NULL, &VS);
 		d3d11Device->CreatePixelShader(PS_Buffer->GetBufferPointer(), PS_Buffer->GetBufferSize(), NULL, &PS);
@@ -427,7 +611,7 @@ private:
 		ZeroMemory(&vertexBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 		vertexBufferData.pSysMem = v;
 
-		hr = d3d11Device->CreateBuffer(&vertexBufferDecs, &vertexBufferData, &SquareVertexBuffer);
+		d3d11Device->CreateBuffer(&vertexBufferDecs, &vertexBufferData, &SquareVertexBuffer);
 
 
 		UINT stride = sizeof(VertexNormal);
@@ -501,7 +685,7 @@ private:
 		ZeroMemory(&indexBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 		indexBufferData.pSysMem = indices;
 
-		hr = d3d11Device->CreateBuffer(&indexBufferDecs, &indexBufferData, &SquareIndexBuffer);
+		d3d11Device->CreateBuffer(&indexBufferDecs, &indexBufferData, &SquareIndexBuffer);
 		d3d11DevCon->IASetIndexBuffer(SquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	}
 	void InitLayoutModel()
@@ -514,7 +698,7 @@ private:
 		};
 
 		UINT numElement = ARRAYSIZE(layout);
-		hr = d3d11Device->CreateInputLayout(layout, numElement, VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), &VertLayout);
+		d3d11Device->CreateInputLayout(layout, numElement, VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), &VertLayout);
 		d3d11DevCon->IASetInputLayout(VertLayout);
 	}
 	void InitViewPort()
@@ -523,8 +707,8 @@ private:
 		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
 		viewport.TopLeftX = 0;
 		viewport.TopLeftY = 0;
-		viewport.Width = Wight;
-		viewport.Height = Heignt;
+		viewport.Width = Window.Wight;
+		viewport.Height = Window.Heignt;
 		//new_
 		viewport.MaxDepth = 1.0f;
 		viewport.MinDepth = 0.0f;
@@ -536,8 +720,8 @@ private:
 	{
 		D3D11_TEXTURE2D_DESC depthStencilDesc;
 		ZeroMemory(&depthStencilDesc, sizeof(D3D11_TEXTURE2D_DESC));
-		depthStencilDesc.Width = Wight;
-		depthStencilDesc.Height = Heignt;
+		depthStencilDesc.Width = Window.Wight;
+		depthStencilDesc.Height = Window.Heignt;
 		depthStencilDesc.MipLevels = 1;
 		depthStencilDesc.ArraySize = 1;
 		depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -553,13 +737,13 @@ private:
 	}
 	void InitCamera()
 	{
-		camPosition = XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f);
-		camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		Camera.camPosition = XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f);
+		Camera.camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		Camera.camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-		camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+		Camera.camView = XMMatrixLookAtLH(Camera.camPosition, Camera.camTarget, Camera.camUp);
 
-		camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, 1600./1400., 1.0f, 1000.0f);
+		Camera.camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, 1600./1400., 1.0f, 1000.0f);
 	}
 	void InitModBlending()
 	{
@@ -570,10 +754,10 @@ private:
 		cmdesc.CullMode = D3D11_CULL_BACK;
 
 		cmdesc.FrontCounterClockwise = true;
-		hr = d3d11Device->CreateRasterizerState(&cmdesc, &CCWcullMode);
+		d3d11Device->CreateRasterizerState(&cmdesc, &CCWcullMode);
 
 		cmdesc.FrontCounterClockwise = false;
-		hr = d3d11Device->CreateRasterizerState(&cmdesc, &CWcullMode);
+		d3d11Device->CreateRasterizerState(&cmdesc, &CWcullMode);
 
 
 		D3D11_RASTERIZER_DESC rastDesc;
@@ -608,36 +792,39 @@ private:
 	}
 	void InitSunLight()
 	{
-		light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-		light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		Light Light;
+		Light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		Light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		constbuffPerFrame.light = light;
-		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &constbuffPerFrame, 0, 0);
+		Cbuffers.constbuffPerFrame.light = Light;
+		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.constbuffPerFrame, 0, 0);
 		d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
 	}
 	void InitPointLight()
 	{
-		light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
-		light.range = 100.0f;
-		light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
-		light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		Light Light;
+		Light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
+		Light.range = 100.0f;
+		Light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
+		Light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		constbuffPerFrame.light = light;
-		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &constbuffPerFrame, 0, 0);
+		Cbuffers.constbuffPerFrame.light = Light;
+		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.constbuffPerFrame, 0, 0);
 		d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
 	}
 private:
 	void UpdateLight()
 	{
+		Light Light;
 		XMVECTOR lightVector = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
-		lightVector = XMVector3TransformCoord(lightVector, cubeWorld);
+		lightVector = XMVector3TransformCoord(lightVector, Property.ResultOBJ);
 
-		light.pos.x = XMVectorGetX(lightVector);
-		light.pos.y = XMVectorGetY(lightVector);
-		light.pos.z = XMVectorGetZ(lightVector);
+		Light.pos.x = XMVectorGetX(lightVector);
+		Light.pos.y = XMVectorGetY(lightVector);
+		Light.pos.z = XMVectorGetZ(lightVector);
 	}
 	void UpdateBlend()
 	{
@@ -647,16 +834,16 @@ private:
 	}
 	void UpdateViewObj(XMMATRIX cubeWorld)
 	{
-		camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
-		camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		Camera.camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
+		Camera.camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		Camera.camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-		World = XMMatrixIdentity();
+		WorldPos.World = XMMatrixIdentity();
 
-		WVP = cubeWorld * camView * camProjection;
-		cbPerObj.World = XMMatrixTranspose(cubeWorld);
-		cbPerObj.WVP = XMMatrixTranspose(WVP);
-		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &cbPerObj, 0, 0);
+		WorldPos.WVP = cubeWorld * Camera.camView * Camera.camProjection;
+		Cbuffers.cbPerObj.World = XMMatrixTranspose(cubeWorld);
+		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
+		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
 		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 
 		d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
@@ -671,64 +858,64 @@ private:
 	}
 	void UpdateCamera()
 	{
-		camRotationMatrix = XMMatrixRotationRollPitchYaw(camPitch, camYaw, 0);
-		camTarget = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
-		camTarget = XMVector3Normalize(camTarget);
+		Camera.camRotationMatrix = XMMatrixRotationRollPitchYaw(Movment.camPitch, Movment.camYaw, 0);
+		Camera.camTarget = XMVector3TransformCoord(Camera.DefaultForward, Camera.camRotationMatrix);
+		Camera.camTarget = XMVector3Normalize(Camera.camTarget);
 
 		/*XMMATRIX RotateYTempMatrix;
 		RotateYTempMatrix = XMMatrixRotationY(camYaw);*/
 
-		camRight = XMVector3TransformCoord(DefaultRight, camRotationMatrix);
-		camUp = XMVector3TransformCoord(camUp, camRotationMatrix);
-		camForward = XMVector3TransformCoord(DefaultForward, camRotationMatrix);
+		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, Camera.camRotationMatrix);
+		Camera.camUp = XMVector3TransformCoord(Camera.camUp, Camera.camRotationMatrix);
+		Camera.camForward = XMVector3TransformCoord(Camera.DefaultForward, Camera.camRotationMatrix);
 
-		camPosition += moveLeftRight * camRight;
-		camPosition += moveBackForward * camForward;
+		Camera.camPosition += Movment.moveLeftRight * Camera.camRight;
+		Camera.camPosition += Movment.moveBackForward * Camera.camForward;
 
-		camTarget = camPosition + camTarget;
+		Camera.camTarget = Camera.camPosition + Camera.camTarget;
 
-		camView = XMMatrixLookAtLH(camPosition, camTarget, camUp);
+		Camera.camView = XMMatrixLookAtLH(Camera.camPosition, Camera.camTarget, Camera.camUp);
 	}
 	void DetectInput(double time) {
 
-		DIMOUSESTATE mouseCurrState;
+		DIMOUSESTATE mouseState;
 
-		BYTE keyboardState[256];
+		BYTE KeyState[256];
 
 		DIKeyboard->Acquire();
 		DIMouse->Acquire();
 
-		DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseCurrState);
+		DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouseState);
 
-		DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
+		DIKeyboard->GetDeviceState(sizeof(KeyState), (LPVOID)&KeyState);
 
-		if (keyboardState[DIK_ESCAPE] & 0x80)
-			PostMessage(hWND, WM_DESTROY, 0, 0);
+		if (KeyState[DIK_ESCAPE] & 0x80)
+			PostMessage(Window.hWND, WM_DESTROY, 0, 0);
 
 		float speed = 15.0f * time;
 		
-		if (keyboardState[DIK_A] & 0x80)
+		if (KeyState[DIK_A] & 0x80)
 		{
-			moveLeftRight -= speed;
+			Movment.moveLeftRight -= speed;
 		}
-		if (keyboardState[DIK_D] & 0x80)
+		if (KeyState[DIK_D] & 0x80)
 		{
-			moveLeftRight += speed;
+			Movment.moveLeftRight += speed;
 		}
-		if (keyboardState[DIK_W] & 0x80)
+		if (KeyState[DIK_W] & 0x80)
 		{
-			moveBackForward += speed;
+			Movment.moveBackForward += speed;
 		}
-		if (keyboardState[DIK_S] & 0x80)
+		if (KeyState[DIK_S] & 0x80)
 		{
-			moveBackForward -= speed;
+			Movment.moveBackForward -= speed;
 		}
-		if ((mouseCurrState.lX != mouseLastState.lX) || (mouseCurrState.lY != mouseLastState.lY))
+		if ((mouseState.lX != ControlInput.mouseLastState.lX) || (mouseState.lY != ControlInput.mouseLastState.lY))
 		{
-			camYaw += mouseLastState.lX * 0.001f;
-			camPitch += mouseCurrState.lY * 0.001f;
+			Movment.camYaw += ControlInput.mouseLastState.lX * 0.001f;
+			Movment.camPitch += mouseState.lY * 0.001f;
 
-			mouseLastState = mouseCurrState;
+			ControlInput.mouseLastState = mouseState;
 		}
 
 	};
@@ -775,15 +962,15 @@ public:
 			InitShaders();
 		}
 
-		D3DXCOLOR bgColor(red, green, blue, 0.0f);
+		D3DXCOLOR bgColor(Property.red, Property.green, Property.blue, 0.0f);
 		d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 		d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 
 		UpdateBlend();
 
-		UpdateViewObj(cubeWorld);
+		UpdateViewObj(Property.ResultOBJ);
 
-		RenderText(L"   FPS: ", fps);
+		RenderText(L"   FPS: ", Timer.fps);
 
 		SwapChain->Present(0, 0);
 	}
@@ -794,29 +981,24 @@ public:
 		UpdateCamera();
 		UpdateLight();
 
-		//Keep the cubes rotating
-		rot += 2.0f * time;
-		if (rot > 6.28f)
-			rot = 0.0f;
-
 		//Reset cube1World
-		cubeWorld = XMMatrixIdentity();
+		Property.ResultOBJ = XMMatrixIdentity();
 
 		//Define cube1's world space matrix
 		XMVECTOR rotaxis = XMVectorSet(1.f, 0.0f, 0.0f, 0.0f);
 		XMVECTOR rotayis = XMVectorSet(0.0f, 1.f, 0.0f, 0.0f);
 		XMVECTOR rotazis = XMVectorSet(0.0f, 0.0f, 1.f, 0.0f);
 
-		Rotationx = XMMatrixRotationAxis(rotaxis, 0);
-		Rotationy = XMMatrixRotationAxis(rotayis, 0);
-		Rotationz = XMMatrixRotationAxis(rotayis, 0);
+		Property.Rotationx = XMMatrixRotationAxis(rotaxis, 0);
+		Property.Rotationy = XMMatrixRotationAxis(rotayis, 0);
+		Property.Rotationz = XMMatrixRotationAxis(rotayis, 0);
 
-		Translation = XMMatrixTranslation(0, -2, 0);
+		Property.Translation = XMMatrixTranslation(0, -2, 0);
 
+		
+		Property.Scale = XMMatrixScaling(20.f, 1.f, 20.f);
 
-		Scale = XMMatrixScaling(20.f, 1.f, 20.f);
-
-		cubeWorld = Translation * Scale;
+		Property.ResultOBJ = Property.Translation * Property.Scale;
 	}
 
 
@@ -825,7 +1007,7 @@ public:
 
 	void CleanAPP() {
 		SwapChain->SetFullscreenState(false, NULL);
-		PostMessage(hWND, WM_DESTROY, 0, 0);
+		PostMessage(Window.hWND, WM_DESTROY, 0, 0);
 		SwapChain->Release();
 		d3d11Device->Release();
 		d3d11DevCon->Release();
@@ -862,7 +1044,7 @@ public:
 
 		DIKeyboard->Unacquire();
 		DIMouse->Unacquire();
-		DirectInput->Release();
+		ControlInput.DirectInput->Release();
 	};
 		
 private:
@@ -906,6 +1088,4 @@ private:
 
 	IDirectInputDevice8* DIKeyboard;
 	IDirectInputDevice8* DIMouse;
-	DIMOUSESTATE mouseLastState;
-	LPDIRECTINPUT8 DirectInput;
 };
