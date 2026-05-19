@@ -893,7 +893,7 @@ private:
 			PostMessage(Window.hWND, WM_DESTROY, 0, 0);
 
 		float speed = 15.0f * time;
-		
+		int f = 1;
 		if (KeyState[DIK_A] & 0x80)
 		{
 			Movment.moveLeftRight -= speed;
