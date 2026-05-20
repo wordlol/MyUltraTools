@@ -161,10 +161,6 @@
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
     </FxCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="DirectEngine.h" />
-    <ClInclude Include="WindowAPP.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

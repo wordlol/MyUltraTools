@@ -24,12 +24,4 @@
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="DirectEngine.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WindowAPP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-  </ItemGroup>
 </Project>
