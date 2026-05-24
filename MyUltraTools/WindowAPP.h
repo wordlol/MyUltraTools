@@ -10,8 +10,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	case WM_KEYDOWN:
 		if (wparam == VK_ESCAPE)
 		{
-			if (MessageBox(0, "Are you sure you want to exit?",
-				"Really?", MB_YESNO | MB_ICONQUESTION) == IDYES)
 				DestroyWindow(hwnd);
 		}
 		return 0;
@@ -94,8 +92,7 @@ int MassegeLoop(D3DEX D3DEX_) {
 
 			Timer.frameTime = Timer.GetFrameTime();
 
-			D3DEX_.UpdateGraphic();
-			D3DEX_.UpdateScene(Timer.frameTime);
+			D3DEX_.UpdateDX(Timer.frameTime);
 		}
 	}
 	return (int)msg.wParam;

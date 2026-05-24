@@ -37,18 +37,24 @@ struct {
 struct {
 	XMMATRIX camView;
 	XMMATRIX camProjection;
+	XMVECTOR camStartPos;
+	XMVECTOR camStartTarget;
+
 	XMVECTOR camPosition;
 	XMVECTOR camTarget;
-
+	XMVECTOR camUp;
 	XMVECTOR DefaultForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	XMVECTOR DefaultUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	XMVECTOR DefaultRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-
 	XMVECTOR camForward = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	XMVECTOR camRight = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	XMVECTOR camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
 	XMMATRIX camRotationMatrix;
+
+	float moveLeftRight = 0.0f;
+	float moveBackForward = 0.0f;
+	float moveUp = 0.0f;
+
+	float camYaw = 0.0f;
+	float camPitch = 0.0f;
 }Camera;
 
 struct {
@@ -111,7 +117,7 @@ struct {
 	float camRoll = 0.0f;
 }Movment;
 
-struct PROP {
+struct  {
 	XMMATRIX ResultOBJ;
 	XMMATRIX Rotationx;
 	XMMATRIX Rotationy;
@@ -125,6 +131,7 @@ struct PROP {
 	int colormodg = 1;
 	int colormodb = 1;
 }Property;
+
 struct Light{
 		Light()
 		{
@@ -184,8 +191,6 @@ struct {
 		Light  light;
 	}constbuffPerFrame;
 }Cbuffers;
-
-
 
 class D3DEX
 {
@@ -308,14 +313,6 @@ private:
 		InitD2D_D3D101_DWrite(Adapter);
 
 		Adapter->Release();
-
-		//hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, NULL, NULL, NULL,
-		//	D3D11_SDK_VERSION, &swapChainDesc, &SwapChain, &d3d11Device, NULL, &d3d11DevCon);
-
-		/*ID3D11Texture2D* BackBuffer;
-		hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&BackBuffer);
-		hr = d3d11Device->CreateRenderTargetView(BackBuffer, NULL, &renderTargetView);
-		BackBuffer->Release();*/
 
 		hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&BackBuffer11);
 		hr = d3d11Device->CreateRenderTargetView(BackBuffer11, NULL, &renderTargetView);
@@ -737,12 +734,10 @@ private:
 	}
 	void InitCamera()
 	{
-		Camera.camPosition = XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f);
-		Camera.camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		Camera.camStartPos = XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f);
+		Camera.camStartTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		Camera.camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-		Camera.camView = XMMatrixLookAtLH(Camera.camPosition, Camera.camTarget, Camera.camUp);
-
+		Camera.camView = XMMatrixLookAtLH(Camera.camStartPos, Camera.camStartTarget, Camera.camUp);
 		Camera.camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, 1600./1400., 1.0f, 1000.0f);
 	}
 	void InitModBlending()
@@ -834,8 +829,8 @@ private:
 	}
 	void UpdateViewObj(XMMATRIX cubeWorld)
 	{
-		Camera.camPosition = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
-		Camera.camTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		Camera.camStartPos = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
+		Camera.camStartTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		Camera.camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 		WorldPos.World = XMMatrixIdentity();
@@ -858,21 +853,37 @@ private:
 	}
 	void UpdateCamera()
 	{
-		Camera.camRotationMatrix = XMMatrixRotationRollPitchYaw(Movment.camPitch, Movment.camYaw, 0);
+		Camera.camRotationMatrix = XMMatrixRotationRollPitchYaw(Camera.camPitch, Camera.camYaw, 0.0f);
 		Camera.camTarget = XMVector3TransformCoord(Camera.DefaultForward, Camera.camRotationMatrix);
 		Camera.camTarget = XMVector3Normalize(Camera.camTarget);
 
-		/*XMMATRIX RotateYTempMatrix;
-		RotateYTempMatrix = XMMatrixRotationY(camYaw);*/
+		XMMATRIX RotateYTempMatrix;
+		RotateYTempMatrix = XMMatrixRotationY(Camera.camYaw);
 
-		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, Camera.camRotationMatrix);
+
+		//режим полета
+		if (true)
+		{
 		Camera.camUp = XMVector3TransformCoord(Camera.camUp, Camera.camRotationMatrix);
+		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, Camera.camRotationMatrix);
 		Camera.camForward = XMVector3TransformCoord(Camera.DefaultForward, Camera.camRotationMatrix);
+		Camera.camPosition += Camera.moveUp * Camera.camUp;
+		Camera.moveUp = 0.0f;
+		}
+		else
+		{
+		Camera.camUp = XMVector3TransformCoord(Camera.camUp, RotateYTempMatrix);
+		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, RotateYTempMatrix);
+		Camera.camForward = XMVector3TransformCoord(Camera.DefaultForward, RotateYTempMatrix);
+		}
 
-		Camera.camPosition += Movment.moveLeftRight * Camera.camRight;
-		Camera.camPosition += Movment.moveBackForward * Camera.camForward;
+		Camera.camPosition += Camera.moveLeftRight * Camera.camRight;
+		Camera.camPosition += Camera.moveBackForward * Camera.camForward;
 
-		Camera.camTarget = Camera.camPosition + Camera.camTarget;
+		Camera.moveLeftRight = 0.0f;
+		Camera.moveBackForward = 0.0f;
+
+		Camera.camTarget += Camera.camPosition;
 
 		Camera.camView = XMMatrixLookAtLH(Camera.camPosition, Camera.camTarget, Camera.camUp);
 	}
@@ -893,27 +904,36 @@ private:
 			PostMessage(Window.hWND, WM_DESTROY, 0, 0);
 
 		float speed = 15.0f * time;
-		int f = 1;
+
 		if (KeyState[DIK_A] & 0x80)
 		{
-			Movment.moveLeftRight -= speed;
+			Camera.moveLeftRight -= speed;
 		}
 		if (KeyState[DIK_D] & 0x80)
 		{
-			Movment.moveLeftRight += speed;
+			Camera.moveLeftRight += speed;
 		}
 		if (KeyState[DIK_W] & 0x80)
 		{
-			Movment.moveBackForward += speed;
+			Camera.moveBackForward += speed;
 		}
 		if (KeyState[DIK_S] & 0x80)
 		{
-			Movment.moveBackForward -= speed;
+			Camera.moveBackForward -= speed;
 		}
+		if (KeyState[DIK_SPACE] & 0x80)
+		{
+			Camera.moveUp += speed;
+		}
+		if (KeyState[DIK_LCONTROL] & 0x80)
+		{
+			Camera.moveUp -= speed;
+		}
+
 		if ((mouseState.lX != ControlInput.mouseLastState.lX) || (mouseState.lY != ControlInput.mouseLastState.lY))
 		{
-			Movment.camYaw += ControlInput.mouseLastState.lX * 0.001f;
-			Movment.camPitch += mouseState.lY * 0.001f;
+			Camera.camYaw += ControlInput.mouseLastState.lX * 0.001f;
+			Camera.camPitch += mouseState.lY * 0.001f;
 
 			ControlInput.mouseLastState = mouseState;
 		}
@@ -927,10 +947,6 @@ public:
 		GetHR = InitializeDirect3dApp(hInstance);
 		InitD2DScreenTexture();
 		InitDirectInput(hInstance);
-	};
-	
-	bool CreateScene()
-	{
 		InitConstBuffer();
 		InitShaders();
 		InitVertexBuffer();
@@ -945,18 +961,32 @@ public:
 		InitLayoutModel();
 		d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 		InitViewPort();
-		return 1;
-	}
+	};
+	
 
-	void AddObj(){};
-	void ResetObj(){};
-	void ClearObj(){};
-
-
-
-
-	void UpdateGraphic()
+	void UpdateDX(double time)
 	{
+		DetectInput(time);
+		UpdateCamera();
+		UpdateLight();
+
+		Property.ResultOBJ = XMMatrixIdentity();
+
+		XMVECTOR rotaxis = XMVectorSet(1.f, 0.0f, 0.0f, 0.0f);
+		XMVECTOR rotayis = XMVectorSet(0.0f, 1.f, 0.0f, 0.0f);
+		XMVECTOR rotazis = XMVectorSet(0.0f, 0.0f, 1.f, 0.0f);
+
+		Property.Rotationx = XMMatrixRotationAxis(rotaxis, 0);
+		Property.Rotationy = XMMatrixRotationAxis(rotayis, 0);
+		Property.Rotationz = XMMatrixRotationAxis(rotayis, 0);
+
+		Property.Translation = XMMatrixTranslation(0, -2, 0);
+
+		Property.Scale = XMMatrixScaling(20.f, 1.f, 20.f);
+
+		Property.ResultOBJ = Property.Translation * Property.Scale;
+
+
 		if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
 		{
 			InitShaders();
@@ -973,37 +1003,10 @@ public:
 		RenderText(L"   FPS: ", Timer.fps);
 
 		SwapChain->Present(0, 0);
-	}
-
-	void UpdateScene(double time)
-	{
-		DetectInput(time);
-		UpdateCamera();
-		UpdateLight();
-
-		//Reset cube1World
-		Property.ResultOBJ = XMMatrixIdentity();
-
-		//Define cube1's world space matrix
-		XMVECTOR rotaxis = XMVectorSet(1.f, 0.0f, 0.0f, 0.0f);
-		XMVECTOR rotayis = XMVectorSet(0.0f, 1.f, 0.0f, 0.0f);
-		XMVECTOR rotazis = XMVectorSet(0.0f, 0.0f, 1.f, 0.0f);
-
-		Property.Rotationx = XMMatrixRotationAxis(rotaxis, 0);
-		Property.Rotationy = XMMatrixRotationAxis(rotayis, 0);
-		Property.Rotationz = XMMatrixRotationAxis(rotayis, 0);
-
-		Property.Translation = XMMatrixTranslation(0, -2, 0);
-
-		
-		Property.Scale = XMMatrixScaling(20.f, 1.f, 20.f);
-
-		Property.ResultOBJ = Property.Translation * Property.Scale;
-	}
 
 
 
-
+	};
 
 	void CleanAPP() {
 		SwapChain->SetFullscreenState(false, NULL);
