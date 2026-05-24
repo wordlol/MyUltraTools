@@ -19,8 +19,10 @@ cbuffer cbPerFrame
     Light light;
 };
 
+
 Texture2D ObjTexture;
 SamplerState ObjSamplerState;
+TextureCube SkyMap;
 
 struct VS_OUTPUT
 {
@@ -30,6 +32,12 @@ struct VS_OUTPUT
     float3 normal : NORMAL;
 };
 
+struct SKYMAP_VS_OUTPUT
+{
+    float4 Pos : SV_POSITION;
+    float3 texCoord : TEXCOORD;
+};
+
 VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL)
 {
     VS_OUTPUT output;
@@ -37,6 +45,17 @@ VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 norma
     output.normal = mul(normal, World);
     output.worldPos = mul(inPos, World);
     output.TexCoord = inTexCoord;
+
+    return output;
+}
+
+SKYMAP_VS_OUTPUT SKYMAP_VS(float3 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL)
+{
+    SKYMAP_VS_OUTPUT output = (SKYMAP_VS_OUTPUT) 0;
+
+    output.Pos = mul(float4(inPos, 1.0f), WVP).xyww;
+
+    output.texCoord = inPos;
 
     return output;
 }
@@ -76,14 +95,7 @@ VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 norma
 //    return float4(finalColor, diffuse.a);
 //}
 
-float4 D2D_PS(VS_OUTPUT input) : SV_TARGET
-{
-    input.normal = normalize(input.normal);
 
-    float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-
-    return diffuse;
-}
 
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
@@ -96,6 +108,20 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     finalColor = diffuse * light.ambient;
     finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);
     return float4(finalColor, diffuse.a);
+}
+
+float4 SKYMAP_PS(SKYMAP_VS_OUTPUT input) : SV_Target
+{
+    return SkyMap.Sample(ObjSamplerState, input.texCoord);
+}
+
+float4 D2D_PS(VS_OUTPUT input) : SV_TARGET
+{
+    input.normal = normalize(input.normal);
+
+    float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
+
+    return diffuse;
 }
 
 //float4 PS(VS_OUTPUT input) : SV_TARGET

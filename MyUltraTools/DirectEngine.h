@@ -20,6 +20,7 @@
 #include <sstream>
 #include <dwrite.h>
 #include <dinput.h>
+#include <vector>
 
 struct {
 	HWND hWND = NULL;
@@ -192,9 +193,14 @@ struct {
 	}constbuffPerFrame;
 }Cbuffers;
 
+int NumSphereVertices;
+int NumSphereFaces;
+XMMATRIX sphereWorld;
+
+
 class D3DEX
 {
-private:
+private: //системы
 	bool InitD2D_D3D101_DWrite(IDXGIAdapter1* Adapter) {
 
 		Window.hr = D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_DEBUG | D3D10_CREATE_DEVICE_BGRA_SUPPORT,
@@ -393,7 +399,7 @@ private:
 
 		return true;
 	}
-private:
+private: //создание
 	void InitConstBuffer()
 	{
 		D3D11_BUFFER_DESC cbbd;
@@ -418,56 +424,6 @@ private:
 
 		d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerFrameBuffer);
 	}
-	void RenderText(std::wstring text, int inInt)
-	{
-		keyedMutex11->ReleaseSync(0);
-
-		keyedMutex10->AcquireSync(0, 5);
-
-		D2DRenderTarget->BeginDraw();
-
-		D2DRenderTarget->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
-
-		std::wostringstream printString;
-		printString << text << inInt;
-		printText = printString.str();
-
-		D2D1_COLOR_F FontColor = D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f);
-
-		Brush->SetColor(FontColor);
-
-		D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, Window.Wight, Window.Heignt);
-
-		D2DRenderTarget->DrawText(
-			printText.c_str(),
-			wcslen(printText.c_str()),
-			TextFormat,
-			layoutRect,
-			Brush
-		);
-
-		D2DRenderTarget->EndDraw();
-
-		keyedMutex10->ReleaseSync(1);
-
-		keyedMutex11->AcquireSync(1, 5);
-
-		d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
-
-		//d3d11DevCon->PSSetShader(D2D_PS, 0, 0);
-
-		WorldPos.WVP = XMMatrixIdentity();
-		Cbuffers.cbPerObj.World = XMMatrixTranspose(WorldPos.WVP);
-		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
-		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
-		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-		d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
-		d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
-
-		d3d11DevCon->RSSetState(CWcullMode);
-
-		d3d11DevCon->DrawIndexed(6, 0, 0);
-	}
 	void InitImageTexture()
 	{
 		D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
@@ -489,11 +445,21 @@ private:
 	{
 		D3D11_RASTERIZER_DESC wfdesc;
 		ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
-		wfdesc.FillMode = D3D11_FILL_WIREFRAME;
+		wfdesc.FillMode = D3D11_FILL_SOLID;
 		wfdesc.CullMode = D3D11_CULL_NONE;
 		wfdesc.AntialiasedLineEnable = TRUE;
 		d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
 		d3d11DevCon->RSSetState(WireFrame);
+
+
+		wfdesc.CullMode = D3D11_CULL_NONE;
+		d3d11Device->CreateRasterizerState(&wfdesc, &RSCullNone);
+		D3D11_DEPTH_STENCIL_DESC dssDesc;
+		ZeroMemory(&dssDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+		dssDesc.DepthEnable = true;
+		dssDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+		dssDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+		d3d11Device->CreateDepthStencilState(&dssDesc, &DSLessEqual);
 	}
 	void InitShaders()
 	{
@@ -502,61 +468,22 @@ private:
 		D3DX11CompileFromFileA("Effect.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
 		D3DX11CompileFromFileA("Effect.fx", 0, 0, "D2D_PS", "ps_5_0", 0, 0, 0, &D2D_PS_Buffer, 0, 0);
 
+		D3DX11CompileFromFileA("Effect.fx", 0, 0, "SKYMAP_VS", "vs_5_0", 0, 0, 0, &SKYMAP_VS_Buffer, 0, 0);
+		D3DX11CompileFromFileA("Effect.fx", 0, 0, "SKYMAP_PS", "ps_5_0", 0, 0, 0, &SKYMAP_PS_Buffer, 0, 0);
+
+
 		d3d11Device->CreateVertexShader(VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), NULL, &VS);
 		d3d11Device->CreatePixelShader(PS_Buffer->GetBufferPointer(), PS_Buffer->GetBufferSize(), NULL, &PS);
 		d3d11Device->CreatePixelShader(D2D_PS_Buffer->GetBufferPointer(), D2D_PS_Buffer->GetBufferSize(), NULL, &D2D_PS);
+
+		d3d11Device->CreateVertexShader(SKYMAP_VS_Buffer->GetBufferPointer(), SKYMAP_VS_Buffer->GetBufferSize(), NULL, &SKYMAP_VS);
+		d3d11Device->CreatePixelShader(SKYMAP_PS_Buffer->GetBufferPointer(), SKYMAP_PS_Buffer->GetBufferSize(), NULL, &SKYMAP_PS);
 
 		d3d11DevCon->VSSetShader(VS, 0, 0);
 		d3d11DevCon->PSSetShader(PS, 0, 0);
 	}
 	void InitVertexBuffer()
 	{
-		/*VertexCol v[] =
-		{
-			VertexCol(-1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-			VertexCol(-1.0f, +1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f),
-			VertexCol(+1.0f, +1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f),
-			VertexCol(+1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 1.0f),
-			VertexCol(-1.0f, -1.0f, +1.0f, 0.0f, 1.0f, 1.0f, 1.0f),
-			VertexCol(-1.0f, +1.0f, +1.0f, 1.0f, 1.0f, 1.0f, 1.0f),
-			VertexCol(+1.0f, +1.0f, +1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
-			VertexCol(+1.0f, -1.0f, +1.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-		};*/
-
-		//VertexTex v[] =
-		//{
-		//	// Front Face
-		//	VertexTex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		//	VertexTex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
-		//	VertexTex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
-		//	VertexTex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
-		//	// Back Face
-		//	VertexTex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f),
-		//	VertexTex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f),
-		//	VertexTex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f),
-		//	VertexTex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f),
-		//	// Top Face
-		//	VertexTex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f),
-		//	VertexTex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f),
-		//	VertexTex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f),
-		//	VertexTex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f),
-		//	// Bottom Face
-		//	VertexTex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
-		//	VertexTex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		//	VertexTex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f),
-		//	VertexTex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f),
-		//	// Left Face
-		//	VertexTex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f),
-		//	VertexTex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f),
-		//	VertexTex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f),
-		//	VertexTex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f),
-		//	// Right Face
-		//	VertexTex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f),
-		//	VertexTex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f),
-		//	VertexTex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f),
-		//	VertexTex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f),
-		//};
-
 		VertexNormal v[] =
 		{
 			// Front Face
@@ -617,33 +544,6 @@ private:
 	}
 	void InitIndexBuffer()
 	{
-
-		//DWORD indices[] = {
-		//	// front face
-		//	0, 1, 2,
-		//	0, 2, 3,
-
-		//	// back face
-		//	4, 6, 5,
-		//	4, 7, 6,
-
-		//	// left face
-		//	4, 5, 1,
-		//	4, 1, 0,
-
-		//	// right face
-		//	3, 2, 6,
-		//	3, 6, 7,
-
-		//	// top face
-		//	1, 5, 6,
-		//	1, 6, 2,
-
-		//	// bottom face
-		//	4, 0, 3,
-		//	4, 3, 7
-		//};
-
 		DWORD indices[] = {
 			// Front Face
 			0,  1,  2,
@@ -809,7 +709,206 @@ private:
 		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.constbuffPerFrame, 0, 0);
 		d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
 	}
-private:
+	void InitShapeSphere(int LatLines, int LongLines)
+	{
+		NumSphereVertices = ((LatLines - 2) * LongLines) + 2;
+		NumSphereFaces = ((LatLines - 3) * (LongLines) * 2) + (LongLines * 2);
+
+		float sphereYaw = 0.0f;
+		float spherePitch = 0.0f;
+
+		std::vector<VertexNormal> vertices(NumSphereVertices);
+
+		XMVECTOR currVertPos = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+
+		vertices[0].pos.x = 0.0f;
+		vertices[0].pos.y = 0.0f;
+		vertices[0].pos.z = 1.0f;
+
+		for (DWORD i = 0; i < LatLines - 2; ++i)
+		{
+			spherePitch = (i + 1) * (3.14 / (LatLines - 1));
+			auto Rotationx = XMMatrixRotationX(spherePitch);
+			for (DWORD j = 0; j < LongLines; ++j)
+			{
+				sphereYaw = j * (6.28 / (LongLines));
+				auto Rotationy = XMMatrixRotationZ(sphereYaw);
+				currVertPos = XMVector3TransformNormal(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), (Rotationx * Rotationy));
+				currVertPos = XMVector3Normalize(currVertPos);
+				vertices[i * LongLines + j + 1].pos.x = XMVectorGetX(currVertPos);
+				vertices[i * LongLines + j + 1].pos.y = XMVectorGetY(currVertPos);
+				vertices[i * LongLines + j + 1].pos.z = XMVectorGetZ(currVertPos);
+			}
+		}
+
+		vertices[NumSphereVertices - 1].pos.x = 0.0f;
+		vertices[NumSphereVertices - 1].pos.y = 0.0f;
+		vertices[NumSphereVertices - 1].pos.z = -1.0f;
+
+
+		D3D11_BUFFER_DESC vertexBufferDesc;
+		ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+
+		vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		vertexBufferDesc.ByteWidth = sizeof(VertexNormal) * NumSphereVertices;
+		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		vertexBufferDesc.CPUAccessFlags = 0;
+		vertexBufferDesc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA vertexBufferData;
+
+		ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+		vertexBufferData.pSysMem = &vertices[0];
+		d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &sphereVertBuffer);
+
+
+		std::vector<DWORD> indices(NumSphereFaces * 3);
+
+		int k = 0;
+		for (DWORD l = 0; l < LongLines - 1; ++l)
+		{
+			indices[k] = 0;
+			indices[k + 1] = l + 1;
+			indices[k + 2] = l + 2;
+			k += 3;
+		}
+
+		indices[k] = 0;
+		indices[k + 1] = LongLines;
+		indices[k + 2] = 1;
+		k += 3;
+
+		for (DWORD i = 0; i < LatLines - 3; ++i)
+		{
+			for (DWORD j = 0; j < LongLines - 1; ++j)
+			{
+				indices[k] = i * LongLines + j + 1;
+				indices[k + 1] = i * LongLines + j + 2;
+				indices[k + 2] = (i + 1) * LongLines + j + 1;
+
+				indices[k + 3] = (i + 1) * LongLines + j + 1;
+				indices[k + 4] = i * LongLines + j + 2;
+				indices[k + 5] = (i + 1) * LongLines + j + 2;
+
+				k += 6; // next quad
+			}
+
+			indices[k] = (i * LongLines) + LongLines;
+			indices[k + 1] = (i * LongLines) + 1;
+			indices[k + 2] = ((i + 1) * LongLines) + LongLines;
+
+			indices[k + 3] = ((i + 1) * LongLines) + LongLines;
+			indices[k + 4] = (i * LongLines) + 1;
+			indices[k + 5] = ((i + 1) * LongLines) + 1;
+
+			k += 6;
+		}
+
+		for (DWORD l = 0; l < LongLines - 1; ++l)
+		{
+			indices[k] = NumSphereVertices - 1;
+			indices[k + 1] = (NumSphereVertices - 1) - (l + 1);
+			indices[k + 2] = (NumSphereVertices - 1) - (l + 2);
+			k += 3;
+		}
+
+		indices[k] = NumSphereVertices - 1;
+		indices[k + 1] = (NumSphereVertices - 1) - LongLines;
+		indices[k + 2] = NumSphereVertices - 2;
+
+		D3D11_BUFFER_DESC indexBufferDesc;
+		ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+
+		indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		indexBufferDesc.ByteWidth = sizeof(DWORD) * NumSphereFaces * 3;
+		indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		indexBufferDesc.CPUAccessFlags = 0;
+		indexBufferDesc.MiscFlags = 0;
+
+		D3D11_SUBRESOURCE_DATA iinitData;
+
+		iinitData.pSysMem = &indices[0];
+		d3d11Device->CreateBuffer(&indexBufferDesc, &iinitData, &sphereIndexBuffer);
+	}
+	void InitSkyBox()
+	{
+		//Tell D3D we will be loading a cube texture
+		D3DX11_IMAGE_LOAD_INFO loadSMInfo;
+		loadSMInfo.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+		//Load the texture
+		ID3D11Texture2D* SMTexture = 0;
+		D3DX11CreateTextureFromFile(d3d11Device, "skymap.dds",
+			&loadSMInfo, 0, (ID3D11Resource**)&SMTexture, 0);
+
+		//Create the textures description
+		D3D11_TEXTURE2D_DESC SMTextureDesc;
+		SMTexture->GetDesc(&SMTextureDesc);
+
+		//Tell D3D We have a cube texture, which is an array of 2D textures
+		D3D11_SHADER_RESOURCE_VIEW_DESC SMViewDesc;
+		SMViewDesc.Format = SMTextureDesc.Format;
+		SMViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+		SMViewDesc.TextureCube.MipLevels = SMTextureDesc.MipLevels;
+		SMViewDesc.TextureCube.MostDetailedMip = 0;
+
+		//Create the Resource view
+		d3d11Device->CreateShaderResourceView(SMTexture, &SMViewDesc, &smrv);
+
+	}
+private: // обновление сцены
+
+private: //обновление графики
+	void UpdateText(std::wstring text, int inInt)
+	{
+		keyedMutex11->ReleaseSync(0);
+
+		keyedMutex10->AcquireSync(0, 5);
+
+		D2DRenderTarget->BeginDraw();
+
+		D2DRenderTarget->Clear(D2D1::ColorF(0.0f, 0.0f, 0.0f, 0.0f));
+
+		std::wostringstream printString;
+		printString << text << inInt;
+		printText = printString.str();
+
+		D2D1_COLOR_F FontColor = D2D1::ColorF(1.0f, 1.0f, 1.0f, 1.0f);
+
+		Brush->SetColor(FontColor);
+
+		D2D1_RECT_F layoutRect = D2D1::RectF(0, 0, Window.Wight, Window.Heignt);
+
+		D2DRenderTarget->DrawText(
+			printText.c_str(),
+			wcslen(printText.c_str()),
+			TextFormat,
+			layoutRect,
+			Brush
+		);
+
+		D2DRenderTarget->EndDraw();
+
+		keyedMutex10->ReleaseSync(1);
+
+		keyedMutex11->AcquireSync(1, 5);
+
+		d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
+
+		//d3d11DevCon->PSSetShader(D2D_PS, 0, 0);
+
+		WorldPos.WVP = XMMatrixIdentity();
+		Cbuffers.cbPerObj.World = XMMatrixTranspose(WorldPos.WVP);
+		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
+		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
+		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+		d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
+		d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
+
+		d3d11DevCon->RSSetState(CWcullMode);
+
+		d3d11DevCon->DrawIndexed(6, 0, 0);
+	}
 	void UpdateLight()
 	{
 		Light Light;
@@ -887,7 +986,7 @@ private:
 
 		Camera.camView = XMMatrixLookAtLH(Camera.camPosition, Camera.camTarget, Camera.camUp);
 	}
-	void DetectInput(double time) {
+	void UpdateInput(double time) {
 
 		DIMOUSESTATE mouseState;
 
@@ -939,6 +1038,32 @@ private:
 		}
 
 	};
+	void UpdateSkyBox()
+	{
+		sphereWorld = XMMatrixIdentity();
+		Property.Scale = XMMatrixScaling(5.0f, 5.0f, 5.0f);
+		Property.Translation = XMMatrixTranslation(XMVectorGetX(Camera.camPosition), XMVectorGetY(Camera.camPosition), XMVectorGetZ(Camera.camPosition));
+		sphereWorld = Property.Scale * Property.Translation;
+		UINT stride = sizeof(VertexNormal);
+		UINT offset = 0;
+		d3d11DevCon->IASetIndexBuffer(sphereIndexBuffer, DXGI_FORMAT_R32_UINT, 0);  // ошибка в том что индексы обычного блока удаляются!!!!!! нужно сделать последовательность
+		d3d11DevCon->IASetVertexBuffers(0, 1, &sphereVertBuffer, &stride, &offset);
+
+		//Cbuffers.cbPerObj.WVP = sphereWorld * Camera.camView * Camera.camProjection;
+		//Cbuffers.cbPerObj.WVP = XMMatrixTranspose(Cbuffers.cbPerObj.WVP);
+		//Cbuffers.cbPerObj.World = XMMatrixTranspose(sphereWorld);
+		//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
+		//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+		//d3d11DevCon->PSSetShaderResources(0, 1, &smrv);
+		//d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
+	/*	d3d11DevCon->VSSetShader(SKYMAP_VS, 0, 0);
+		d3d11DevCon->PSSetShader(SKYMAP_PS, 0, 0);
+		d3d11DevCon->OMSetDepthStencilState(DSLessEqual, 0);
+		d3d11DevCon->RSSetState(RSCullNone);
+		d3d11DevCon->DrawIndexed(NumSphereFaces * 3, 0, 0);
+		d3d11DevCon->VSSetShader(VS, 0, 0);*/
+		//d3d11DevCon->OMSetDepthStencilState(NULL, 0);
+	}
 public:
 	bool GetHR;
 
@@ -946,9 +1071,11 @@ public:
 	{
 		GetHR = InitializeDirect3dApp(hInstance);
 		InitD2DScreenTexture();
+		InitShapeSphere(10, 10);
 		InitDirectInput(hInstance);
 		InitConstBuffer();
 		InitShaders();
+		InitSkyBox();
 		InitVertexBuffer();
 		InitIndexBuffer();
 		InitBlendMaterial();
@@ -956,7 +1083,7 @@ public:
 		InitImageTexture();
 		InitCamera();
 		//InitPointLight();
-		//InitRasterized();
+		InitRasterized();
 		InitSunLight();
 		InitLayoutModel();
 		d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -966,9 +1093,14 @@ public:
 
 	void UpdateDX(double time)
 	{
-		DetectInput(time);
+		if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
+			InitShaders();
+
+		UpdateInput(time);
 		UpdateCamera();
 		UpdateLight();
+
+
 
 		Property.ResultOBJ = XMMatrixIdentity();
 
@@ -987,26 +1119,27 @@ public:
 		Property.ResultOBJ = Property.Translation * Property.Scale;
 
 
-		if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
-		{
-			InitShaders();
-		}
-
 		D3DXCOLOR bgColor(Property.red, Property.green, Property.blue, 0.0f);
 		d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
 		d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
 
+
+		//UpdateSkyBox();
+
+
+
 		UpdateBlend();
-
 		UpdateViewObj(Property.ResultOBJ);
-
-		RenderText(L"   FPS: ", Timer.fps);
-
+		UpdateText(L"   FPS: ", Timer.fps);
 		SwapChain->Present(0, 0);
-
-
-
 	};
+
+
+	//испрвить индексный буфер а если быть точнее распределить такие части как:
+	// создание 1 раз
+	// обновление изменений на сцене
+	// рендер графики последовательно и логично
+
 
 	void CleanAPP() {
 		SwapChain->SetFullscreenState(false, NULL);
@@ -1048,8 +1181,17 @@ public:
 		DIKeyboard->Unacquire();
 		DIMouse->Unacquire();
 		ControlInput.DirectInput->Release();
-	};
-		
+
+		sphereIndexBuffer->Release();
+		sphereVertBuffer->Release();
+		SKYMAP_VS->Release();
+		SKYMAP_PS->Release();
+		SKYMAP_VS_Buffer->Release();
+		SKYMAP_PS_Buffer->Release();
+		smrv->Release();
+		DSLessEqual->Release();
+		RSCullNone->Release();
+	};	
 private:
 	IDXGISwapChain* SwapChain;
 	ID3D11Device* d3d11Device;
@@ -1091,4 +1233,17 @@ private:
 
 	IDirectInputDevice8* DIKeyboard;
 	IDirectInputDevice8* DIMouse;
+
+	ID3D11Buffer* sphereIndexBuffer;
+	ID3D11Buffer* sphereVertBuffer;
+
+	ID3D11VertexShader* SKYMAP_VS;
+	ID3D11PixelShader* SKYMAP_PS;
+	ID3D10Blob* SKYMAP_VS_Buffer;
+	ID3D10Blob* SKYMAP_PS_Buffer;
+
+	ID3D11ShaderResourceView* smrv;
+
+	ID3D11DepthStencilState* DSLessEqual;
+	ID3D11RasterizerState* RSCullNone;
 };
