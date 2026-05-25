@@ -198,8 +198,68 @@ int NumSphereFaces;
 XMMATRIX sphereWorld;
 
 
+
+enum MOD
+{
+	VERTEX_0,
+	INDEX_0,
+	CONSTANTA_0,
+	RUSTER_0,
+	TEXTURE_0,
+	SAMPLER_0,
+};
+
+
+//typename BUFFER = D3D11_BUFFER_DESC,
+//typename SAMPLER = D3D11_SAMPLER_DESC,
+//typename RASTERIZER = D3D11_RASTERIZER_DESC,
+//typename DEPTH_STENCIL = D3D11_DEPTH_STENCIL_DESC,
+//typename SUBRESOURCE = D3D11_SUBRESOURCE_DATA,
+//typename INPUT_ELEMENT = D3D11_INPUT_ELEMENT_DESC,
+//typename VIEWPORT = D3D11_VIEWPORT,
+//typename TEXTURE2D = D3D11_TEXTURE2D_DESC,
+//typename BLEND = D3D11_BLEND_DESC,
+//typename RENDER_TARGET_BLEND = D3D11_RENDER_TARGET_BLEND_DESC,
+//typename IMAGE_LOAD_INFO = D3DX11_IMAGE_LOAD_INFO,
+//typename SHADER_RESOURCE_VIEW = D3D11_SHADER_RESOURCE_VIEW_DESC
+
+
 class D3DEX
 {
+private:
+	//Создание константного буфера
+	void CreateModuleDX(MOD mod,ID3D11Buffer** buf, UINT size = 0)
+	{
+		D3D11_BUFFER_DESC cbbd;
+		ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
+		cbbd.Usage = D3D11_USAGE_DEFAULT;
+		cbbd.ByteWidth = size;
+		cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cbbd.CPUAccessFlags = 0;
+		cbbd.MiscFlags = 0;
+		d3d11Device->CreateBuffer(&cbbd, NULL, buf);
+	}
+	//Создание текстуры
+	void CreateModuleDX(MOD mod,ID3D11ShaderResourceView** buf, const char* namefile, UINT size = 0)
+	{
+		D3DX11CreateShaderResourceViewFromFile(d3d11Device, namefile, NULL, NULL, buf, NULL);
+	}
+	//Создание семплера
+	void CreateModuleDX(MOD mod, ID3D11SamplerState** buf, UINT size = 0)
+	{
+		D3D11_SAMPLER_DESC sampDesc;
+		ZeroMemory(&sampDesc, sizeof(sampDesc));
+		sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+		sampDesc.MinLOD = 0;
+		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+		d3d11Device->CreateSamplerState(&sampDesc, buf);
+	}
+
+
 private: //системы
 	bool InitD2D_D3D101_DWrite(IDXGIAdapter1* Adapter) {
 
@@ -402,44 +462,13 @@ private: //системы
 private: //создание
 	void InitConstBuffer()
 	{
-		D3D11_BUFFER_DESC cbbd;
-		ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
-
-		cbbd.Usage = D3D11_USAGE_DEFAULT;
-		cbbd.ByteWidth = sizeof(Cbuffers.cbPerObj);
-		cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbbd.CPUAccessFlags = 0;
-		cbbd.MiscFlags = 0;
-
-		d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerObjectBuffer);
-
-
-		ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
-
-		cbbd.Usage = D3D11_USAGE_DEFAULT;
-		cbbd.ByteWidth = sizeof(Cbuffers.constbuffPerFrame);
-		cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbbd.CPUAccessFlags = 0;
-		cbbd.MiscFlags = 0;
-
-		d3d11Device->CreateBuffer(&cbbd, NULL, &cbPerFrameBuffer);
+		CreateModuleDX(CONSTANTA_0,&cbPerObjectBuffer, sizeof(Cbuffers.cbPerObj));
+		CreateModuleDX(CONSTANTA_0,&cbPerFrameBuffer,  sizeof(Cbuffers.constbuffPerFrame));
 	}
 	void InitImageTexture()
 	{
-		D3DX11CreateShaderResourceViewFromFile(d3d11Device, "block.jpg",
-			NULL, NULL, &CubesTexture, NULL);
-
-		D3D11_SAMPLER_DESC sampDesc;
-		ZeroMemory(&sampDesc, sizeof(sampDesc));
-		sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		sampDesc.MinLOD = 0;
-		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-
-		d3d11Device->CreateSamplerState(&sampDesc, &CubesTexSamplerState);
+		CreateModuleDX(TEXTURE_0,&CubesTexture, "block.jpg");
+		CreateModuleDX(SAMPLER_0,&CubesTexSamplerState);
 	}
 	void InitRasterized()
 	{
