@@ -18,6 +18,5 @@ int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE rhinstance, LPSTR lpstr, int n
 	}
 
 	MassegeLoop(D3DEX_);
-	D3DEX_.CleanAPP();
 	return 0;
 }

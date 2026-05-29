@@ -21,6 +21,8 @@
 #include <dwrite.h>
 #include <dinput.h>
 #include <vector>
+bool nullbuffer_element[1] = {};
+#define NULLBUFFER nullbuffer_element
 
 struct {
 	HWND hWND = NULL;
@@ -37,7 +39,7 @@ struct {
 
 struct {
 	XMMATRIX camView;
-	XMMATRIX camProjection;
+	XMMATRIX camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, 1600. / 1400., 1.0f, 1000.0f);
 	XMVECTOR camStartPos;
 	XMVECTOR camStartTarget;
 
@@ -119,7 +121,7 @@ struct {
 }Movment;
 
 struct  {
-	XMMATRIX ResultOBJ;
+	XMMATRIX OBJBox;
 	XMMATRIX Rotationx;
 	XMMATRIX Rotationy;
 	XMMATRIX Rotationz;
@@ -147,38 +149,63 @@ struct Light{
 		XMFLOAT4 ambient;
 		XMFLOAT4 diffuse;
 };
-struct VertexCol
+struct Vertex
 {
-	VertexCol() {};
-	VertexCol(float x, float y, float z,
-		float r, float g, float b, float a) : pos(x, y, z), color(r, g, b, a) {
-	}
-
-	XMFLOAT3 pos;
-	XMFLOAT4 color;
-};
-struct VertexTex
-{
-	VertexTex() {};
-	VertexTex(float x, float y, float z,
-		float u, float v) : pos(x, y, z), texCoord(u, v) {
-	}
-
-	XMFLOAT3 pos;
-	XMFLOAT2 texCoord;
-};
-struct VertexNormal
-{
-	VertexNormal() {}
-	VertexNormal(float x, float y, float z,
+	Vertex() {}
+	Vertex(float x, float y, float z,
 		float u, float v,
-		float nx, float ny, float nz)
-		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {
+		float nx, float ny, float nz
+	)
+		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz){
 	}
 
 	XMFLOAT3 pos;
 	XMFLOAT2 texCoord;
 	XMFLOAT3 normal;
+};
+struct Position
+{
+	Position() {}
+	Position(float x, float y, float z) : x(x), y(y), z(z) {}
+
+	float x;
+	float y;
+	float z;
+};
+struct Rotation
+{
+	Rotation() {}
+	Rotation(float x, float y, float z) : x(x), y(y), z(z) {}
+
+	float x;
+	float y;
+	float z;
+};
+struct Size
+{
+	Size() {}
+	Size(float x, float y, float z) : x(x), y(y), z(z) {}
+
+	float x;
+	float y;
+	float z;
+};
+struct Transparens
+{
+	Transparens() {}
+	Transparens(float x, float y, float z, float a) : x(x), y(y), z(z), a(a) {}
+
+	float x;
+	float y;
+	float z;
+	float a;
+};
+struct Color
+{
+	Color() {}
+	Color(float r, float g, float b, float a) : color(r, g, b, a) {}
+
+	XMFLOAT4 color;
 };
 
 struct {
@@ -190,12 +217,114 @@ struct {
 	struct cbPerFrame
 	{
 		Light  light;
-	}constbuffPerFrame;
+	}cbPerFrame;
+	struct cbPerColor
+	{
+		XMFLOAT4 color;
+	}cbPerColor;
 }Cbuffers;
 
 int NumSphereVertices;
 int NumSphereFaces;
 XMMATRIX sphereWorld;
+
+Vertex Block_V[] = {
+	// Front Face
+	Vertex(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+	Vertex(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+	Vertex(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+	Vertex(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+
+	// Back Face
+	Vertex(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
+	Vertex(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
+	Vertex(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
+	Vertex(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
+
+	// Top Face
+	Vertex(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
+	Vertex(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
+	Vertex(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
+	Vertex(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
+
+	// Bottom Face
+	Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+	Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+	Vertex(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
+	Vertex(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
+
+	// Left Face
+	Vertex(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
+	Vertex(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
+	Vertex(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
+	Vertex(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
+
+	// Right Face
+	Vertex(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
+	Vertex(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
+	Vertex(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
+	Vertex(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
+};
+
+DWORD Block_I[] = {
+	// Front Face
+	0,  1,  2,
+	0,  2,  3,
+
+	// Back Face
+	4,  5,  6,
+	4,  6,  7,
+
+	// Top Face
+	8,  9, 10,
+	8, 10, 11,
+
+	// Bottom Face
+	12, 13, 14,
+	12, 14, 15,
+
+	// Left Face
+	16, 17, 18,
+	16, 18, 19,
+
+	// Right Face
+	20, 21, 22,
+	20, 22, 23
+};
+
+Vertex Plane_V[] =
+{
+	// Front Face
+	Vertex(
+		-1.0f, -1.0f, -1.0f, 
+		0.0f, 1.0f,
+		-1.0f, -1.0f, -1.0f
+	),
+	Vertex(
+		-1.0f,  1.0f, -1.0f, 
+		0.0f, 0.0f,
+		-1.0f,  1.0f, -1.0f
+	),
+	Vertex(
+		1.0f,  1.0f, -1.0f, 
+		1.0f, 0.0f, 
+		1.0f,  1.0f, -1.0f
+	),
+	Vertex(
+		1.0f, -1.0f, -1.0f, 
+		1.0f, 1.0f, 
+		1.0f, -1.0f, -1.0f
+	),
+};
+
+DWORD Plane_I[] = {
+	// Front Face
+	0,  1,  2,
+	0,  2,  3,
+};
+
+UINT stride = sizeof(Vertex);
+UINT offset = 0;
 
 
 
@@ -205,62 +334,274 @@ enum MOD
 	INDEX_0,
 	CONSTANTA_0,
 	RUSTER_0,
+	RUSTER_1,
+	RUSTER_2,
+	RUSTER_3,
 	TEXTURE_0,
+	TEXTURE_1,
 	SAMPLER_0,
+	DEPTH_0,
+	DEPTH_1,
+	SH_VS0,
+	SH_PS0,
+	LAYER_0,
+	LAYER_1,
+	BLEND_0,
+
 };
 
-
-//typename BUFFER = D3D11_BUFFER_DESC,
-//typename SAMPLER = D3D11_SAMPLER_DESC,
-//typename RASTERIZER = D3D11_RASTERIZER_DESC,
-//typename DEPTH_STENCIL = D3D11_DEPTH_STENCIL_DESC,
-//typename SUBRESOURCE = D3D11_SUBRESOURCE_DATA,
-//typename INPUT_ELEMENT = D3D11_INPUT_ELEMENT_DESC,
-//typename VIEWPORT = D3D11_VIEWPORT,
-//typename TEXTURE2D = D3D11_TEXTURE2D_DESC,
-//typename BLEND = D3D11_BLEND_DESC,
-//typename RENDER_TARGET_BLEND = D3D11_RENDER_TARGET_BLEND_DESC,
-//typename IMAGE_LOAD_INFO = D3DX11_IMAGE_LOAD_INFO,
-//typename SHADER_RESOURCE_VIEW = D3D11_SHADER_RESOURCE_VIEW_DESC
-
+enum MOD_VISIBLE
+{
+	INSIDE_ONLY,
+	OUTSIDE_ONLY,
+	OUT_IN_SIDE,
+	NO_VISIBLE
+};
 
 class D3DEX
 {
 private:
-	//Создание константного буфера
-	void CreateModuleDX(MOD mod,ID3D11Buffer** buf, UINT size = 0)
+	//Соединить нескольно модулей
+	template<typename T, typename T2>
+	void BindModuls(MOD mod,T** buf, T2** buf2)
 	{
-		D3D11_BUFFER_DESC cbbd;
-		ZeroMemory(&cbbd, sizeof(D3D11_BUFFER_DESC));
-		cbbd.Usage = D3D11_USAGE_DEFAULT;
-		cbbd.ByteWidth = size;
-		cbbd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		cbbd.CPUAccessFlags = 0;
-		cbbd.MiscFlags = 0;
-		d3d11Device->CreateBuffer(&cbbd, NULL, buf);
+		if (mod == MOD::DEPTH_1)
+		{
+			d3d11Device->CreateDepthStencilView(*(ID3D11Texture2D**)buf, NULL, (ID3D11DepthStencilView**)buf2);
+			return;
+		}
+		else if (mod == MOD::TEXTURE_1)
+		{
+			D3D11_TEXTURE2D_DESC SMTextureDesc;
+			ZeroMemory(&SMTextureDesc, sizeof(D3D11_TEXTURE2D_DESC));
+			(*(ID3D11Texture2D**)buf)->GetDesc(&SMTextureDesc);
+
+			D3D11_SHADER_RESOURCE_VIEW_DESC SMViewDesc;
+			SMViewDesc.Format = SMTextureDesc.Format;
+			SMViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+			SMViewDesc.TextureCube.MipLevels = SMTextureDesc.MipLevels;
+			SMViewDesc.TextureCube.MostDetailedMip = 0;
+
+			d3d11Device->CreateShaderResourceView(*(ID3D11Texture2D**)buf, &SMViewDesc, (ID3D11ShaderResourceView**)buf2);
+			return;
+		}
 	}
-	//Создание текстуры
-	void CreateModuleDX(MOD mod,ID3D11ShaderResourceView** buf, const char* namefile, UINT size = 0)
+	//Создание Семплера|Растеризатора|Глубины|Текстур|Смешение|
+	template<typename T>
+	void CreateModuleDX(MOD mod, T** buf, const char* namefile = "error.jpg")
 	{
-		D3DX11CreateShaderResourceViewFromFile(d3d11Device, namefile, NULL, NULL, buf, NULL);
+		if (mod == MOD::SAMPLER_0)
+		{
+			D3D11_SAMPLER_DESC sampDesc;
+			ZeroMemory(&sampDesc, sizeof(sampDesc));
+			sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+			sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+			sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+			sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+			sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+			sampDesc.MinLOD = 0;
+			sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+			d3d11Device->CreateSamplerState(&sampDesc, (ID3D11SamplerState**)buf);
+			return;
+		}
+
+		else if (mod == MOD::RUSTER_0)
+		{
+			D3D11_RASTERIZER_DESC wfdesc;
+			ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
+			wfdesc.FillMode = D3D11_FILL_SOLID;
+			wfdesc.CullMode = D3D11_CULL_NONE;
+			wfdesc.AntialiasedLineEnable = TRUE;
+			d3d11Device->CreateRasterizerState(&wfdesc, (ID3D11RasterizerState**)buf);
+			return;
+		}
+		else if (mod == MOD::RUSTER_1)
+		{
+			D3D11_RASTERIZER_DESC cmdesc;
+			ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+			cmdesc.FillMode = D3D11_FILL_SOLID;
+			cmdesc.CullMode = D3D11_CULL_BACK;
+			cmdesc.FrontCounterClockwise = true;
+			d3d11Device->CreateRasterizerState(&cmdesc, (ID3D11RasterizerState**)buf);
+			return;
+		}
+		else if (mod == MOD::RUSTER_2)
+		{
+			D3D11_RASTERIZER_DESC cmdesc;
+			ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+			cmdesc.FillMode = D3D11_FILL_SOLID;
+			cmdesc.CullMode = D3D11_CULL_BACK;
+			cmdesc.FrontCounterClockwise = false;
+			d3d11Device->CreateRasterizerState(&cmdesc, (ID3D11RasterizerState**)buf);
+			return;
+		}
+		else if (mod == MOD::RUSTER_3)
+		{
+			D3D11_RASTERIZER_DESC cmdesc;
+			ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
+			cmdesc.FillMode = D3D11_FILL_SOLID;
+			cmdesc.CullMode = D3D11_CULL_BACK;
+			d3d11Device->CreateRasterizerState(&cmdesc, (ID3D11RasterizerState**)buf);
+			return;
+		}
+
+		else if (mod == MOD::DEPTH_0)
+		{
+			D3D11_DEPTH_STENCIL_DESC dssDesc;
+			ZeroMemory(&dssDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+			dssDesc.DepthEnable = true;
+			dssDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+			dssDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+			d3d11Device->CreateDepthStencilState(&dssDesc, (ID3D11DepthStencilState**)buf);
+			return;
+		}
+
+		else if (mod == MOD::DEPTH_1)
+		{
+			D3D11_TEXTURE2D_DESC depthStencilDesc;
+			ZeroMemory(&depthStencilDesc, sizeof(D3D11_TEXTURE2D_DESC));
+			depthStencilDesc.Width = Window.Wight;
+			depthStencilDesc.Height = Window.Heignt;
+			depthStencilDesc.MipLevels = 1;
+			depthStencilDesc.ArraySize = 1;
+			depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			depthStencilDesc.SampleDesc.Count = 1;
+			depthStencilDesc.SampleDesc.Quality = 0;
+			depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+			depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+			depthStencilDesc.CPUAccessFlags = 0;
+			depthStencilDesc.MiscFlags = 0;
+
+			d3d11Device->CreateTexture2D(&depthStencilDesc, NULL, (ID3D11Texture2D**)buf);
+		}
+
+		else if (mod == MOD::TEXTURE_0)
+		{
+			D3DX11CreateShaderResourceViewFromFile(d3d11Device, namefile, NULL, NULL, (ID3D11ShaderResourceView**)buf, NULL);
+		}
+		else if (mod == MOD::TEXTURE_1)
+		{
+			D3DX11_IMAGE_LOAD_INFO loadSMInfo;
+			loadSMInfo.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+			D3DX11CreateTextureFromFile(d3d11Device, namefile, &loadSMInfo, 0, (ID3D11Resource**)buf, 0);
+		}
+
+		else if (mod == MOD::BLEND_0)
+		{
+			D3D11_BLEND_DESC blendDesc;
+			ZeroMemory(&blendDesc, sizeof(blendDesc));
+			D3D11_RENDER_TARGET_BLEND_DESC rtbd;
+			ZeroMemory(&rtbd, sizeof(rtbd));
+
+			rtbd.BlendEnable = true;
+			rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
+			rtbd.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+			rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
+			rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+			rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+			rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
+			rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+			rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
+
+			blendDesc.AlphaToCoverageEnable = false;
+			blendDesc.RenderTarget[0] = rtbd;
+
+			d3d11Device->CreateBlendState(&blendDesc, (ID3D11BlendState**)buf);
+			return;
+		}
+
 	}
-	//Создание семплера
-	void CreateModuleDX(MOD mod, ID3D11SamplerState** buf, UINT size = 0)
+	//Создание Шейдера
+	template<typename T>
+	void CreateModuleDX(MOD mod, T** buf, LPCSTR NameShader, LPCSTR endpoint, ID3D10Blob** blob)
 	{
-		D3D11_SAMPLER_DESC sampDesc;
-		ZeroMemory(&sampDesc, sizeof(sampDesc));
-		sampDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-		sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-		sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-		sampDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-		sampDesc.MinLOD = 0;
-		sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
-		d3d11Device->CreateSamplerState(&sampDesc, buf);
+		if (mod == MOD::SH_VS0)
+		{
+			D3DX11CompileFromFileA(NameShader, 0, 0, endpoint, "vs_5_0", 0, 0, 0, (ID3D10Blob**)blob, 0, 0);
+			ID3D10Blob* pBlob = *(ID3D10Blob**)blob;
+			d3d11Device->CreateVertexShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, (ID3D11VertexShader**)buf);
+		}
+		else if (mod == MOD::SH_PS0)
+		{
+			D3DX11CompileFromFileA(NameShader, 0, 0, endpoint, "ps_5_0", 0, 0, 0, (ID3D10Blob**)blob, 0, 0);
+			ID3D10Blob* pBlob = *(ID3D10Blob**)blob;
+			d3d11Device->CreatePixelShader(pBlob->GetBufferPointer(), pBlob->GetBufferSize(), NULL, (ID3D11PixelShader**)buf);
+		}
 	}
+	//Создание Буферов
+	template<typename T>
+	void CreateModuleDX(MOD mod, T* v, UINT size, ID3D11Buffer** buf)
+	{
+		D3D11_BUFFER_DESC BufferDecs;
+		D3D11_SUBRESOURCE_DATA BufferData;
+		ZeroMemory(&BufferDecs, sizeof(D3D11_BUFFER_DESC));
+		ZeroMemory(&BufferData, sizeof(D3D11_SUBRESOURCE_DATA));
 
 
+		BufferDecs.Usage = D3D11_USAGE_DEFAULT;
+		BufferDecs.CPUAccessFlags = 0;
+		BufferDecs.MiscFlags = 0;
+		BufferDecs.ByteWidth = size;
+
+		if (mod == MOD::VERTEX_0)
+		BufferDecs.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		else if (mod == MOD::INDEX_0)
+		BufferDecs.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		else if (mod == MOD::CONSTANTA_0)
+		{
+			BufferDecs.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			d3d11Device->CreateBuffer(&BufferDecs, NULL, buf);
+			return;
+		}
+
+		BufferData.pSysMem = v;
+
+		d3d11Device->CreateBuffer(&BufferDecs, &BufferData, buf);
+	}
+	//Создание Слоев
+	template<typename T>
+	void CreateModuleDX(MOD mod, T** buf, ID3D10Blob* blob)
+	{
+		D3D11_INPUT_ELEMENT_DESC* temp = {};
+		UINT size = {};
+
+		if (mod = MOD::LAYER_0)
+		{
+			D3D11_INPUT_ELEMENT_DESC layout[] =
+			{
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+				{ "NORMAL"   , 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
+			};
+			temp = layout;
+			size = ARRAYSIZE(layout);
+		}
+		else if (mod = MOD::LAYER_1)
+		{
+			D3D11_INPUT_ELEMENT_DESC layout[] =
+			{
+				{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			};
+			temp = layout;
+			size = ARRAYSIZE(layout);
+		}
+
+
+
+		d3d11Device->CreateInputLayout(temp, size, blob->GetBufferPointer(), blob->GetBufferSize(), buf);
+	}
 private: //системы
+	void CreateDirectInput(HINSTANCE hInstance) {
+
+		DirectInput8Create(hInstance,DIRECTINPUT_VERSION,IID_IDirectInput8,(void**)&ControlInput.DirectInput,NULL);
+		ControlInput.DirectInput->CreateDevice(GUID_SysKeyboard,&DIKeyboard,NULL);
+		ControlInput.DirectInput->CreateDevice(GUID_SysMouse,&DIMouse,NULL);
+		DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+		DIKeyboard->SetCooperativeLevel(Window.hWND, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+		DIMouse->SetDataFormat(&c_dfDIMouse);
+		DIMouse->SetCooperativeLevel(Window.hWND, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
+	}
 	bool InitD2D_D3D101_DWrite(IDXGIAdapter1* Adapter) {
 
 		Window.hr = D3D10CreateDevice1(Adapter, D3D10_DRIVER_TYPE_HARDWARE, NULL, D3D10_CREATE_DEVICE_DEBUG | D3D10_CREATE_DEVICE_BGRA_SUPPORT,
@@ -348,7 +689,6 @@ private: //системы
 		bufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 		bufferDesc.Scaling = DXGI_MODE_SCALING_STRETCHED;
 
-
 		DXGI_SWAP_CHAIN_DESC swapChainDesc;
 		ZeroMemory(&swapChainDesc, sizeof(DXGI_SWAP_CHAIN_DESC));
 
@@ -360,7 +700,6 @@ private: //системы
 		swapChainDesc.OutputWindow = Window.hWND;
 		swapChainDesc.Windowed = TRUE;
 		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-
 
 		IDXGIFactory1* DXGIFactory;
 
@@ -383,361 +722,13 @@ private: //системы
 		hr = SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&BackBuffer11);
 		hr = d3d11Device->CreateRenderTargetView(BackBuffer11, NULL, &renderTargetView);
 
-		InitDepth();
+		CreateModuleDX(DEPTH_1, &depthStencilBuffer);
+		BindModuls(DEPTH_1, &depthStencilBuffer, &depthStencilView);
+
 		d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 		return true;
 	};
-	void InitD2DScreenTexture() {
-
-		VertexNormal v[] =
-		{
-			// Front Face
-			VertexNormal(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-			VertexNormal(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-			VertexNormal(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-			VertexNormal(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-		};
-
-		DWORD indices[] = {
-			// Front Face
-			0,  1,  2,
-			0,  2,  3,
-		};
-
-		D3D11_BUFFER_DESC indexBufferDesc;
-		ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-
-		indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		indexBufferDesc.ByteWidth = sizeof(DWORD) * 2 * 3;
-		indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		indexBufferDesc.CPUAccessFlags = 0;
-		indexBufferDesc.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA iinitData;
-
-		iinitData.pSysMem = indices;
-		d3d11Device->CreateBuffer(&indexBufferDesc, &iinitData, &d2dIndexBuffer);
-
-
-		D3D11_BUFFER_DESC vertexBufferDesc;
-		ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-
-		vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		vertexBufferDesc.ByteWidth = sizeof(VertexNormal) * 4;
-		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		vertexBufferDesc.CPUAccessFlags = 0;
-		vertexBufferDesc.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA vertexBufferData;
-
-		ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-		vertexBufferData.pSysMem = v;
-		d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &d2dVertBuffer);
-
-		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
-	}
-	bool InitDirectInput(HINSTANCE hInstance) {
-		DirectInput8Create(hInstance,
-			DIRECTINPUT_VERSION,
-			IID_IDirectInput8,
-			(void**)&ControlInput.DirectInput,
-			NULL);
-		
-		ControlInput.DirectInput->CreateDevice(GUID_SysKeyboard,
-			&DIKeyboard,
-			NULL);
-
-		ControlInput.DirectInput->CreateDevice(GUID_SysMouse,
-			&DIMouse,
-			NULL);
-
-		DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
-		DIKeyboard->SetCooperativeLevel(Window.hWND, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
-
-		DIMouse->SetDataFormat(&c_dfDIMouse);
-		DIMouse->SetCooperativeLevel(Window.hWND, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
-
-		return true;
-	}
 private: //создание
-	void InitConstBuffer()
-	{
-		CreateModuleDX(CONSTANTA_0,&cbPerObjectBuffer, sizeof(Cbuffers.cbPerObj));
-		CreateModuleDX(CONSTANTA_0,&cbPerFrameBuffer,  sizeof(Cbuffers.constbuffPerFrame));
-	}
-	void InitImageTexture()
-	{
-		CreateModuleDX(TEXTURE_0,&CubesTexture, "block.jpg");
-		CreateModuleDX(SAMPLER_0,&CubesTexSamplerState);
-	}
-	void InitRasterized()
-	{
-		D3D11_RASTERIZER_DESC wfdesc;
-		ZeroMemory(&wfdesc, sizeof(D3D11_RASTERIZER_DESC));
-		wfdesc.FillMode = D3D11_FILL_SOLID;
-		wfdesc.CullMode = D3D11_CULL_NONE;
-		wfdesc.AntialiasedLineEnable = TRUE;
-		d3d11Device->CreateRasterizerState(&wfdesc, &WireFrame);
-		d3d11DevCon->RSSetState(WireFrame);
-
-
-		wfdesc.CullMode = D3D11_CULL_NONE;
-		d3d11Device->CreateRasterizerState(&wfdesc, &RSCullNone);
-		D3D11_DEPTH_STENCIL_DESC dssDesc;
-		ZeroMemory(&dssDesc, sizeof(D3D11_DEPTH_STENCIL_DESC));
-		dssDesc.DepthEnable = true;
-		dssDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
-		dssDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-		d3d11Device->CreateDepthStencilState(&dssDesc, &DSLessEqual);
-	}
-	void InitShaders()
-	{
-
-		D3DX11CompileFromFileA("Effect.fx", 0, 0, "VS", "vs_5_0", 0, 0, 0, &VS_Buffer, 0, 0);
-		D3DX11CompileFromFileA("Effect.fx", 0, 0, "PS", "ps_5_0", 0, 0, 0, &PS_Buffer, 0, 0);
-		D3DX11CompileFromFileA("Effect.fx", 0, 0, "D2D_PS", "ps_5_0", 0, 0, 0, &D2D_PS_Buffer, 0, 0);
-
-		D3DX11CompileFromFileA("Effect.fx", 0, 0, "SKYMAP_VS", "vs_5_0", 0, 0, 0, &SKYMAP_VS_Buffer, 0, 0);
-		D3DX11CompileFromFileA("Effect.fx", 0, 0, "SKYMAP_PS", "ps_5_0", 0, 0, 0, &SKYMAP_PS_Buffer, 0, 0);
-
-
-		d3d11Device->CreateVertexShader(VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), NULL, &VS);
-		d3d11Device->CreatePixelShader(PS_Buffer->GetBufferPointer(), PS_Buffer->GetBufferSize(), NULL, &PS);
-		d3d11Device->CreatePixelShader(D2D_PS_Buffer->GetBufferPointer(), D2D_PS_Buffer->GetBufferSize(), NULL, &D2D_PS);
-
-		d3d11Device->CreateVertexShader(SKYMAP_VS_Buffer->GetBufferPointer(), SKYMAP_VS_Buffer->GetBufferSize(), NULL, &SKYMAP_VS);
-		d3d11Device->CreatePixelShader(SKYMAP_PS_Buffer->GetBufferPointer(), SKYMAP_PS_Buffer->GetBufferSize(), NULL, &SKYMAP_PS);
-
-		d3d11DevCon->VSSetShader(VS, 0, 0);
-		d3d11DevCon->PSSetShader(PS, 0, 0);
-	}
-	void InitVertexBuffer()
-	{
-		VertexNormal v[] =
-		{
-			// Front Face
-			VertexNormal(-1.0f, -1.0f, -1.0f, 0.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-			VertexNormal(-1.0f,  1.0f, -1.0f, 0.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-			VertexNormal(1.0f,  1.0f, -1.0f, 1.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-			VertexNormal(1.0f, -1.0f, -1.0f, 1.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-
-			// Back Face
-			VertexNormal(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f,-1.0f, -1.0f, 1.0f),
-			VertexNormal(1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f, -1.0f, 1.0f),
-			VertexNormal(1.0f,  1.0f, 1.0f, 0.0f, 0.0f, 1.0f,  1.0f, 1.0f),
-			VertexNormal(-1.0f,  1.0f, 1.0f, 1.0f, 0.0f,-1.0f,  1.0f, 1.0f),
-
-			// Top Face
-			VertexNormal(-1.0f, 1.0f, -1.0f, 0.0f, 1.0f,-1.0f, 1.0f, -1.0f),
-			VertexNormal(-1.0f, 1.0f,  1.0f, 0.0f, 0.0f,-1.0f, 1.0f,  1.0f),
-			VertexNormal(1.0f, 1.0f,  1.0f, 1.0f, 0.0f, 1.0f, 1.0f,  1.0f),
-			VertexNormal(1.0f, 1.0f, -1.0f, 1.0f, 1.0f, 1.0f, 1.0f, -1.0f),
-
-			// Bottom Face
-			VertexNormal(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-			VertexNormal(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-			VertexNormal(1.0f, -1.0f,  1.0f, 0.0f, 0.0f, 1.0f, -1.0f,  1.0f),
-			VertexNormal(-1.0f, -1.0f,  1.0f, 1.0f, 0.0f,-1.0f, -1.0f,  1.0f),
-
-			// Left Face
-			VertexNormal(-1.0f, -1.0f,  1.0f, 0.0f, 1.0f,-1.0f, -1.0f,  1.0f),
-			VertexNormal(-1.0f,  1.0f,  1.0f, 0.0f, 0.0f,-1.0f,  1.0f,  1.0f),
-			VertexNormal(-1.0f,  1.0f, -1.0f, 1.0f, 0.0f,-1.0f,  1.0f, -1.0f),
-			VertexNormal(-1.0f, -1.0f, -1.0f, 1.0f, 1.0f,-1.0f, -1.0f, -1.0f),
-
-			// Right Face
-			VertexNormal(1.0f, -1.0f, -1.0f, 0.0f, 1.0f, 1.0f, -1.0f, -1.0f),
-			VertexNormal(1.0f,  1.0f, -1.0f, 0.0f, 0.0f, 1.0f,  1.0f, -1.0f),
-			VertexNormal(1.0f,  1.0f,  1.0f, 1.0f, 0.0f, 1.0f,  1.0f,  1.0f),
-			VertexNormal(1.0f, -1.0f,  1.0f, 1.0f, 1.0f, 1.0f, -1.0f,  1.0f),
-		};
-
-		D3D11_BUFFER_DESC vertexBufferDecs;
-		ZeroMemory(&vertexBufferDecs, sizeof(D3D11_BUFFER_DESC));
-		vertexBufferDecs.Usage = D3D11_USAGE_DEFAULT;
-		vertexBufferDecs.ByteWidth = sizeof(VertexNormal) * 24;
-		vertexBufferDecs.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		vertexBufferDecs.CPUAccessFlags = 0;
-		vertexBufferDecs.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA vertexBufferData;
-		ZeroMemory(&vertexBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-		vertexBufferData.pSysMem = v;
-
-		d3d11Device->CreateBuffer(&vertexBufferDecs, &vertexBufferData, &SquareVertexBuffer);
-
-
-		UINT stride = sizeof(VertexNormal);
-		UINT offset = 0;
-		d3d11DevCon->IASetVertexBuffers(0, 1, &SquareVertexBuffer, &stride, &offset);
-	}
-	void InitIndexBuffer()
-	{
-		DWORD indices[] = {
-			// Front Face
-			0,  1,  2,
-			0,  2,  3,
-
-			// Back Face
-			4,  5,  6,
-			4,  6,  7,
-
-			// Top Face
-			8,  9, 10,
-			8, 10, 11,
-
-			// Bottom Face
-			12, 13, 14,
-			12, 14, 15,
-
-			// Left Face
-			16, 17, 18,
-			16, 18, 19,
-
-			// Right Face
-			20, 21, 22,
-			20, 22, 23
-		};
-
-		D3D11_BUFFER_DESC indexBufferDecs;
-		ZeroMemory(&indexBufferDecs, sizeof(D3D11_BUFFER_DESC));
-		indexBufferDecs.Usage = D3D11_USAGE_DEFAULT;
-		indexBufferDecs.ByteWidth = sizeof(DWORD) * 12 * 3;
-		indexBufferDecs.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		indexBufferDecs.CPUAccessFlags = 0;
-		indexBufferDecs.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA indexBufferData;
-		ZeroMemory(&indexBufferData, sizeof(D3D11_SUBRESOURCE_DATA));
-		indexBufferData.pSysMem = indices;
-
-		d3d11Device->CreateBuffer(&indexBufferDecs, &indexBufferData, &SquareIndexBuffer);
-		d3d11DevCon->IASetIndexBuffer(SquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	}
-	void InitLayoutModel()
-	{
-		D3D11_INPUT_ELEMENT_DESC layout[] =
-		{
-			{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL"   , 0, DXGI_FORMAT_R32G32B32_FLOAT,    0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0},
-		};
-
-		UINT numElement = ARRAYSIZE(layout);
-		d3d11Device->CreateInputLayout(layout, numElement, VS_Buffer->GetBufferPointer(), VS_Buffer->GetBufferSize(), &VertLayout);
-		d3d11DevCon->IASetInputLayout(VertLayout);
-	}
-	void InitViewPort()
-	{
-		D3D11_VIEWPORT viewport;
-		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.Width = Window.Wight;
-		viewport.Height = Window.Heignt;
-		//new_
-		viewport.MaxDepth = 1.0f;
-		viewport.MinDepth = 0.0f;
-		//new-
-
-		d3d11DevCon->RSSetViewports(1, &viewport);
-	}
-	void InitDepth()
-	{
-		D3D11_TEXTURE2D_DESC depthStencilDesc;
-		ZeroMemory(&depthStencilDesc, sizeof(D3D11_TEXTURE2D_DESC));
-		depthStencilDesc.Width = Window.Wight;
-		depthStencilDesc.Height = Window.Heignt;
-		depthStencilDesc.MipLevels = 1;
-		depthStencilDesc.ArraySize = 1;
-		depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-		depthStencilDesc.SampleDesc.Count = 1;
-		depthStencilDesc.SampleDesc.Quality = 0;
-		depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-		depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-		depthStencilDesc.CPUAccessFlags = 0;
-		depthStencilDesc.MiscFlags = 0;
-
-		d3d11Device->CreateTexture2D(&depthStencilDesc, NULL, &depthStencilBuffer);
-		d3d11Device->CreateDepthStencilView(depthStencilBuffer, NULL, &depthStencilView);
-	}
-	void InitCamera()
-	{
-		Camera.camStartPos = XMVectorSet(0.0f, 5.0f, -8.0f, 0.0f);
-		Camera.camStartTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		Camera.camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		Camera.camView = XMMatrixLookAtLH(Camera.camStartPos, Camera.camStartTarget, Camera.camUp);
-		Camera.camProjection = XMMatrixPerspectiveFovLH(0.4f * 3.14f, 1600./1400., 1.0f, 1000.0f);
-	}
-	void InitModBlending()
-	{
-		D3D11_RASTERIZER_DESC cmdesc;
-		ZeroMemory(&cmdesc, sizeof(D3D11_RASTERIZER_DESC));
-
-		cmdesc.FillMode = D3D11_FILL_SOLID;
-		cmdesc.CullMode = D3D11_CULL_BACK;
-
-		cmdesc.FrontCounterClockwise = true;
-		d3d11Device->CreateRasterizerState(&cmdesc, &CCWcullMode);
-
-		cmdesc.FrontCounterClockwise = false;
-		d3d11Device->CreateRasterizerState(&cmdesc, &CWcullMode);
-
-
-		D3D11_RASTERIZER_DESC rastDesc;
-		ZeroMemory(&rastDesc, sizeof(D3D11_RASTERIZER_DESC));
-		rastDesc.FillMode = D3D11_FILL_SOLID;
-		rastDesc.CullMode = D3D11_CULL_NONE;
-
-		d3d11Device->CreateRasterizerState(&rastDesc, &noCull);
-	}
-	void InitBlendMaterial()
-	{
-		D3D11_BLEND_DESC blendDesc;
-		ZeroMemory(&blendDesc, sizeof(blendDesc));
-
-		D3D11_RENDER_TARGET_BLEND_DESC rtbd;
-		ZeroMemory(&rtbd, sizeof(rtbd));
-
-		rtbd.BlendEnable = true;
-		rtbd.SrcBlend = D3D11_BLEND_SRC_COLOR;
-		//rtbd.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
-		rtbd.DestBlend = D3D11_BLEND_BLEND_FACTOR;
-		rtbd.BlendOp = D3D11_BLEND_OP_ADD;
-		rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
-		rtbd.DestBlendAlpha = D3D11_BLEND_ZERO;
-		rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
-		rtbd.RenderTargetWriteMask = D3D10_COLOR_WRITE_ENABLE_ALL;
-
-		blendDesc.AlphaToCoverageEnable = false;
-		blendDesc.RenderTarget[0] = rtbd;
-
-		d3d11Device->CreateBlendState(&blendDesc, &Transparency);
-	}
-	void InitSunLight()
-	{
-		Light Light;
-		Light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-		Light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		Cbuffers.constbuffPerFrame.light = Light;
-		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.constbuffPerFrame, 0, 0);
-		d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
-	}
-	void InitPointLight()
-	{
-		Light Light;
-		Light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
-		Light.range = 100.0f;
-		Light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
-		Light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-
-		Cbuffers.constbuffPerFrame.light = Light;
-		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.constbuffPerFrame, 0, 0);
-		d3d11DevCon->PSSetConstantBuffers(0, 1, &cbPerFrameBuffer);
-	}
 	void InitShapeSphere(int LatLines, int LongLines)
 	{
 		NumSphereVertices = ((LatLines - 2) * LongLines) + 2;
@@ -746,7 +737,7 @@ private: //создание
 		float sphereYaw = 0.0f;
 		float spherePitch = 0.0f;
 
-		std::vector<VertexNormal> vertices(NumSphereVertices);
+		std::vector<Vertex> vertices(NumSphereVertices);
 
 		XMVECTOR currVertPos = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 
@@ -773,23 +764,6 @@ private: //создание
 		vertices[NumSphereVertices - 1].pos.x = 0.0f;
 		vertices[NumSphereVertices - 1].pos.y = 0.0f;
 		vertices[NumSphereVertices - 1].pos.z = -1.0f;
-
-
-		D3D11_BUFFER_DESC vertexBufferDesc;
-		ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-
-		vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		vertexBufferDesc.ByteWidth = sizeof(VertexNormal) * NumSphereVertices;
-		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		vertexBufferDesc.CPUAccessFlags = 0;
-		vertexBufferDesc.MiscFlags = 0;
-
-		D3D11_SUBRESOURCE_DATA vertexBufferData;
-
-		ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-		vertexBufferData.pSysMem = &vertices[0];
-		d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &sphereVertBuffer);
-
 
 		std::vector<DWORD> indices(NumSphereFaces * 3);
 
@@ -845,51 +819,118 @@ private: //создание
 		indices[k + 1] = (NumSphereVertices - 1) - LongLines;
 		indices[k + 2] = NumSphereVertices - 2;
 
+		/*CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * NumSphereVertices, &sphereVertBuffer);
+		CreateModuleDX(INDEX_0, &vertices[0], sizeof(DWORD) * NumSphereFaces * 3, &sphereIndexBuffer);*/
+
+		D3D11_BUFFER_DESC vertexBufferDesc;
+		ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+		vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+		vertexBufferDesc.ByteWidth = sizeof(Vertex) * NumSphereVertices;
+		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		vertexBufferDesc.CPUAccessFlags = 0;
+		vertexBufferDesc.MiscFlags = 0;
+		D3D11_SUBRESOURCE_DATA vertexBufferData;
+		ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+		vertexBufferData.pSysMem = &vertices[0];
+		d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &sphereVertBuffer);
+
+
 		D3D11_BUFFER_DESC indexBufferDesc;
 		ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-
 		indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
 		indexBufferDesc.ByteWidth = sizeof(DWORD) * NumSphereFaces * 3;
 		indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		indexBufferDesc.CPUAccessFlags = 0;
 		indexBufferDesc.MiscFlags = 0;
-
 		D3D11_SUBRESOURCE_DATA iinitData;
-
 		iinitData.pSysMem = &indices[0];
 		d3d11Device->CreateBuffer(&indexBufferDesc, &iinitData, &sphereIndexBuffer);
 	}
-	void InitSkyBox()
-	{
-		//Tell D3D we will be loading a cube texture
-		D3DX11_IMAGE_LOAD_INFO loadSMInfo;
-		loadSMInfo.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
-
-		//Load the texture
-		ID3D11Texture2D* SMTexture = 0;
-		D3DX11CreateTextureFromFile(d3d11Device, "skymap.dds",
-			&loadSMInfo, 0, (ID3D11Resource**)&SMTexture, 0);
-
-		//Create the textures description
-		D3D11_TEXTURE2D_DESC SMTextureDesc;
-		SMTexture->GetDesc(&SMTextureDesc);
-
-		//Tell D3D We have a cube texture, which is an array of 2D textures
-		D3D11_SHADER_RESOURCE_VIEW_DESC SMViewDesc;
-		SMViewDesc.Format = SMTextureDesc.Format;
-		SMViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
-		SMViewDesc.TextureCube.MipLevels = SMTextureDesc.MipLevels;
-		SMViewDesc.TextureCube.MostDetailedMip = 0;
-
-		//Create the Resource view
-		d3d11Device->CreateShaderResourceView(SMTexture, &SMViewDesc, &smrv);
-
-	}
 private: // обновление сцены
+	void SetPointLight()
+	{
+		Light Light;
+		Light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		Light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
+		Light.range = 100.0f;
+		Light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
+		Light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		Cbuffers.cbPerFrame.light = Light;
+		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.cbPerFrame, 0, 0);
+		d3d11DevCon->PSSetConstantBuffers(1, 1, &cbPerFrameBuffer);
+	}
+	void SetSunLight()
+	{
+		Light Light;
+		Light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		Light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		Cbuffers.cbPerFrame.light = Light;
+
+		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.cbPerFrame, 0, 0);
+		d3d11DevCon->PSSetConstantBuffers(1, 1, &cbPerFrameBuffer);
+	}
+	void SetViewPort(int Wight, int Heignt, int x, int y, float MaxD, float MinD) {
+		D3D11_VIEWPORT viewport;
+		ZeroMemory(&viewport, sizeof(D3D11_VIEWPORT));
+		viewport.TopLeftX = x;
+		viewport.TopLeftY = y;
+		viewport.Width = Wight;
+		viewport.Height = Heignt;
+		viewport.MaxDepth = 1.0f;
+		viewport.MinDepth = 0.0f;
+		d3d11DevCon->RSSetViewports(1, &viewport);
+	}
+	void SetTransform(Position pos, Rotation rot, Size size, XMMATRIX& obj)
+	{
+		obj = XMMatrixIdentity();
+		obj = XMMatrixTranslation(pos.x, pos.y, pos.z)
+			* XMMatrixScaling(size.x, size.y, size.z)
+			* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
+			* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
+			* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z));
+
+
+		
+
+		WorldPos.World = XMMatrixIdentity();
+		WorldPos.WVP = obj * Camera.camView * Camera.camProjection;
+		Cbuffers.cbPerObj.World = XMMatrixTranspose(obj);
+		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
+		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
+		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+	}	
+	void SetTransform(XMVECTOR pos, Size size, XMMATRIX& obj)
+	{
+		obj = XMMatrixIdentity();
+		obj = XMMatrixScaling(size.x, size.y, size.z)
+			* XMMatrixTranslationFromVector(pos);
+
+		WorldPos.World = XMMatrixIdentity();
+		WorldPos.WVP = obj * Camera.camView * Camera.camProjection;
+		Cbuffers.cbPerObj.World = XMMatrixTranspose(obj);
+		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
+		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
+		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+	}
+
 
 private: //обновление графики
+	void CrearViewPort()
+	{
+		D3DXCOLOR bgColor(Property.red, Property.green, Property.blue, 0.0f);
+		d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
+		d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
+	}
 	void UpdateText(std::wstring text, int inInt)
 	{
+		d3d11DevCon->OMSetDepthStencilState(NULL, 0);
+		d3d11DevCon->VSSetShader(VS, 0, 0);
+		d3d11DevCon->IASetInputLayout(VertLayout);
+		d3d11DevCon->IASetVertexBuffers(0, 1, &SquareVertexBuffer, &stride, &offset);
+		d3d11DevCon->IASetIndexBuffer(SquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 		keyedMutex11->ReleaseSync(0);
 
 		keyedMutex10->AcquireSync(0, 5);
@@ -924,8 +965,10 @@ private: //обновление графики
 
 		d3d11DevCon->OMSetBlendState(Transparency, NULL, 0xffffffff);
 
-		//d3d11DevCon->PSSetShader(D2D_PS, 0, 0);
+		d3d11DevCon->RSSetState(CWcullMode);
 
+
+		d3d11DevCon->PSSetShader(D2D_PS, 0, 0);
 		WorldPos.WVP = XMMatrixIdentity();
 		Cbuffers.cbPerObj.World = XMMatrixTranspose(WorldPos.WVP);
 		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
@@ -934,60 +977,60 @@ private: //обновление графики
 		d3d11DevCon->PSSetShaderResources(0, 1, &d2dTexture);
 		d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 
-		d3d11DevCon->RSSetState(CWcullMode);
-
 		d3d11DevCon->DrawIndexed(6, 0, 0);
 	}
-	void UpdateLight()
+	void BlendObject(ID3D11BlendState* Surface, Transparens Trans)
 	{
-		Light Light;
-		XMVECTOR lightVector = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-
-		lightVector = XMVector3TransformCoord(lightVector, Property.ResultOBJ);
-
-		Light.pos.x = XMVectorGetX(lightVector);
-		Light.pos.y = XMVectorGetY(lightVector);
-		Light.pos.z = XMVectorGetZ(lightVector);
+		float blendFactor[] = { Trans.x, Trans.y, Trans.z, Trans.a };
+		d3d11DevCon->OMSetBlendState(Surface, blendFactor, 0xffffffff);
 	}
-	void UpdateBlend()
+	void SetColor(Color color)
+	{	
+		Cbuffers.cbPerColor.color.x = color.color.x;
+		Cbuffers.cbPerColor.color.y = color.color.y;
+		Cbuffers.cbPerColor.color.z = color.color.z;
+		Cbuffers.cbPerColor.color.w = color.color.w;
+		d3d11DevCon->UpdateSubresource(cbPerColorBuffer, 0, NULL, &Cbuffers.cbPerColor, 0, 0);
+		d3d11DevCon->PSSetConstantBuffers(2, 1, &cbPerColorBuffer);
+	}
+	void DrawViewObj(MOD_VISIBLE mod, ID3D11ShaderResourceView** tex, ID3D11SamplerState** sample, UINT size)
 	{
-		float blendFactor[] = { 0.1f, 0.1f, 0.1f, 0.2f };
-		d3d11DevCon->OMSetBlendState(0, 0, 0xffffffff);
-		d3d11DevCon->OMSetBlendState(Transparency, blendFactor, 0xffffffff);
+		d3d11DevCon->PSSetShaderResources(0, 1, tex);
+		d3d11DevCon->PSSetSamplers(0, 1, sample);
+
+		if (mod == MOD_VISIBLE::OUTSIDE_ONLY)
+		{
+			d3d11DevCon->RSSetState(CWcullMode);
+			d3d11DevCon->DrawIndexed(size, 0, 0);
+			return;
+		}
+		else if (mod == MOD_VISIBLE::INSIDE_ONLY)
+		{
+			d3d11DevCon->RSSetState(CCWcullMode);
+			d3d11DevCon->DrawIndexed(size, 0, 0);
+			return;
+		}
+		else if (mod == MOD_VISIBLE::OUT_IN_SIDE)
+		{
+			d3d11DevCon->RSSetState(CCWcullMode);
+			d3d11DevCon->DrawIndexed(size, 0, 0);
+			d3d11DevCon->RSSetState(CWcullMode);
+			d3d11DevCon->DrawIndexed(size, 0, 0);
+			return;
+		}
 	}
-	void UpdateViewObj(XMMATRIX cubeWorld)
+	void UpdateCamera()
 	{
 		Camera.camStartPos = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
 		Camera.camStartTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		Camera.camUp = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-		WorldPos.World = XMMatrixIdentity();
-
-		WorldPos.WVP = cubeWorld * Camera.camView * Camera.camProjection;
-		Cbuffers.cbPerObj.World = XMMatrixTranspose(cubeWorld);
-		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
-		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
-		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-
-		d3d11DevCon->PSSetShaderResources(0, 1, &CubesTexture);
-		d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
-
-		d3d11DevCon->RSSetState(CCWcullMode);
-		//d3d11DevCon->RSSetState(NULL);
-		d3d11DevCon->DrawIndexed(36, 0, 0);
-		d3d11DevCon->RSSetState(CWcullMode);
-		//d3d11DevCon->RSSetState(noCull);
-		d3d11DevCon->DrawIndexed(36, 0, 0);
-	}
-	void UpdateCamera()
-	{
 		Camera.camRotationMatrix = XMMatrixRotationRollPitchYaw(Camera.camPitch, Camera.camYaw, 0.0f);
 		Camera.camTarget = XMVector3TransformCoord(Camera.DefaultForward, Camera.camRotationMatrix);
 		Camera.camTarget = XMVector3Normalize(Camera.camTarget);
 
 		XMMATRIX RotateYTempMatrix;
 		RotateYTempMatrix = XMMatrixRotationY(Camera.camYaw);
-
 
 		//режим полета
 		if (true)
@@ -1067,115 +1110,124 @@ private: //обновление графики
 		}
 
 	};
-	void UpdateSkyBox()
-	{
-		sphereWorld = XMMatrixIdentity();
-		Property.Scale = XMMatrixScaling(5.0f, 5.0f, 5.0f);
-		Property.Translation = XMMatrixTranslation(XMVectorGetX(Camera.camPosition), XMVectorGetY(Camera.camPosition), XMVectorGetZ(Camera.camPosition));
-		sphereWorld = Property.Scale * Property.Translation;
-		UINT stride = sizeof(VertexNormal);
-		UINT offset = 0;
-		d3d11DevCon->IASetIndexBuffer(sphereIndexBuffer, DXGI_FORMAT_R32_UINT, 0);  // ошибка в том что индексы обычного блока удаляются!!!!!! нужно сделать последовательность
-		d3d11DevCon->IASetVertexBuffers(0, 1, &sphereVertBuffer, &stride, &offset);
-
-		//Cbuffers.cbPerObj.WVP = sphereWorld * Camera.camView * Camera.camProjection;
-		//Cbuffers.cbPerObj.WVP = XMMatrixTranspose(Cbuffers.cbPerObj.WVP);
-		//Cbuffers.cbPerObj.World = XMMatrixTranspose(sphereWorld);
-		//d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
-		//d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-		//d3d11DevCon->PSSetShaderResources(0, 1, &smrv);
-		//d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
-	/*	d3d11DevCon->VSSetShader(SKYMAP_VS, 0, 0);
-		d3d11DevCon->PSSetShader(SKYMAP_PS, 0, 0);
-		d3d11DevCon->OMSetDepthStencilState(DSLessEqual, 0);
-		d3d11DevCon->RSSetState(RSCullNone);
-		d3d11DevCon->DrawIndexed(NumSphereFaces * 3, 0, 0);
-		d3d11DevCon->VSSetShader(VS, 0, 0);*/
-		//d3d11DevCon->OMSetDepthStencilState(NULL, 0);
-	}
 public:
 	bool GetHR;
 
 	D3DEX(HINSTANCE hInstance)
 	{
 		GetHR = InitializeDirect3dApp(hInstance);
-		InitD2DScreenTexture();
+
 		InitShapeSphere(10, 10);
-		InitDirectInput(hInstance);
-		InitConstBuffer();
-		InitShaders();
-		InitSkyBox();
-		InitVertexBuffer();
-		InitIndexBuffer();
-		InitBlendMaterial();
-		InitModBlending();
-		InitImageTexture();
-		InitCamera();
-		//InitPointLight();
-		InitRasterized();
-		InitSunLight();
-		InitLayoutModel();
+
+		CreateDirectInput(hInstance);
+
+		CreateModuleDX(CONSTANTA_0, NULLBUFFER, sizeof(Cbuffers.cbPerObj), &cbPerObjectBuffer);
+		CreateModuleDX(CONSTANTA_0, NULLBUFFER, sizeof(Cbuffers.cbPerFrame), &cbPerFrameBuffer);
+		CreateModuleDX(CONSTANTA_0, NULLBUFFER, sizeof(Cbuffers.cbPerColor), &cbPerColorBuffer);
+
+
+		CreateModuleDX(SH_VS0, &VS, "Effect.fx", "VS", &VS_Buffer);
+		CreateModuleDX(SH_PS0, &PS, "Effect.fx", "PS", &PS_Buffer);
+		CreateModuleDX(SH_PS0, &D2D_PS, "Effect.fx", "D2D_PS", &D2D_PS_Buffer);
+		CreateModuleDX(SH_VS0, &SKYMAP_VS, "Effect.fx", "SKYMAP_VS", &SKYMAP_VS_Buffer);
+		CreateModuleDX(SH_PS0, &SKYMAP_PS, "Effect.fx", "SKYMAP_PS", &SKYMAP_PS_Buffer);
+
+		CreateModuleDX(VERTEX_0, Plane_V, sizeof(Plane_V), &d2dVertBuffer);
+		CreateModuleDX(INDEX_0, Plane_I, sizeof(Plane_I), &d2dIndexBuffer);
+		CreateModuleDX(VERTEX_0, Block_V, sizeof(Block_V), &SquareVertexBuffer);
+		CreateModuleDX(INDEX_0, Block_I, sizeof(Block_I), &SquareIndexBuffer);
+
+		CreateModuleDX(BLEND_0, &Transparency);
+		CreateModuleDX(TEXTURE_0, &CubesTexture, "block.jpg");
+		CreateModuleDX(TEXTURE_1, &SMTexture, "skymap.dds");
+		BindModuls(TEXTURE_1, &SMTexture, &smrv);
+
+		CreateModuleDX(SAMPLER_0, &CubesTexSamplerState);
+		CreateModuleDX(SAMPLER_0, &SpeherTexSamplerState);
+
+		CreateModuleDX(RUSTER_0, &WireFrame);
+		CreateModuleDX(RUSTER_0, &RSCullNone);
+		CreateModuleDX(RUSTER_1, &CCWcullMode);
+		CreateModuleDX(RUSTER_2, &CWcullMode);
+		CreateModuleDX(RUSTER_3, &noCull);
+
+		CreateModuleDX(DEPTH_0, &DSLessEqual);
+		CreateModuleDX(LAYER_0, &VertLayout, VS_Buffer);
+		CreateModuleDX(LAYER_1, &VertSpeherLayout, SKYMAP_VS_Buffer);
+		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
+
+		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
+		SetPointLight();
+		SetSunLight();
 		d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		InitViewPort();
 	};
-	
+
 
 	void UpdateDX(double time)
-	{
-		if (GetAsyncKeyState('R')) // RESET FX IN JUST TIME
-			InitShaders();
-
+	{   
+		CrearViewPort();
 		UpdateInput(time);
 		UpdateCamera();
-		UpdateLight();
+		test_timer += 20 * time;
+
+		d3d11DevCon->VSSetShader(VS, 0, 0);
+		d3d11DevCon->PSSetShader(PS, 0, 0);
+		d3d11DevCon->IASetVertexBuffers(0, 1, &SquareVertexBuffer, &stride, &offset);
+		d3d11DevCon->IASetIndexBuffer(SquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		d3d11DevCon->RSSetState(WireFrame);
+		d3d11DevCon->IASetInputLayout(VertLayout);
+		d3d11DevCon->OMSetDepthStencilState(NULL, 0);
+
+		BlendObject(Transparency, Transparens(0.1, 0.1, 0.1, 1));
+		SetTransform(Position(0, 0, 0), Rotation(0, test_timer, test_timer), Size(5, 5, 5), Property.OBJBox);
+		SetColor(Color(1,1,1,1));
+		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
+		
+
+		SetTransform(Position(5, 0, 0), Rotation(0, test_timer, test_timer), Size(5, 5, 5), Property.OBJBox);
+		BlendObject(Transparency, Transparens(0.1, 0.1, 0.1, 1));
+		SetColor(Color(0, 1, 1, 1));
+		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
+
+
+		SetTransform(Position(5, 5, 0), Rotation(0, test_timer, test_timer), Size(5, 5, 5), Property.OBJBox);
+		BlendObject(Transparency, Transparens(0.1, 0.1, 0.1, 1));
+		SetColor(Color(1, 0, 1, 1));
+		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
 
 
 
-		Property.ResultOBJ = XMMatrixIdentity();
+		d3d11DevCon->VSSetShader(SKYMAP_VS, 0, 0);
+		d3d11DevCon->PSSetShader(SKYMAP_PS, 0, 0);
+		d3d11DevCon->IASetInputLayout(VertSpeherLayout);
+		d3d11DevCon->IASetVertexBuffers(0, 1, &sphereVertBuffer, &stride, &offset);
+		d3d11DevCon->IASetIndexBuffer(sphereIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+		d3d11DevCon->OMSetDepthStencilState(DSLessEqual, 0);
 
-		XMVECTOR rotaxis = XMVectorSet(1.f, 0.0f, 0.0f, 0.0f);
-		XMVECTOR rotayis = XMVectorSet(0.0f, 1.f, 0.0f, 0.0f);
-		XMVECTOR rotazis = XMVectorSet(0.0f, 0.0f, 1.f, 0.0f);
-
-		Property.Rotationx = XMMatrixRotationAxis(rotaxis, 0);
-		Property.Rotationy = XMMatrixRotationAxis(rotayis, 0);
-		Property.Rotationz = XMMatrixRotationAxis(rotayis, 0);
-
-		Property.Translation = XMMatrixTranslation(0, -2, 0);
-
-		Property.Scale = XMMatrixScaling(20.f, 1.f, 20.f);
-
-		Property.ResultOBJ = Property.Translation * Property.Scale;
-
-
-		D3DXCOLOR bgColor(Property.red, Property.green, Property.blue, 0.0f);
-		d3d11DevCon->ClearRenderTargetView(renderTargetView, bgColor);
-		d3d11DevCon->ClearDepthStencilView(depthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0, 0);
-
-
-		//UpdateSkyBox();
+		SetTransform(
+			Camera.camPosition,
+			Size(50.0f, 50.0f, 50.0f),
+			sphereWorld);
+		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &smrv, &SpeherTexSamplerState, NumSphereFaces * 3);
 
 
 
-		UpdateBlend();
-		UpdateViewObj(Property.ResultOBJ);
+
+		SetColor(Color(1, 1, 1, 1)); // цвет для текста
 		UpdateText(L"   FPS: ", Timer.fps);
 		SwapChain->Present(0, 0);
 	};
 
 
-	//испрвить индексный буфер а если быть точнее распределить такие части как:
-	// создание 1 раз
-	// обновление изменений на сцене
-	// рендер графики последовательно и логично
-
-
-	void CleanAPP() {
+	~D3DEX()
+	{
 		SwapChain->SetFullscreenState(false, NULL);
 		PostMessage(Window.hWND, WM_DESTROY, 0, 0);
+
 		SwapChain->Release();
 		d3d11Device->Release();
 		d3d11DevCon->Release();
+		renderTargetView->Release();
 		SquareVertexBuffer->Release();
 		SquareIndexBuffer->Release();
 		VS->Release();
@@ -1183,16 +1235,16 @@ public:
 		VS_Buffer->Release();
 		PS_Buffer->Release();
 		VertLayout->Release();
-		depthStencilView->Release();
-		depthStencilBuffer->Release();
 		cbPerObjectBuffer->Release();
-		//WireFrame->Release();
+		WireFrame->Release();
 		CubesTexture->Release();
 		CubesTexSamplerState->Release();
 		Transparency->Release();
 		CCWcullMode->Release();
 		CWcullMode->Release();
 		noCull->Release();
+		depthStencilView->Release();
+		depthStencilBuffer->Release();
 		d3d101Device->Release();
 		keyedMutex11->Release();
 		keyedMutex10->Release();
@@ -1200,17 +1252,15 @@ public:
 		Brush->Release();
 		BackBuffer11->Release();
 		sharedTex11->Release();
+		d2dVertBuffer->Release();
+		d2dIndexBuffer->Release();
+		d2dTexture->Release();
 		DWriteFactory->Release();
 		TextFormat->Release();
-		d2dTexture->Release();
 		cbPerFrameBuffer->Release();
+		cbPerColorBuffer->Release();
 		D2D_PS->Release();
 		D2D_PS_Buffer->Release();
-
-		DIKeyboard->Unacquire();
-		DIMouse->Unacquire();
-		ControlInput.DirectInput->Release();
-
 		sphereIndexBuffer->Release();
 		sphereVertBuffer->Release();
 		SKYMAP_VS->Release();
@@ -1220,59 +1270,62 @@ public:
 		smrv->Release();
 		DSLessEqual->Release();
 		RSCullNone->Release();
-	};	
+		SMTexture->Release();
+		DIKeyboard->Release();
+		DIMouse->Release();
+	}
 private:
-	IDXGISwapChain* SwapChain;
-	ID3D11Device* d3d11Device;
-	ID3D11DeviceContext* d3d11DevCon;
-	ID3D11RenderTargetView* renderTargetView;
-	ID3D11Buffer* SquareVertexBuffer;
-	ID3D11Buffer* SquareIndexBuffer;
-	ID3D11VertexShader* VS;
-	ID3D11PixelShader* PS;
-	ID3D10Blob* VS_Buffer;
-	ID3D10Blob* PS_Buffer;
-	ID3D11InputLayout* VertLayout;
-	ID3D11Buffer* cbPerObjectBuffer;
-	ID3D11RasterizerState* WireFrame;
-	ID3D11ShaderResourceView* CubesTexture;
-	ID3D11SamplerState* CubesTexSamplerState;
-	ID3D11BlendState* Transparency;
-	ID3D11RasterizerState* CCWcullMode;
-	ID3D11RasterizerState* CWcullMode;
-	ID3D11RasterizerState* noCull;
-	ID3D11DepthStencilView* depthStencilView;
-	ID3D11Texture2D* depthStencilBuffer;
-	ID3D10Device1* d3d101Device;
-	IDXGIKeyedMutex* keyedMutex11;
-	IDXGIKeyedMutex* keyedMutex10;
-	ID2D1RenderTarget* D2DRenderTarget;
-	ID2D1SolidColorBrush* Brush;
-	ID3D11Texture2D* BackBuffer11;
-	ID3D11Texture2D* sharedTex11;
-	ID3D11Buffer* d2dVertBuffer;
-	ID3D11Buffer* d2dIndexBuffer;
-	ID3D11ShaderResourceView* d2dTexture;
-	IDWriteFactory* DWriteFactory;
-	IDWriteTextFormat* TextFormat;
+	IDXGISwapChain*				SwapChain;
+	ID3D11Device*				d3d11Device;
+	ID3D11DeviceContext*		d3d11DevCon;
+	ID3D11RenderTargetView*		renderTargetView;
+	ID3D11Buffer*				SquareVertexBuffer;
+	ID3D11Buffer*				SquareIndexBuffer;
+	ID3D11VertexShader*			VS;
+	ID3D11PixelShader*			PS;
+	ID3D10Blob*					VS_Buffer;
+	ID3D10Blob*					PS_Buffer;
+	ID3D11InputLayout*			VertLayout;
+	ID3D11InputLayout*			VertSpeherLayout;
+	ID3D11Buffer*				cbPerObjectBuffer;
+	ID3D11RasterizerState*		WireFrame;
+	ID3D11ShaderResourceView*	CubesTexture;
+	ID3D11SamplerState*			CubesTexSamplerState;
+	ID3D11SamplerState*			SpeherTexSamplerState;
+	ID3D11BlendState*			Transparency;
+	ID3D11RasterizerState*		CCWcullMode;
+	ID3D11RasterizerState*		CWcullMode;
+	ID3D11RasterizerState*		noCull;
+	ID3D11DepthStencilView*		depthStencilView;
+	ID3D11Texture2D*			depthStencilBuffer;
+	ID3D10Device1*				d3d101Device;
+	IDXGIKeyedMutex*			keyedMutex11;
+	IDXGIKeyedMutex*			keyedMutex10;
+	ID2D1RenderTarget*			D2DRenderTarget;
+	ID2D1SolidColorBrush*		Brush;
+	ID3D11Texture2D*			BackBuffer11;
+	ID3D11Texture2D*			sharedTex11;
+	ID3D11Buffer*				d2dVertBuffer;
+	ID3D11Buffer*				d2dIndexBuffer;
+	ID3D11ShaderResourceView*	d2dTexture;
+	IDWriteFactory*				DWriteFactory;
+	IDWriteTextFormat*			TextFormat;
+	ID3D11Buffer*				cbPerFrameBuffer;
+	ID3D11Buffer*				cbPerColorBuffer;
+	ID3D11PixelShader*			D2D_PS;
+	ID3D10Blob*					D2D_PS_Buffer;
+	ID3D11Buffer*				sphereIndexBuffer;
+	ID3D11Buffer*				sphereVertBuffer;
+	ID3D11VertexShader*			SKYMAP_VS;
+	ID3D11PixelShader*			SKYMAP_PS;
+	ID3D10Blob*					SKYMAP_VS_Buffer;
+	ID3D10Blob*					SKYMAP_PS_Buffer;
+	ID3D11ShaderResourceView*	smrv;
+	ID3D11DepthStencilState*	DSLessEqual;
+	ID3D11RasterizerState*		RSCullNone;
+	ID3D11Texture2D*			SMTexture;
+	IDirectInputDevice8*		DIKeyboard;
+	IDirectInputDevice8*		DIMouse;
 	std::wstring printText;
-	ID3D11Buffer* cbPerFrameBuffer;
-	ID3D11PixelShader* D2D_PS;
-	ID3D10Blob* D2D_PS_Buffer;
-
-	IDirectInputDevice8* DIKeyboard;
-	IDirectInputDevice8* DIMouse;
-
-	ID3D11Buffer* sphereIndexBuffer;
-	ID3D11Buffer* sphereVertBuffer;
-
-	ID3D11VertexShader* SKYMAP_VS;
-	ID3D11PixelShader* SKYMAP_PS;
-	ID3D10Blob* SKYMAP_VS_Buffer;
-	ID3D10Blob* SKYMAP_PS_Buffer;
-
-	ID3D11ShaderResourceView* smrv;
-
-	ID3D11DepthStencilState* DSLessEqual;
-	ID3D11RasterizerState* RSCullNone;
+	float test_timer = 0;
 };

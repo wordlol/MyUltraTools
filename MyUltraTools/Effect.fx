@@ -8,15 +8,20 @@ struct Light
     float4 diffuse;
 };
 
-cbuffer cbPerObject
+cbuffer cbPerObject : register(b0)
 {
     float4x4 WVP;
     float4x4 World;
 };
 
-cbuffer cbPerFrame
+cbuffer cbPerFrame : register(b1)
 {
     Light light;
+};
+
+cbuffer cbPerColor : register(b2)
+{
+    float4 color;
 };
 
 
@@ -27,9 +32,9 @@ TextureCube SkyMap;
 struct VS_OUTPUT
 {
     float4 Pos : SV_POSITION;
-    float4 worldPos : POSITION;
     float2 TexCoord : TEXCOORD;
     float3 normal : NORMAL;
+    float4 worldPos : POSITION;
 };
 
 struct SKYMAP_VS_OUTPUT
@@ -49,12 +54,11 @@ VS_OUTPUT VS(float4 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 norma
     return output;
 }
 
-SKYMAP_VS_OUTPUT SKYMAP_VS(float3 inPos : POSITION, float2 inTexCoord : TEXCOORD, float3 normal : NORMAL)
+SKYMAP_VS_OUTPUT SKYMAP_VS(float4 inPos : POSITION, float3 inTexCoord : TEXCOORD)
 {
-    SKYMAP_VS_OUTPUT output = (SKYMAP_VS_OUTPUT) 0;
-
-    output.Pos = mul(float4(inPos, 1.0f), WVP).xyww;
-
+    SKYMAP_VS_OUTPUT output;
+    
+    output.Pos = mul(float4(inPos.rgb, 1.0f), WVP).xyww;
     output.texCoord = inPos;
 
     return output;
@@ -104,10 +108,11 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
     clip(diffuse.a - .25);
     float3 finalColor;
-
+    
     finalColor = diffuse * light.ambient;
     finalColor += saturate(dot(light.dir, input.normal) * light.diffuse * diffuse);
-    return float4(finalColor, diffuse.a);
+
+    return float4(finalColor * float3(color.rgb), diffuse.a);
 }
 
 float4 SKYMAP_PS(SKYMAP_VS_OUTPUT input) : SV_Target
