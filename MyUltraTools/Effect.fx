@@ -13,6 +13,9 @@ cbuffer cbPerObject : register(b0)
 {
     float4x4 WVP;
     float4x4 World;
+    
+    float4 difColor;
+    bool hasTexture;
 };
 
 cbuffer cbPerFrame : register(b1)
@@ -65,11 +68,16 @@ SKYMAP_VS_OUTPUT SKYMAP_VS(float4 inPos : POSITION, float3 inTexCoord : TEXCOORD
     return output;
 }
 
+
 float4 PS(VS_OUTPUT input) : SV_TARGET
 {
     input.normal = normalize(input.normal);
 
     float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
+
+    if (hasTexture == true)
+        diffuse = difColor;
+    
     clip(diffuse.a - .25);
     float3 finalColor = float3(0.0f, 0.0f, 0.0f);
     
@@ -86,13 +94,16 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
 
     float howMuchLight = dot(lightToPixelVec, input.normal);
 
-    finalColor += diffuse * light.diffuse;          
+    finalColor += diffuse * light.diffuse;
     finalColor /= (light.att[0] + (light.att[1] * d)) + (light.att[2] * (d * d));
     finalColor *= pow(max(dot(-lightToPixelVec, light.dir), 0.0f), light.cone);
     finalColor = saturate(finalColor + finalAmbient);
     
     return float4(finalColor * float3(color.rgb), diffuse.a);
 }
+
+
+
 
 
 //float4 PS(VS_OUTPUT input) : SV_TARGET

@@ -21,6 +21,9 @@
 #include <dwrite.h>
 #include <dinput.h>
 #include <vector>
+#include <fstream>
+#include <istream>
+
 bool nullbuffer_element[1] = {};
 #define NULLBUFFER nullbuffer_element
 
@@ -209,12 +212,24 @@ struct Color
 
 	XMFLOAT4 color;
 };
+struct SurfaceMaterial
+{
+	std::wstring matName;
+	XMFLOAT4 difColor;
+	int texArrayIndex;
+	bool hasTexture;
+	bool transparent;
+};
+std::vector<SurfaceMaterial> material;
 
 struct {
 	struct cbPerObject
 	{
 		XMMATRIX  WVP;
 		XMMATRIX  World;
+
+		XMFLOAT4 difColor;
+		bool hasTexture;
 	}cbPerObj;
 	struct cbPerFrame
 	{
@@ -356,6 +371,7 @@ enum MOD_VISIBLE
 	INSIDE_ONLY,
 	OUTSIDE_ONLY,
 	OUT_IN_SIDE,
+	MODEL,
 	NO_VISIBLE
 };
 enum MOD_ROTATION
@@ -619,6 +635,187 @@ private:
 		d3d11DevCon->IASetInputLayout(Layout);
 		d3d11DevCon->OMSetDepthStencilState(Depth, 0);
 	}
+
+
+	void LoadObjModel(std::wstring filename,
+		ID3D11Buffer** vertBuff,
+		ID3D11Buffer** indexBuff)
+	{
+		HRESULT hr = 0;
+
+		std::wifstream fileIn(filename.c_str()); 
+		std::wstring meshMatLib;                 
+
+		std::vector<DWORD> indices;
+		std::vector<XMFLOAT3> vertPos;
+		std::vector<XMFLOAT3> vertNorm;
+		std::vector<XMFLOAT2> vertTexCoord;
+		std::vector<std::wstring> meshMaterials;
+		std::vector<std::wstring> meshTex;
+		std::wstring meshMaterialsTemp;
+		wchar_t checkChar;        
+		std::vector<DWORD> indVert;
+		std::vector<DWORD> indNorm;
+		std::vector<DWORD> indTex;
+		std::vector<Vertex> vertices;
+
+		while (fileIn)
+		{
+			checkChar = fileIn.get();
+
+			switch (checkChar)
+			{
+			case '#':
+				{
+					checkChar = fileIn.get();
+					while (checkChar != '\n')
+						checkChar = fileIn.get();
+					break;
+				}
+			case 'v': 
+				{
+					checkChar = fileIn.get();
+					if (checkChar == ' ')
+					{
+						float vz, vy, vx;
+						fileIn >> vx >> vy >> vz;
+						vertPos.push_back(XMFLOAT3(vx, vy, vz));
+					}
+					else if (checkChar == 't')
+					{
+						float vtcu, vtcv;
+						fileIn >> vtcu >> vtcv;
+						vertTexCoord.push_back(XMFLOAT2(vtcu, vtcv));
+					}
+					else if (checkChar == 'n')
+					{
+						float vnx, vny, vnz;
+						fileIn >> vnx >> vny >> vnz;
+						vertNorm.push_back(XMFLOAT3(vnx, vny, vnz));
+					}
+					break;
+				}
+			case 'f':
+				{
+					checkChar = fileIn.get();
+					if (checkChar == ' ')
+					{
+						int num = 0;
+						while (true)
+						{
+							num++;
+							std::wstring sss;
+							fileIn >> sss;
+							int a, b, c;
+							swscanf_s(sss.c_str(), L"%d/%d/%d", &a, &b, &c);
+
+
+							Vertex tempVert;
+							tempVert.pos = vertPos[a - 1];
+							tempVert.texCoord = vertTexCoord[b - 1];
+							tempVert.normal = vertNorm[c - 1];
+
+							vertices.push_back(tempVert);
+							indices.push_back(a-1);
+
+							checkChar = fileIn.get();
+							if (sss.c_str() == L"f" || num == 3)
+								break;
+						}
+					}
+					break;
+				}
+			case 'm': 
+				{
+					checkChar = fileIn.get();
+					if (checkChar == 't')
+					{
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						fileIn >> meshMatLib;
+					}
+					break;
+				}
+			case 'u': 
+				{
+					checkChar = fileIn.get();
+					checkChar = fileIn.get();
+					checkChar = fileIn.get();
+					checkChar = fileIn.get();
+					checkChar = fileIn.get();
+					checkChar = fileIn.get();
+					if (checkChar == ' ')
+					{
+						meshMaterialsTemp = L""; 
+						fileIn >> meshMaterialsTemp;
+						meshMaterials.push_back(meshMaterialsTemp);
+					}
+					break;
+				}
+			case 'g':
+				{
+					checkChar = fileIn.get();
+					break;
+				}
+			case 's':
+				{
+					checkChar = fileIn.get();
+					break;
+				}
+			default:
+				break;
+			}
+		}
+
+		fileIn.close();
+		fileIn.open(meshMatLib.c_str());
+		while (fileIn)
+		{
+			checkChar = fileIn.get(); 
+			switch (checkChar)
+			{
+			case 'm':
+			{
+				std::wstring tex;
+				checkChar = fileIn.get();
+				if (checkChar == 'a')
+				{
+					checkChar = fileIn.get();
+					if (checkChar == 'p')
+					{
+						while (true)
+						{
+							checkChar = fileIn.get();
+							if (checkChar == ' ')
+							{
+								fileIn >> tex;
+									ID3D11ShaderResourceView* tempMeshSRV;
+									D3DX11CreateShaderResourceViewFromFileW(d3d11Device, tex.c_str(),
+										NULL, NULL, &tempMeshSRV, NULL);
+								meshSRV.push_back(tempMeshSRV);
+								meshTex.push_back(tex);
+								break;
+							}
+						}
+					}
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+		fileIn.close();
+
+		meshSubsetIndexStart = indices.size() * 3;
+		CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * vertices.size(), vertBuff);
+		CreateModuleDX(INDEX_0, &indices[0], sizeof(DWORD) * indices.size() * 3, indexBuff);
+	}
+
+
 private: //системы
 	void CreateDirectInput(HINSTANCE hInstance) {
 
@@ -847,32 +1044,8 @@ private: //создание
 		indices[k + 1] = (NumSphereVertices - 1) - LongLines;
 		indices[k + 2] = NumSphereVertices - 2;
 
-		/*CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * NumSphereVertices, &sphereVertBuffer);
-		CreateModuleDX(INDEX_0, &vertices[0], sizeof(DWORD) * NumSphereFaces * 3, &sphereIndexBuffer);*/
-
-		D3D11_BUFFER_DESC vertexBufferDesc;
-		ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-		vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		vertexBufferDesc.ByteWidth = sizeof(Vertex) * NumSphereVertices;
-		vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-		vertexBufferDesc.CPUAccessFlags = 0;
-		vertexBufferDesc.MiscFlags = 0;
-		D3D11_SUBRESOURCE_DATA vertexBufferData;
-		ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-		vertexBufferData.pSysMem = &vertices[0];
-		d3d11Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &sphereVertBuffer);
-
-
-		D3D11_BUFFER_DESC indexBufferDesc;
-		ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-		indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-		indexBufferDesc.ByteWidth = sizeof(DWORD) * NumSphereFaces * 3;
-		indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		indexBufferDesc.CPUAccessFlags = 0;
-		indexBufferDesc.MiscFlags = 0;
-		D3D11_SUBRESOURCE_DATA iinitData;
-		iinitData.pSysMem = &indices[0];
-		d3d11Device->CreateBuffer(&indexBufferDesc, &iinitData, &sphereIndexBuffer);
+		CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * NumSphereVertices, &sphereVertBuffer);
+		CreateModuleDX(INDEX_0, &indices[0], sizeof(DWORD) * NumSphereFaces * 3, &sphereIndexBuffer);
 	}
 private: // обновление сцены
 	void SetPointLight()
@@ -951,6 +1124,37 @@ private: // обновление сцены
 		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
 		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	}	
+	void SetTransform(Position pos, Rotation rot, Size size, XMMATRIX& obj, MOD_ROTATION mod, bool hasT)
+	{
+		if (mod == MOD_ROTATION::LOCAL)
+		{
+			obj = XMMatrixIdentity();
+			obj = XMMatrixScaling(size.x, size.y, size.z)
+				* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z))
+				* XMMatrixTranslation(pos.x, pos.y, pos.z);
+		}
+		else if (mod == MOD_ROTATION::WORLD)
+		{
+			obj = XMMatrixIdentity();
+			obj = XMMatrixScaling(size.x, size.y, size.z)
+				* XMMatrixTranslation(pos.x, pos.y, pos.z)
+				* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z));
+		}
+
+		WorldPos.World = XMMatrixIdentity();
+		WorldPos.WVP = obj * Camera.camView * Camera.camProjection;
+		Cbuffers.cbPerObj.World = XMMatrixTranspose(obj);
+		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
+		Cbuffers.cbPerObj.difColor = XMFLOAT4(0.f, 0.f, 0.f, 0.f);
+		Cbuffers.cbPerObj.hasTexture = hasT;
+
+		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
+		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
+	}
 	void SetTransform(XMVECTOR pos, Size size, XMMATRIX& obj)
 	{
 		obj = XMMatrixIdentity();
@@ -1199,19 +1403,15 @@ private:
 			SetTransform(pos, rot, size, Property.OBJBox, mod_rot);
 			DrawViewObj(Visible, &CubesTexture, &CubesTexSamplerState, NumSphereFaces * 3);
 		}
-
-
-
-
-
-
-
-
-
-
-
-
-
+		else if (obj == OBJECT::MODEL_OBJ)
+		{
+				SetModObject(VS, PS, meshVertBuff, meshIndexBuff, NULL, NULL, NULL);
+				SetTransform(pos, rot, size, meshWorld, mod_rot, false);
+					d3d11DevCon->PSSetShaderResources(0, 1, &meshSRV[0]);
+					d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
+					d3d11DevCon->RSSetState(RSCullNone);
+					d3d11DevCon->DrawIndexed(meshSubsetIndexStart, 0, 0);
+		}
 	}
 	//СКАЙБОКС
 	void CreateObject(OBJECT obj)
@@ -1271,6 +1471,8 @@ public:
 		CreateModuleDX(LAYER_1, &VertSpeherLayout, SKYMAP_VS_Buffer);
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 
+		LoadObjModel(L"Untitled.obj", &meshVertBuff, &meshIndexBuff); ///!!!!
+
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
 		//SetPointLight();
 		//SetSunLight();
@@ -1291,18 +1493,15 @@ public:
 		for (int i = 0; i < 1; i++)
 		{
 			CreateObject(
-				SQUARE,
-				Position(0, -3, 0),
+				MODEL_OBJ,
+				Position(0, 0, 0),
 				LOCAL,
 				Rotation(0, 0, 0),
-				Size(200, 0.2, 200),
+				Size(5, 5, 5),
 				Color(1, 1, 1, 1),
 				Transparens(0, 0, 0, 1),
-				MOD_VISIBLE::OUTSIDE_ONLY);
+				MOD_VISIBLE::OUT_IN_SIDE);
 		}
-
-		
-
 
 		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
 		UpdateText(L"   FPS: ", Timer.fps);
@@ -1367,6 +1566,8 @@ public:
 		SMTexture->Release();
 		DIKeyboard->Release();
 		DIMouse->Release();
+		meshVertBuff->Release();
+		meshIndexBuff->Release();
 	}
 private:
 	IDXGISwapChain*				SwapChain;
@@ -1423,4 +1624,12 @@ private:
 	std::wstring printText;
 	float test_timer = 0;
 	float test_timer2 = 0;
+	ID3D11Buffer*				meshVertBuff;
+	ID3D11Buffer*				meshIndexBuff;
+	XMMATRIX meshWorld;
+	int meshSubsets = 0;
+	UINT meshSubsetIndexStart;
+	std::vector<int> meshSubsetTexture;
+	std::vector<ID3D11ShaderResourceView*> meshSRV;
+	std::vector<std::wstring> textureNameArray;
 };
