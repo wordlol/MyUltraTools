@@ -27,8 +27,9 @@ bool nullbuffer_element[1] = {};
 struct {
 	HWND hWND = NULL;
 	HRESULT hr;
-	int Wight = GetSystemMetrics(SM_CXSCREEN)/2;
-	int	Heignt = GetSystemMetrics(SM_CYSCREEN)/2;
+	int Wight = GetSystemMetrics(SM_CXSCREEN);
+	int	Heignt = GetSystemMetrics(SM_CYSCREEN);
+	bool Fullscreen = true;
 	LPCSTR WndClassName = "3D REDACTOR";
 }Window;
 
@@ -135,20 +136,21 @@ struct  {
 	int colormodb = 1;
 }Property;
 
-struct Light{
-		Light()
-		{
-			ZeroMemory(this, sizeof(Light));
-		}
-		XMFLOAT3 dir;
-		float pad1;
-		XMFLOAT3 pos;
-		float range;
-		XMFLOAT3 att;
-		float pad2;
-		XMFLOAT4 ambient;
-		XMFLOAT4 diffuse;
-};
+struct Light
+{
+	Light()
+	{
+		ZeroMemory(this, sizeof(Light));
+	}
+	XMFLOAT3 pos;
+	float range;
+	XMFLOAT3 dir;
+	float cone;
+	XMFLOAT3 att;
+	float pad2;
+	XMFLOAT4 ambient;
+	XMFLOAT4 diffuse;
+}light;
 struct Vertex
 {
 	Vertex() {}
@@ -349,13 +351,28 @@ enum MOD
 	BLEND_0,
 
 };
-
 enum MOD_VISIBLE
 {
 	INSIDE_ONLY,
 	OUTSIDE_ONLY,
 	OUT_IN_SIDE,
 	NO_VISIBLE
+};
+enum MOD_ROTATION
+{
+	WORLD,
+	LOCAL,
+};
+enum OBJECT
+{
+	SQUARE,
+	PLANE,
+	SPHERE,
+	SKY_BOX,
+	SPARK,
+	MODEL_OBJ,
+	MODEL_FBX,
+	PARTICLES
 };
 
 class D3DEX
@@ -590,6 +607,17 @@ private:
 
 
 		d3d11Device->CreateInputLayout(temp, size, blob->GetBufferPointer(), blob->GetBufferSize(), buf);
+	}
+	//Настройка шейдра для работы с объектами
+	void SetModObject(ID3D11VertexShader* VS, ID3D11PixelShader* PS, ID3D11Buffer* BufferVER,ID3D11Buffer* BufferIND, ID3D11RasterizerState* RS, ID3D11InputLayout* Layout, ID3D11DepthStencilState* Depth = NULL)
+	{
+		d3d11DevCon->VSSetShader(VS, 0, 0);
+		d3d11DevCon->PSSetShader(PS, 0, 0);
+		d3d11DevCon->IASetVertexBuffers(0, 1, &BufferVER, &stride, &offset);
+		d3d11DevCon->IASetIndexBuffer(BufferIND, DXGI_FORMAT_R32_UINT, 0);
+		d3d11DevCon->RSSetState(RS);
+		d3d11DevCon->IASetInputLayout(Layout);
+		d3d11DevCon->OMSetDepthStencilState(Depth, 0);
 	}
 private: //системы
 	void CreateDirectInput(HINSTANCE hInstance) {
@@ -849,26 +877,38 @@ private: //создание
 private: // обновление сцены
 	void SetPointLight()
 	{
-		Light Light;
-		Light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-		Light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
-		Light.range = 100.0f;
-		Light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
-		Light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
-		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		light.pos = XMFLOAT3(1.0f, 1.0f, 0.0f);
+		light.range = 100.0f;
+		light.att = XMFLOAT3(1.0f, 0.2f, 0.0f);
+		light.ambient = XMFLOAT4(0.3f, 0.3f, 0.3f, 1.0f);
+		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
-		Cbuffers.cbPerFrame.light = Light;
+		Cbuffers.cbPerFrame.light = light;
 		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.cbPerFrame, 0, 0);
 		d3d11DevCon->PSSetConstantBuffers(1, 1, &cbPerFrameBuffer);
 	}
 	void SetSunLight()
 	{
-		Light Light;
-		Light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
-		Light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
-		Light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
-		Cbuffers.cbPerFrame.light = Light;
+		light.dir = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
+		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+		Cbuffers.cbPerFrame.light = light;
 
+		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.cbPerFrame, 0, 0);
+		d3d11DevCon->PSSetConstantBuffers(1, 1, &cbPerFrameBuffer);
+	}
+	void SetSpotLight()
+	{
+		light.pos = XMFLOAT3(0.0f, 1.0f, 0.0f);
+		light.dir = XMFLOAT3(0.0f, 0.0f, 1.0f);
+		light.range = 1000.0f;
+		light.cone = 20.0f;
+		light.att = XMFLOAT3(0.4f, 0.02f, 0.0f);
+		light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		Cbuffers.cbPerFrame.light = light;
 		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.cbPerFrame, 0, 0);
 		d3d11DevCon->PSSetConstantBuffers(1, 1, &cbPerFrameBuffer);
 	}
@@ -883,17 +923,26 @@ private: // обновление сцены
 		viewport.MinDepth = 0.0f;
 		d3d11DevCon->RSSetViewports(1, &viewport);
 	}
-	void SetTransform(Position pos, Rotation rot, Size size, XMMATRIX& obj)
+	void SetTransform(Position pos, Rotation rot, Size size, XMMATRIX& obj, MOD_ROTATION mod)
 	{
-		obj = XMMatrixIdentity();
-		obj = XMMatrixTranslation(pos.x, pos.y, pos.z)
-			* XMMatrixScaling(size.x, size.y, size.z)
-			* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
-			* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
-			* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z));
-
-
-		
+		if (mod == MOD_ROTATION::LOCAL)
+		{
+			obj = XMMatrixIdentity();
+			obj = XMMatrixScaling(size.x, size.y, size.z)
+				* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z))
+				* XMMatrixTranslation(pos.x, pos.y, pos.z);
+		}
+		else if (mod == MOD_ROTATION::WORLD)
+		{
+			obj = XMMatrixIdentity();
+			obj = XMMatrixScaling(size.x, size.y, size.z)
+				* XMMatrixTranslation(pos.x, pos.y, pos.z)
+				* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
+				* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z));
+		}
 
 		WorldPos.World = XMMatrixIdentity();
 		WorldPos.WVP = obj * Camera.camView * Camera.camProjection;
@@ -915,8 +964,6 @@ private: // обновление сцены
 		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
 		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	}
-
-
 private: //обновление графики
 	void CrearViewPort()
 	{
@@ -1019,7 +1066,7 @@ private: //обновление графики
 			return;
 		}
 	}
-	void UpdateCamera()
+	void UpdateCamera(bool fly)
 	{
 		Camera.camStartPos = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
 		Camera.camStartTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1033,7 +1080,7 @@ private: //обновление графики
 		RotateYTempMatrix = XMMatrixRotationY(Camera.camYaw);
 
 		//режим полета
-		if (true)
+		if (fly)
 		{
 		Camera.camUp = XMVector3TransformCoord(Camera.camUp, Camera.camRotationMatrix);
 		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, Camera.camRotationMatrix);
@@ -1076,6 +1123,10 @@ private: //обновление графики
 
 		float speed = 15.0f * time;
 
+		if (KeyState[DIK_LSHIFT] & 0x80)
+		{
+			speed = 100.0f * time;
+		}
 		if (KeyState[DIK_A] & 0x80)
 		{
 			Camera.moveLeftRight -= speed;
@@ -1110,6 +1161,69 @@ private: //обновление графики
 		}
 
 	};
+	void UpdateLightPosition()
+	{
+		light.range = 1000.0f;
+		light.cone = 20.0f;
+		light.att = XMFLOAT3(0.4f, 0.02f, 0.0f);
+		light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+
+		light.pos.x = XMVectorGetX(Camera.camPosition);
+		light.pos.y = XMVectorGetY(Camera.camPosition);
+		light.pos.z = XMVectorGetZ(Camera.camPosition);
+		light.dir.x = XMVectorGetX(Camera.camTarget) - light.pos.x;
+		light.dir.y = XMVectorGetY(Camera.camTarget) - light.pos.y;
+		light.dir.z = XMVectorGetZ(Camera.camTarget) - light.pos.z;
+
+
+		Cbuffers.cbPerFrame.light = light;
+		d3d11DevCon->UpdateSubresource(cbPerFrameBuffer, 0, NULL, &Cbuffers.cbPerFrame, 0, 0);
+		d3d11DevCon->PSSetConstantBuffers(1, 1, &cbPerFrameBuffer);
+	}
+private: 
+	//создание объекта
+	void CreateObject(OBJECT obj, Position pos, MOD_ROTATION mod_rot, Rotation rot, Size size, Color color, Transparens trans, MOD_VISIBLE Visible)
+	{
+		BlendObject(Transparency, trans);
+		SetColor(color);
+		if (obj == OBJECT::SQUARE)
+		{
+			SetModObject(VS, PS, SquareVertexBuffer, SquareIndexBuffer, WireFrame, VertLayout, NULL);
+			SetTransform(pos, rot, size, Property.OBJBox, mod_rot);
+			DrawViewObj(Visible, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
+		}
+		else if (obj == OBJECT::SPHERE)
+		{
+			SetModObject(VS, PS, sphereVertBuffer, sphereIndexBuffer, WireFrame, VertLayout, NULL);
+			SetTransform(pos, rot, size, Property.OBJBox, mod_rot);
+			DrawViewObj(Visible, &CubesTexture, &CubesTexSamplerState, NumSphereFaces * 3);
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+	}
+	//СКАЙБОКС
+	void CreateObject(OBJECT obj)
+	{
+		if (obj == OBJECT::SKY_BOX)
+		{
+			SetModObject(SKYMAP_VS, SKYMAP_PS, sphereVertBuffer, sphereIndexBuffer, WireFrame, VertSpeherLayout, DSLessEqual);
+			SetTransform(Camera.camPosition, Size(1, 1, 1),sphereWorld);
+			DrawViewObj(OUT_IN_SIDE, &smrv, &SpeherTexSamplerState, NumSphereFaces * 3);
+		}
+	}
+
 public:
 	bool GetHR;
 
@@ -1131,6 +1245,7 @@ public:
 		CreateModuleDX(SH_PS0, &D2D_PS, "Effect.fx", "D2D_PS", &D2D_PS_Buffer);
 		CreateModuleDX(SH_VS0, &SKYMAP_VS, "Effect.fx", "SKYMAP_VS", &SKYMAP_VS_Buffer);
 		CreateModuleDX(SH_PS0, &SKYMAP_PS, "Effect.fx", "SKYMAP_PS", &SKYMAP_PS_Buffer);
+
 
 		CreateModuleDX(VERTEX_0, Plane_V, sizeof(Plane_V), &d2dVertBuffer);
 		CreateModuleDX(INDEX_0, Plane_I, sizeof(Plane_I), &d2dIndexBuffer);
@@ -1157,8 +1272,9 @@ public:
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
-		SetPointLight();
-		SetSunLight();
+		//SetPointLight();
+		//SetSunLight();
+		//SetSpotLight();
 		d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	};
 
@@ -1167,56 +1283,32 @@ public:
 	{   
 		CrearViewPort();
 		UpdateInput(time);
-		UpdateCamera();
+		UpdateLightPosition();
+		UpdateCamera(true);
 		test_timer += 20 * time;
+		test_timer2 += 2 * time;
 
-		d3d11DevCon->VSSetShader(VS, 0, 0);
-		d3d11DevCon->PSSetShader(PS, 0, 0);
-		d3d11DevCon->IASetVertexBuffers(0, 1, &SquareVertexBuffer, &stride, &offset);
-		d3d11DevCon->IASetIndexBuffer(SquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-		d3d11DevCon->RSSetState(WireFrame);
-		d3d11DevCon->IASetInputLayout(VertLayout);
-		d3d11DevCon->OMSetDepthStencilState(NULL, 0);
+		for (int i = 0; i < 1; i++)
+		{
+			CreateObject(
+				SQUARE,
+				Position(0, -3, 0),
+				LOCAL,
+				Rotation(0, 0, 0),
+				Size(200, 0.2, 200),
+				Color(1, 1, 1, 1),
+				Transparens(0, 0, 0, 1),
+				MOD_VISIBLE::OUTSIDE_ONLY);
+		}
 
-		BlendObject(Transparency, Transparens(0.1, 0.1, 0.1, 1));
-		SetTransform(Position(0, 0, 0), Rotation(0, test_timer, test_timer), Size(5, 5, 5), Property.OBJBox);
-		SetColor(Color(1,1,1,1));
-		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
 		
 
-		SetTransform(Position(5, 0, 0), Rotation(0, test_timer, test_timer), Size(5, 5, 5), Property.OBJBox);
-		BlendObject(Transparency, Transparens(0.1, 0.1, 0.1, 1));
-		SetColor(Color(0, 1, 1, 1));
-		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
 
-
-		SetTransform(Position(5, 5, 0), Rotation(0, test_timer, test_timer), Size(5, 5, 5), Property.OBJBox);
-		BlendObject(Transparency, Transparens(0.1, 0.1, 0.1, 1));
-		SetColor(Color(1, 0, 1, 1));
-		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &CubesTexture, &CubesTexSamplerState, sizeof(Block_I));
-
-
-
-		d3d11DevCon->VSSetShader(SKYMAP_VS, 0, 0);
-		d3d11DevCon->PSSetShader(SKYMAP_PS, 0, 0);
-		d3d11DevCon->IASetInputLayout(VertSpeherLayout);
-		d3d11DevCon->IASetVertexBuffers(0, 1, &sphereVertBuffer, &stride, &offset);
-		d3d11DevCon->IASetIndexBuffer(sphereIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-		d3d11DevCon->OMSetDepthStencilState(DSLessEqual, 0);
-
-		SetTransform(
-			Camera.camPosition,
-			Size(50.0f, 50.0f, 50.0f),
-			sphereWorld);
-		DrawViewObj(MOD_VISIBLE::OUT_IN_SIDE, &smrv, &SpeherTexSamplerState, NumSphereFaces * 3);
-
-
-
-
-		SetColor(Color(1, 1, 1, 1)); // цвет для текста
+		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
 		UpdateText(L"   FPS: ", Timer.fps);
 		SwapChain->Present(0, 0);
 	};
+
 
 
 	~D3DEX()
@@ -1235,10 +1327,12 @@ public:
 		VS_Buffer->Release();
 		PS_Buffer->Release();
 		VertLayout->Release();
+		VertSpeherLayout->Release();
 		cbPerObjectBuffer->Release();
 		WireFrame->Release();
 		CubesTexture->Release();
 		CubesTexSamplerState->Release();
+		SpeherTexSamplerState->Release();
 		Transparency->Release();
 		CCWcullMode->Release();
 		CWcullMode->Release();
@@ -1328,4 +1422,5 @@ private:
 	IDirectInputDevice8*		DIMouse;
 	std::wstring printText;
 	float test_timer = 0;
+	float test_timer2 = 0;
 };

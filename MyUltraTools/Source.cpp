@@ -3,7 +3,7 @@
 int WINAPI WinMain(HINSTANCE hinstance, HINSTANCE rhinstance, LPSTR lpstr, int nshowcmd)
 {
 
-	if (!InitializeWindow(hinstance, nshowcmd, 800, 800, true))
+	if (!InitializeWindow(hinstance, nshowcmd, Window.Wight, Window.Heignt, Window.Fullscreen))
 	{
 		MessageBox(0, "Window Create - error", "Error", MB_OK);
 		return 0;

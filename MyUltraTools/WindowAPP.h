@@ -21,7 +21,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	return DefWindowProc(hwnd, msg, wparam, lparam);
 };
 
-bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, bool Windowed)
+bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, bool Fullscreen)
 {
 	WNDCLASSEX wc;
 	wc.cbSize = sizeof(WNDCLASSEX);
@@ -42,14 +42,14 @@ bool InitializeWindow(HINSTANCE hinstance, int ShowWind, int wignt, int heignt, 
 		MessageBox(NULL, "ERROR REGISTER Window", "Error", MB_OK);
 		return false;
 	}
-
+	DWORD dwStyle = Fullscreen ? WS_POPUP : WS_OVERLAPPEDWINDOW;
 	Window.hWND = CreateWindowEx(
 		NULL,
 		Window.WndClassName,
 		"3D REDACTOR",
-		WS_OVERLAPPEDWINDOW,
+		dwStyle,
 		CW_USEDEFAULT, CW_USEDEFAULT,
-		Window.Wight, Window.Heignt,
+		wignt, heignt,
 		NULL, NULL,
 		hinstance,
 		NULL
