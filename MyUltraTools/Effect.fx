@@ -13,9 +13,6 @@ cbuffer cbPerObject : register(b0)
 {
     float4x4 WVP;
     float4x4 World;
-    
-    float4 difColor;
-    bool hasTexture;
 };
 
 cbuffer cbPerFrame : register(b1)
@@ -62,7 +59,7 @@ SKYMAP_VS_OUTPUT SKYMAP_VS(float4 inPos : POSITION, float3 inTexCoord : TEXCOORD
 {
     SKYMAP_VS_OUTPUT output;
     
-    output.Pos = mul(float4(inPos.rgb, 1.0f), WVP).xyww;
+    output.Pos = mul(float4(inPos.xyz, 1.0f), WVP).xyww;
     output.texCoord = inPos;
 
     return output;
@@ -74,9 +71,6 @@ float4 PS(VS_OUTPUT input) : SV_TARGET
     input.normal = normalize(input.normal);
 
     float4 diffuse = ObjTexture.Sample(ObjSamplerState, input.TexCoord);
-
-    if (hasTexture == true)
-        diffuse = difColor;
     
     clip(diffuse.a - .25);
     float3 finalColor = float3(0.0f, 0.0f, 0.0f);

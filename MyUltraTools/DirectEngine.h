@@ -227,9 +227,6 @@ struct {
 	{
 		XMMATRIX  WVP;
 		XMMATRIX  World;
-
-		XMFLOAT4 difColor;
-		bool hasTexture;
 	}cbPerObj;
 	struct cbPerFrame
 	{
@@ -646,18 +643,19 @@ private:
 		std::wifstream fileIn(filename.c_str()); 
 		std::wstring meshMatLib;                 
 
-		std::vector<DWORD> indices;
 		std::vector<XMFLOAT3> vertPos;
 		std::vector<XMFLOAT3> vertNorm;
 		std::vector<XMFLOAT2> vertTexCoord;
 		std::vector<std::wstring> meshMaterials;
 		std::vector<std::wstring> meshTex;
 		std::wstring meshMaterialsTemp;
-		wchar_t checkChar;        
-		std::vector<DWORD> indVert;
-		std::vector<DWORD> indNorm;
+		wchar_t checkChar;     
+		std::vector<DWORD> index;
+		std::vector<DWORD> indPos;
 		std::vector<DWORD> indTex;
+		std::vector<DWORD> indNorm;
 		std::vector<Vertex> vertices;
+		int n = 0;
 
 		while (fileIn)
 		{
@@ -701,6 +699,7 @@ private:
 					if (checkChar == ' ')
 					{
 						int num = 0;
+						
 						while (true)
 						{
 							num++;
@@ -709,15 +708,11 @@ private:
 							int a, b, c;
 							swscanf_s(sss.c_str(), L"%d/%d/%d", &a, &b, &c);
 
-
-							Vertex tempVert;
-							tempVert.pos = vertPos[a - 1];
-							tempVert.texCoord = vertTexCoord[b - 1];
-							tempVert.normal = vertNorm[c - 1];
-
-							vertices.push_back(tempVert);
-							indices.push_back(a-1);
-
+							index.push_back(n);
+							indPos.push_back(a - 1);
+							indTex.push_back(b - 1);
+							indNorm.push_back(c - 1);
+							n++;
 							checkChar = fileIn.get();
 							if (sss.c_str() == L"f" || num == 3)
 								break;
@@ -739,19 +734,22 @@ private:
 					}
 					break;
 				}
-			case 'u': 
+			case 'u':
 				{
 					checkChar = fileIn.get();
-					checkChar = fileIn.get();
-					checkChar = fileIn.get();
-					checkChar = fileIn.get();
-					checkChar = fileIn.get();
-					checkChar = fileIn.get();
-					if (checkChar == ' ')
+					if (checkChar == 's')
 					{
-						meshMaterialsTemp = L""; 
-						fileIn >> meshMaterialsTemp;
-						meshMaterials.push_back(meshMaterialsTemp);
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						checkChar = fileIn.get();
+						if (checkChar == ' ')
+						{
+							meshMaterialsTemp = L"";
+							fileIn >> meshMaterialsTemp;
+							meshMaterials.push_back(meshMaterialsTemp);
+						}
 					}
 					break;
 				}
@@ -810,9 +808,19 @@ private:
 		}
 		fileIn.close();
 
-		meshSubsetIndexStart = indices.size() * 3;
+			Vertex tempVert;
+			for (int j = 0; j < indPos.size(); j++)
+			{
+					tempVert.pos = vertPos[indPos[j]];
+					tempVert.texCoord = vertTexCoord[indTex[j]];
+					tempVert.normal = vertNorm[indNorm[j]];
+					vertices.push_back(tempVert);
+			}
+		
+
+		meshSubsetIndexStart = index.size();
 		CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * vertices.size(), vertBuff);
-		CreateModuleDX(INDEX_0, &indices[0], sizeof(DWORD) * indices.size() * 3, indexBuff);
+		CreateModuleDX(INDEX_0, &index[0], sizeof(DWORD) * index.size(), indexBuff);
 	}
 
 
@@ -1124,37 +1132,6 @@ private: // обновление сцены
 		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
 		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	}	
-	void SetTransform(Position pos, Rotation rot, Size size, XMMATRIX& obj, MOD_ROTATION mod, bool hasT)
-	{
-		if (mod == MOD_ROTATION::LOCAL)
-		{
-			obj = XMMatrixIdentity();
-			obj = XMMatrixScaling(size.x, size.y, size.z)
-				* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
-				* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
-				* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z))
-				* XMMatrixTranslation(pos.x, pos.y, pos.z);
-		}
-		else if (mod == MOD_ROTATION::WORLD)
-		{
-			obj = XMMatrixIdentity();
-			obj = XMMatrixScaling(size.x, size.y, size.z)
-				* XMMatrixTranslation(pos.x, pos.y, pos.z)
-				* XMMatrixRotationAxis(XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f), XMConvertToRadians(rot.x))
-				* XMMatrixRotationAxis(XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f), XMConvertToRadians(rot.y))
-				* XMMatrixRotationAxis(XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f), XMConvertToRadians(rot.z));
-		}
-
-		WorldPos.World = XMMatrixIdentity();
-		WorldPos.WVP = obj * Camera.camView * Camera.camProjection;
-		Cbuffers.cbPerObj.World = XMMatrixTranspose(obj);
-		Cbuffers.cbPerObj.WVP = XMMatrixTranspose(WorldPos.WVP);
-		Cbuffers.cbPerObj.difColor = XMFLOAT4(0.f, 0.f, 0.f, 0.f);
-		Cbuffers.cbPerObj.hasTexture = hasT;
-
-		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
-		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
-	}
 	void SetTransform(XMVECTOR pos, Size size, XMMATRIX& obj)
 	{
 		obj = XMMatrixIdentity();
@@ -1368,7 +1345,7 @@ private: //обновление графики
 	void UpdateLightPosition()
 	{
 		light.range = 1000.0f;
-		light.cone = 20.0f;
+		light.cone = 3.0f;
 		light.att = XMFLOAT3(0.4f, 0.02f, 0.0f);
 		light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1406,7 +1383,7 @@ private:
 		else if (obj == OBJECT::MODEL_OBJ)
 		{
 				SetModObject(VS, PS, meshVertBuff, meshIndexBuff, NULL, NULL, NULL);
-				SetTransform(pos, rot, size, meshWorld, mod_rot, false);
+				SetTransform(pos, rot, size, meshWorld, mod_rot);
 					d3d11DevCon->PSSetShaderResources(0, 1, &meshSRV[0]);
 					d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 					d3d11DevCon->RSSetState(RSCullNone);
@@ -1471,7 +1448,7 @@ public:
 		CreateModuleDX(LAYER_1, &VertSpeherLayout, SKYMAP_VS_Buffer);
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 
-		LoadObjModel(L"Untitled.obj", &meshVertBuff, &meshIndexBuff); ///!!!!
+		LoadObjModel(L"Model1.obj", &meshVertBuff, &meshIndexBuff); ///!!!!
 
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
 		//SetPointLight();
@@ -1487,8 +1464,8 @@ public:
 		UpdateInput(time);
 		UpdateLightPosition();
 		UpdateCamera(true);
-		test_timer += 20 * time;
-		test_timer2 += 2 * time;
+		test_timer += 50 * time;
+		test_timer2 += 20 * time;
 
 		for (int i = 0; i < 1; i++)
 		{
@@ -1496,12 +1473,33 @@ public:
 				MODEL_OBJ,
 				Position(0, 0, 0),
 				LOCAL,
-				Rotation(0, 0, 0),
-				Size(5, 5, 5),
+				Rotation(0, test_timer, 0),
+				Size(1, 1, 1),
 				Color(1, 1, 1, 1),
-				Transparens(0, 0, 0, 1),
+				Transparens(1, 1, 1, 1),
 				MOD_VISIBLE::OUT_IN_SIDE);
 		}
+
+		CreateObject(
+			MODEL_OBJ,
+			Position(0, 5, 0),
+			LOCAL,
+			Rotation(test_timer2, test_timer2, -test_timer2),
+			Size(1, 1, 1),
+			Color(1, 0, 1, 1),
+			Transparens(0, 0, 0, 1),
+			MOD_VISIBLE::OUT_IN_SIDE);
+
+		CreateObject(
+			MODEL_OBJ,
+			Position(5, 0, 0),
+			LOCAL,
+			Rotation(test_timer2, -test_timer2, test_timer2),
+			Size(1, 2, 1),
+			Color(1, 1, 1, 1),
+			Transparens(0, 0, 0, 1),
+			MOD_VISIBLE::OUT_IN_SIDE);
+		
 
 		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
 		UpdateText(L"   FPS: ", Timer.fps);
