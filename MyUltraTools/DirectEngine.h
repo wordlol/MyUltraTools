@@ -222,6 +222,38 @@ struct SurfaceMaterial
 };
 std::vector<SurfaceMaterial> material;
 
+struct MaterialOBJ
+{
+	XMFLOAT3 ColorAround = {0.0f,0.0f,0.0f};
+	XMFLOAT3 ColorDiffuse = {0.0f,0.0f,0.0f};
+	XMFLOAT3 ColorReflection = {0.0f,0.0f,0.0f};
+	XMFLOAT3 ColorEmission = {0.0f,0.0f,0.0f};
+	float Transparensy = 0.0f;
+	float Metallic = 0.0f;
+	float Reflection = 0.0f;
+};
+struct OBJ
+{
+	ID3D11Buffer* meshVertBuff = {nullptr};
+	ID3D11Buffer* meshIndexBuff = {nullptr};
+	std::vector<ID3D11ShaderResourceView*> meshSRVDiffuse = {nullptr};
+	std::vector<ID3D11ShaderResourceView*> meshSRVNormal = {nullptr};
+	std::vector<UINT> StartDrawIndex = {0};
+	std::vector<UINT> EndDrawIndex = {0};
+	std::wstring NameObj = L"NULL";
+};
+struct ModelsOBJ
+{
+	std::vector<XMFLOAT3> SettingsDraw = {0};
+	//X - IndexDraw
+	//Y - Tex | no Tex
+	//Z - Material
+	std::vector<OBJ> Obj;
+	std::vector<MaterialOBJ> MaterialObj;
+	std::wstring GroupObj = L"NULL";
+};
+std::vector<ModelsOBJ> Models;
+
 struct {
 	struct cbPerObject
 	{
@@ -339,8 +371,6 @@ DWORD Plane_I[] = {
 
 UINT stride = sizeof(Vertex);
 UINT offset = 0;
-
-
 
 enum MOD
 {
@@ -642,13 +672,12 @@ private:
 
 		std::wifstream fileIn(filename.c_str()); 
 		std::wstring meshMatLib;                 
-
 		std::vector<XMFLOAT3> vertPos;
 		std::vector<XMFLOAT3> vertNorm;
 		std::vector<XMFLOAT2> vertTexCoord;
+		std::vector<std::wstring> useMaterial;
 		std::vector<std::wstring> meshMaterials;
 		std::vector<std::wstring> meshTex;
-		std::wstring meshMaterialsTemp;
 		wchar_t checkChar;     
 		std::vector<DWORD> index;
 		std::vector<DWORD> indPos;
@@ -656,6 +685,8 @@ private:
 		std::vector<DWORD> indNorm;
 		std::vector<Vertex> vertices;
 		int n = 0;
+		std::wstring temp_words;
+		std::wstring meshMaterialsTemp;
 
 		while (fileIn)
 		{
@@ -665,9 +696,22 @@ private:
 			{
 			case '#':
 				{
-					checkChar = fileIn.get();
-					while (checkChar != '\n')
-						checkChar = fileIn.get();
+					fileIn.ignore(1000, L'\n');
+					break;
+				}
+			case 'm': 
+				{
+					std::wstring f_word = L"tllib ";
+					getline(fileIn, temp_words);
+					if (!temp_words.find(f_word))
+					{
+						meshMatLib = L"";
+						for (int i = 0; i < temp_words.size(); i++)
+						{
+							if (i >= f_word.size())
+								meshMatLib += temp_words[i];
+						}
+					}
 					break;
 				}
 			case 'v': 
@@ -677,19 +721,27 @@ private:
 					{
 						float vz, vy, vx;
 						fileIn >> vx >> vy >> vz;
-						vertPos.push_back(XMFLOAT3(vx, vy, vz));
+						vertPos.push_back(XMFLOAT3(vx*-1, vy, vz));
 					}
 					else if (checkChar == 't')
 					{
-						float vtcu, vtcv;
-						fileIn >> vtcu >> vtcv;
-						vertTexCoord.push_back(XMFLOAT2(vtcu, vtcv));
+						checkChar = fileIn.get();
+						if (checkChar == ' ')
+						{
+							float vtcu, vtcv;
+							fileIn >> vtcu >> vtcv;
+							vertTexCoord.push_back(XMFLOAT2(vtcu, vtcv));
+						}
 					}
 					else if (checkChar == 'n')
 					{
-						float vnx, vny, vnz;
-						fileIn >> vnx >> vny >> vnz;
-						vertNorm.push_back(XMFLOAT3(vnx, vny, vnz));
+						checkChar = fileIn.get();
+						if (checkChar == ' ')
+						{
+							float vnx, vny, vnz;
+							fileIn >> vnx >> vny >> vnz;
+							vertNorm.push_back(XMFLOAT3(vnx * -1, vny, vnz));
+						}
 					}
 					break;
 				}
@@ -720,36 +772,19 @@ private:
 					}
 					break;
 				}
-			case 'm': 
-				{
-					checkChar = fileIn.get();
-					if (checkChar == 't')
-					{
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						fileIn >> meshMatLib;
-					}
-					break;
-				}
 			case 'u':
 				{
-					checkChar = fileIn.get();
-					if (checkChar == 's')
+					std::wstring f_word = L"semtl ";
+					getline(fileIn, temp_words);
+					if (!temp_words.find(f_word))
 					{
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						checkChar = fileIn.get();
-						if (checkChar == ' ')
+						meshMaterialsTemp = L"";
+						for (int i = 0; i < temp_words.size(); i++)
 						{
-							meshMaterialsTemp = L"";
-							fileIn >> meshMaterialsTemp;
-							meshMaterials.push_back(meshMaterialsTemp);
+							if (i >= f_word.size())
+								meshMaterialsTemp += temp_words[i];
 						}
+						useMaterial.push_back(meshMaterialsTemp);
 					}
 					break;
 				}
@@ -808,15 +843,15 @@ private:
 		}
 		fileIn.close();
 
-			Vertex tempVert;
-			for (int j = 0; j < indPos.size(); j++)
-			{
-					tempVert.pos = vertPos[indPos[j]];
-					tempVert.texCoord = vertTexCoord[indTex[j]];
-					tempVert.normal = vertNorm[indNorm[j]];
-					vertices.push_back(tempVert);
-			}
-		
+		Vertex tempVert;
+		for (int j = 0; j < indPos.size(); j++)
+		{
+			tempVert.pos = vertPos[indPos[j]];
+			tempVert.texCoord = vertTexCoord[indTex[j]];
+			tempVert.normal = vertNorm[indNorm[j]];
+			vertices.push_back(tempVert);
+		}
+			
 
 		meshSubsetIndexStart = index.size();
 		CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * vertices.size(), vertBuff);
@@ -1345,9 +1380,9 @@ private: //обновление графики
 	void UpdateLightPosition()
 	{
 		light.range = 1000.0f;
-		light.cone = 3.0f;
+		light.cone = 1.0f;
 		light.att = XMFLOAT3(0.4f, 0.02f, 0.0f);
-		light.ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
+		light.ambient = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
 		light.diffuse = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 
 		light.pos.x = XMVectorGetX(Camera.camPosition);
@@ -1448,7 +1483,7 @@ public:
 		CreateModuleDX(LAYER_1, &VertSpeherLayout, SKYMAP_VS_Buffer);
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 
-		LoadObjModel(L"Model1.obj", &meshVertBuff, &meshIndexBuff); ///!!!!
+		LoadObjModel(L"test.obj", &meshVertBuff, &meshIndexBuff); ///!!!!
 
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
 		//SetPointLight();
@@ -1473,32 +1508,12 @@ public:
 				MODEL_OBJ,
 				Position(0, 0, 0),
 				LOCAL,
-				Rotation(0, test_timer, 0),
+				Rotation(0, 0, 0),
 				Size(1, 1, 1),
 				Color(1, 1, 1, 1),
-				Transparens(1, 1, 1, 1),
+				Transparens(0, 0, 0, 1),
 				MOD_VISIBLE::OUT_IN_SIDE);
 		}
-
-		CreateObject(
-			MODEL_OBJ,
-			Position(0, 5, 0),
-			LOCAL,
-			Rotation(test_timer2, test_timer2, -test_timer2),
-			Size(1, 1, 1),
-			Color(1, 0, 1, 1),
-			Transparens(0, 0, 0, 1),
-			MOD_VISIBLE::OUT_IN_SIDE);
-
-		CreateObject(
-			MODEL_OBJ,
-			Position(5, 0, 0),
-			LOCAL,
-			Rotation(test_timer2, -test_timer2, test_timer2),
-			Size(1, 2, 1),
-			Color(1, 1, 1, 1),
-			Transparens(0, 0, 0, 1),
-			MOD_VISIBLE::OUT_IN_SIDE);
 		
 
 		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
