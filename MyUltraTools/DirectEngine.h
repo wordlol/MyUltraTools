@@ -226,32 +226,31 @@ struct MaterialOBJ
 {
 	XMFLOAT3 ColorAround = {0.0f,0.0f,0.0f};
 	XMFLOAT3 ColorDiffuse = {0.0f,0.0f,0.0f};
-	XMFLOAT3 ColorReflection = {0.0f,0.0f,0.0f};
 	XMFLOAT3 ColorEmission = {0.0f,0.0f,0.0f};
+	XMFLOAT3 ColorKs = { 0.0f,0.0f,0.0f };
 	float Transparensy = 0.0f;
 	float Metallic = 0.0f;
 	float Reflection = 0.0f;
+	int ilumination = 0;
+	std::wstring NameMaterial = L"NULL";
+	ID3D11ShaderResourceView* meshSRVDiffuse = {nullptr};
+	ID3D11ShaderResourceView* meshSRVNormal = {nullptr};
 };
 struct OBJ
 {
 	ID3D11Buffer* meshVertBuff = {nullptr};
 	ID3D11Buffer* meshIndexBuff = {nullptr};
-	std::vector<ID3D11ShaderResourceView*> meshSRVDiffuse = {nullptr};
-	std::vector<ID3D11ShaderResourceView*> meshSRVNormal = {nullptr};
-	std::vector<UINT> StartDrawIndex = {0};
-	std::vector<UINT> EndDrawIndex = {0};
+	UINT CountDrawIndex = {0};
 	std::wstring NameObj = L"NULL";
 };
 struct ModelsOBJ
 {
-	std::vector<XMFLOAT3> SettingsDraw = {0};
-	//X - IndexDraw
+	//X - Material
 	//Y - Tex | no Tex
-	//Z - Material
+	std::vector<XMFLOAT2> SettingsDraw;
 	std::vector<OBJ> Obj;
-	std::vector<MaterialOBJ> MaterialObj;
-	std::wstring GroupObj = L"NULL";
 };
+std::vector<MaterialOBJ> MaterialObj;
 std::vector<ModelsOBJ> Models;
 
 struct {
@@ -267,6 +266,7 @@ struct {
 	struct cbPerColor
 	{
 		XMFLOAT4 color;
+
 	}cbPerColor;
 }Cbuffers;
 
@@ -413,7 +413,6 @@ enum OBJECT
 	SPHERE,
 	SKY_BOX,
 	SPARK,
-	MODEL_OBJ,
 	MODEL_FBX,
 	PARTICLES
 };
@@ -664,21 +663,17 @@ private:
 	}
 
 
-	void LoadObjModel(std::wstring filename,
-		ID3D11Buffer** vertBuff,
-		ID3D11Buffer** indexBuff)
+	void LoadObjModel(std::wstring filename)
 	{
-		HRESULT hr = 0;
-
 		std::wifstream fileIn(filename.c_str()); 
+		std::wifstream fileInMtl;
 		std::wstring meshMatLib;                 
 		std::vector<XMFLOAT3> vertPos;
 		std::vector<XMFLOAT3> vertNorm;
 		std::vector<XMFLOAT2> vertTexCoord;
-		std::vector<std::wstring> useMaterial;
 		std::vector<std::wstring> meshMaterials;
-		std::vector<std::wstring> meshTex;
-		wchar_t checkChar;     
+		wchar_t checkChar = '0';
+		wchar_t checkCharMtl;
 		std::vector<DWORD> index;
 		std::vector<DWORD> indPos;
 		std::vector<DWORD> indTex;
@@ -686,12 +681,24 @@ private:
 		std::vector<Vertex> vertices;
 		int n = 0;
 		std::wstring temp_words;
-		std::wstring meshMaterialsTemp;
+		std::wstring meshMaterialsTemp = L"";
+		std::wstring TempW = L"";
+		ModelsOBJ model;
+		OBJ obj;
+		MaterialOBJ materialobj;
+		float R, G, B;
+		XMFLOAT3 TEMP;
+		bool skip = true;
 
 		while (fileIn)
 		{
-			checkChar = fileIn.get();
-
+			if (skip == true)
+			{
+				skip = false;
+				checkChar = fileIn.get();
+			}
+			else
+				skip = true;
 			switch (checkChar)
 			{
 			case '#':
@@ -711,9 +718,200 @@ private:
 							if (i >= f_word.size())
 								meshMatLib += temp_words[i];
 						}
+
+						fileInMtl.open(meshMatLib);
+						while (fileInMtl)
+						{
+							checkCharMtl = fileInMtl.get();
+							switch (checkCharMtl)
+							{
+								case '#':
+								{
+									fileInMtl.ignore(1000, L'\n');
+									break;
+								}
+								case 'n':
+								{
+									std::wstring f_word = L"ewmtl ";
+									getline(fileInMtl, temp_words);
+									if (!temp_words.find(f_word))
+									{
+										TempW = L"";
+										for (int i = 0; i < temp_words.size(); i++)
+										{
+											if (i >= f_word.size())
+												TempW += temp_words[i];
+										}
+										materialobj.NameMaterial = TempW;
+									}
+									break;
+								}
+								case 'N':
+								{
+									checkCharMtl = fileInMtl.get();
+									if (checkCharMtl == 's')
+									{
+										checkCharMtl = fileInMtl.get();
+										if (checkCharMtl == ' ')
+										{
+											float Ns;
+											fileInMtl >> Ns;
+											materialobj.Metallic = Ns;
+										}
+									}
+									else if (checkCharMtl == 'i')
+									{
+										checkCharMtl = fileInMtl.get();
+										if (checkCharMtl == ' ')
+										{
+											float Ni;
+											fileInMtl >> Ni;
+											materialobj.Reflection = Ni;
+										}
+									}
+									break;
+								}
+								case 'K':
+								{
+									checkCharMtl = fileInMtl.get();
+									if (checkCharMtl == 'a')
+									{
+										checkCharMtl = fileInMtl.get();
+										if (checkCharMtl == ' ')
+										{
+											fileInMtl >> R >> G >> B;
+											TEMP.x = R;
+											TEMP.y = G;
+											TEMP.z = B;
+											materialobj.ColorAround = TEMP;
+										}
+									}
+									else if (checkCharMtl == 'd')
+									{
+										checkCharMtl = fileInMtl.get();
+										if (checkCharMtl == ' ')
+										{
+											fileInMtl >> R >> G >> B;
+											TEMP.x = R;
+											TEMP.y = G;
+											TEMP.z = B;
+											materialobj.ColorDiffuse = TEMP;
+										}
+									}
+									else if (checkCharMtl == 's')
+									{
+										checkCharMtl = fileInMtl.get();
+										if (checkCharMtl == ' ')
+										{
+											fileInMtl >> R >> G >> B;
+											TEMP.x = R;
+											TEMP.y = G;
+											TEMP.z = B;
+											materialobj.ColorKs = TEMP;
+										}
+									}
+									else if (checkCharMtl == 'e')
+									{
+										checkCharMtl = fileInMtl.get();
+										if (checkCharMtl == ' ')
+										{
+											fileInMtl >> R >> G >> B;
+											TEMP.x = R;
+											TEMP.y = G;
+											TEMP.z = B;
+											materialobj.ColorEmission = TEMP;
+										}
+									}
+									break;
+								}
+								case 'd':
+								{
+									checkCharMtl = fileInMtl.get();
+									if (checkCharMtl == ' ')
+									{
+										float T;
+										fileInMtl >> T;
+										materialobj.Transparensy = T;
+									}
+
+									break;
+								}
+								case 'i':
+								{
+									std::wstring f_word = L"llum ";
+									getline(fileInMtl, temp_words);
+									if (!temp_words.find(f_word))
+									{
+										int il = 0;
+										
+										il = (int)temp_words[temp_words.size()-1] - 48;
+										materialobj.ilumination = il;
+									}
+									
+									checkCharMtl = fileInMtl.get();
+									if (checkCharMtl != L'\n')
+									{
+										std::wstring f_word = L"ap_Kd ";
+										getline(fileInMtl, temp_words);
+										if (!temp_words.find(f_word))
+										{
+											TempW = L"";
+											for (int i = 0; i < temp_words.size(); i++)
+											{
+												if (i >= f_word.size())
+													TempW += temp_words[i];
+											}
+
+											ID3D11ShaderResourceView* tempMeshSRV;
+											D3DX11CreateShaderResourceViewFromFileW(d3d11Device, TempW.c_str(),
+												NULL, NULL, &tempMeshSRV, NULL);
+
+											materialobj.meshSRVDiffuse = tempMeshSRV;
+										}
+									}
+									
+									MaterialObj.push_back(materialobj);
+									materialobj.ColorAround = { 0.0f,0.0f,0.0f };
+									materialobj.ColorDiffuse = { 0.0f,0.0f,0.0f };
+									materialobj.ColorEmission = { 0.0f,0.0f,0.0f };
+									materialobj.ColorKs = { 0.0f,0.0f,0.0f };
+									materialobj.ilumination = {0};
+									materialobj.meshSRVDiffuse = { nullptr };
+									materialobj.meshSRVNormal = { nullptr };
+									materialobj.Metallic = {0};
+									materialobj.NameMaterial = {L"NULL"};
+									materialobj.Reflection = {0};
+									materialobj.Transparensy = {0};
+									break;
+								}
+							default:
+								break;
+							}
+						}
+						fileInMtl.close();
 					}
 					break;
 				}
+			case 'g':
+				{
+					checkChar = fileIn.get();
+					if (checkChar == ' ')
+					{
+						getline(fileIn, temp_words);
+						obj.NameObj = temp_words;
+					}
+					break;
+				}
+			case 'o':
+			{
+					checkChar = fileIn.get();
+					if (checkChar == ' ')
+					{
+						getline(fileIn, temp_words);
+						obj.NameObj = temp_words;
+					}
+					break;
+			}
 			case 'v': 
 				{
 					checkChar = fileIn.get();
@@ -745,30 +943,12 @@ private:
 					}
 					break;
 				}
-			case 'f':
+			case 's':
 				{
 					checkChar = fileIn.get();
 					if (checkChar == ' ')
 					{
-						int num = 0;
-						
-						while (true)
-						{
-							num++;
-							std::wstring sss;
-							fileIn >> sss;
-							int a, b, c;
-							swscanf_s(sss.c_str(), L"%d/%d/%d", &a, &b, &c);
-
-							index.push_back(n);
-							indPos.push_back(a - 1);
-							indTex.push_back(b - 1);
-							indNorm.push_back(c - 1);
-							n++;
-							checkChar = fileIn.get();
-							if (sss.c_str() == L"f" || num == 3)
-								break;
-						}
+						fileIn.ignore(1000, L'\n');
 					}
 					break;
 				}
@@ -778,84 +958,96 @@ private:
 					getline(fileIn, temp_words);
 					if (!temp_words.find(f_word))
 					{
+						while (true)
+						{
+								checkChar = fileIn.get();
+							if (checkChar == L'f')
+								checkChar = fileIn.get();
+							else
+								break;
+
+							for (int i = 0; i < 3; i++)
+							{
+								std::wstring sss;
+								fileIn >> sss;
+								int a, b, c;
+								swscanf_s(sss.c_str(), L"%d/%d/%d", &a, &b, &c);
+
+								index.push_back(n);
+								indPos.push_back(a - 1);
+								indTex.push_back(b - 1);
+								indNorm.push_back(c - 1);
+								n++;
+							}
+							checkChar = fileIn.get();
+						}
+
+						if (checkChar == 'u')
+							skip = false;
+
+						Vertex tempVert;
+						ID3D11Buffer* IndexBuffer;
+						ID3D11Buffer* VertexBuffer;
+						for (int j = 0; j < indPos.size(); j++)
+						{
+							tempVert.pos = vertPos[indPos[j]];
+							tempVert.texCoord = vertTexCoord[indTex[j]];
+							tempVert.normal = vertNorm[indNorm[j]];
+							vertices.push_back(tempVert);
+						}
+
+						meshSubsetIndexStart = index.size();
+
+						CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * vertices.size(), &VertexBuffer);
+						CreateModuleDX(INDEX_0, &index[0], sizeof(DWORD) * index.size(), &IndexBuffer);
+						obj.meshVertBuff = VertexBuffer;
+						obj.meshIndexBuff = IndexBuffer;
+						obj.CountDrawIndex = index.size();
+						
 						meshMaterialsTemp = L"";
 						for (int i = 0; i < temp_words.size(); i++)
 						{
 							if (i >= f_word.size())
 								meshMaterialsTemp += temp_words[i];
 						}
-						useMaterial.push_back(meshMaterialsTemp);
-					}
-					break;
-				}
-			case 'g':
-				{
-					checkChar = fileIn.get();
-					break;
-				}
-			case 's':
-				{
-					checkChar = fileIn.get();
-					break;
-				}
-			default:
-				break;
-			}
-		}
 
-		fileIn.close();
-		fileIn.open(meshMatLib.c_str());
-		while (fileIn)
-		{
-			checkChar = fileIn.get(); 
-			switch (checkChar)
-			{
-			case 'm':
-			{
-				std::wstring tex;
-				checkChar = fileIn.get();
-				if (checkChar == 'a')
-				{
-					checkChar = fileIn.get();
-					if (checkChar == 'p')
-					{
-						while (true)
+						XMFLOAT2 TEMPfloat2;
+						for (int i = 0; i < MaterialObj.size(); i++)
 						{
-							checkChar = fileIn.get();
-							if (checkChar == ' ')
+							if (MaterialObj[i].NameMaterial == meshMaterialsTemp)
 							{
-								fileIn >> tex;
-									ID3D11ShaderResourceView* tempMeshSRV;
-									D3DX11CreateShaderResourceViewFromFileW(d3d11Device, tex.c_str(),
-										NULL, NULL, &tempMeshSRV, NULL);
-								meshSRV.push_back(tempMeshSRV);
-								meshTex.push_back(tex);
+								TEMPfloat2.x = i;
+
+								if (MaterialObj[i].meshSRVDiffuse == nullptr)
+									TEMPfloat2.y = 0;
+								else
+									TEMPfloat2.y = 1;
+
 								break;
 							}
 						}
+						model.SettingsDraw.push_back(TEMPfloat2);
+						model.Obj.push_back(obj);
+
+						n = 0;
+						indPos.clear();
+						indTex.clear();
+						indNorm.clear();
+						vertices.clear();
+						index.clear();
+						obj.CountDrawIndex = 0;
+						obj.meshIndexBuff = {nullptr};
+						obj.meshVertBuff = {nullptr};
+						TEMPfloat2 = {0.0f,0.0f};
 					}
+					break;
 				}
-				break;
-			}
 			default:
 				break;
 			}
 		}
 		fileIn.close();
-
-		Vertex tempVert;
-		for (int j = 0; j < indPos.size(); j++)
-		{
-			tempVert.pos = vertPos[indPos[j]];
-			tempVert.texCoord = vertTexCoord[indTex[j]];
-			tempVert.normal = vertNorm[indNorm[j]];
-			vertices.push_back(tempVert);
-		}
-			
-
-		meshSubsetIndexStart = index.size();
-		CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * vertices.size(), vertBuff);
-		CreateModuleDX(INDEX_0, &index[0], sizeof(DWORD) * index.size(), indexBuff);
+		Models.push_back(model);
 	}
 
 
@@ -1415,16 +1607,45 @@ private:
 			SetTransform(pos, rot, size, Property.OBJBox, mod_rot);
 			DrawViewObj(Visible, &CubesTexture, &CubesTexSamplerState, NumSphereFaces * 3);
 		}
-		else if (obj == OBJECT::MODEL_OBJ)
-		{
-				SetModObject(VS, PS, meshVertBuff, meshIndexBuff, NULL, NULL, NULL);
-				SetTransform(pos, rot, size, meshWorld, mod_rot);
-					d3d11DevCon->PSSetShaderResources(0, 1, &meshSRV[0]);
-					d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
-					d3d11DevCon->RSSetState(RSCullNone);
-					d3d11DevCon->DrawIndexed(meshSubsetIndexStart, 0, 0);
-		}
 	}
+	//создание объекта .obj
+	void CreateObject(Position pos, MOD_ROTATION mod_rot, Rotation rot, Size size, OBJ object, MaterialOBJ Material, float Tex_noTex)
+	{
+		Color color;
+		color.color.x = Material.ColorDiffuse.x;
+		color.color.y = Material.ColorDiffuse.y;
+		color.color.z = Material.ColorDiffuse.z;
+		color.color.w = Tex_noTex;
+			Transparens trans;
+			trans.x = 1 - Material.Transparensy;
+			trans.y = 1 - Material.Transparensy;
+			trans.z = 1 - Material.Transparensy;
+			trans.a = 1 - Material.Transparensy;
+
+			BlendObject(Transparency, trans);
+
+			if (Tex_noTex == 1.0f)
+			{
+			d3d11DevCon->PSSetShaderResources(0, 1, &Material.meshSRVDiffuse);
+			color.color.x = 1;
+			color.color.y = 1;
+			color.color.z = 1;
+			color.color.w = 1;
+			SetColor(color);
+			}
+			else
+			{
+			SetColor(color);
+			}
+
+			SetModObject(VS, PS, object.meshVertBuff, object.meshIndexBuff, NULL, NULL, NULL);
+			SetTransform(pos, rot, size, meshWorld, mod_rot);
+			d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
+			d3d11DevCon->RSSetState(WireFrame);
+			d3d11DevCon->DrawIndexed(object.CountDrawIndex, 0, 0);
+	}
+
+
 	//СКАЙБОКС
 	void CreateObject(OBJECT obj)
 	{
@@ -1483,7 +1704,7 @@ public:
 		CreateModuleDX(LAYER_1, &VertSpeherLayout, SKYMAP_VS_Buffer);
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 
-		LoadObjModel(L"test.obj", &meshVertBuff, &meshIndexBuff); ///!!!!
+		LoadObjModel(L"modeltest.obj"); ///!!!!
 
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
 		//SetPointLight();
@@ -1493,7 +1714,7 @@ public:
 	};
 
 
-	void UpdateDX(double time)
+	void UpdateDX(double time)		
 	{   
 		CrearViewPort();
 		UpdateInput(time);
@@ -1502,17 +1723,19 @@ public:
 		test_timer += 50 * time;
 		test_timer2 += 20 * time;
 
-		for (int i = 0; i < 1; i++)
+		for (int i = 0; i < Models.size(); i++)
 		{
-			CreateObject(
-				MODEL_OBJ,
+			for (int j = 0; j < Models[i].Obj.size(); j++)
+			{
+				CreateObject(
 				Position(0, 0, 0),
 				LOCAL,
 				Rotation(0, 0, 0),
 				Size(1, 1, 1),
-				Color(1, 1, 1, 1),
-				Transparens(0, 0, 0, 1),
-				MOD_VISIBLE::OUT_IN_SIDE);
+				Models[i].Obj[j],
+				MaterialObj[Models[i].SettingsDraw[j].x],
+				Models[i].SettingsDraw[j].y);
+			}
 		}
 		
 
