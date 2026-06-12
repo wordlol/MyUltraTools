@@ -8,6 +8,7 @@
 #pragma comment (lib, "dwrite.lib")
 #pragma comment (lib, "dinput8.lib")
 #pragma comment (lib, "dxguid.lib")
+#pragma comment (lib, "libfbxsdk.lib")
 
 #include <Windows.h>
 #include <d3d11.h>
@@ -23,6 +24,9 @@
 #include <vector>
 #include <fstream>
 #include <istream>
+#include <fbxsdk.h>
+#include <imgui.h>
+
 
 bool nullbuffer_element[1] = {};
 #define NULLBUFFER nullbuffer_element
@@ -212,15 +216,6 @@ struct Color
 
 	XMFLOAT4 color;
 };
-struct SurfaceMaterial
-{
-	std::wstring matName;
-	XMFLOAT4 difColor;
-	int texArrayIndex;
-	bool hasTexture;
-	bool transparent;
-};
-std::vector<SurfaceMaterial> material;
 
 struct MaterialOBJ
 {
@@ -245,8 +240,6 @@ struct OBJ
 };
 struct ModelsOBJ
 {
-	//X - Material
-	//Y - Tex | no Tex
 	std::vector<XMFLOAT2> SettingsDraw;
 	std::vector<OBJ> Obj;
 };
@@ -662,7 +655,6 @@ private:
 		d3d11DevCon->OMSetDepthStencilState(Depth, 0);
 	}
 
-
 	void LoadObjModel(std::wstring filename)
 	{
 		std::wifstream fileIn(filename.c_str()); 
@@ -996,8 +988,6 @@ private:
 							vertices.push_back(tempVert);
 						}
 
-						meshSubsetIndexStart = index.size();
-
 						CreateModuleDX(VERTEX_0, &vertices[0], sizeof(Vertex) * vertices.size(), &VertexBuffer);
 						CreateModuleDX(INDEX_0, &index[0], sizeof(DWORD) * index.size(), &IndexBuffer);
 						obj.meshVertBuff = VertexBuffer;
@@ -1049,7 +1039,6 @@ private:
 		fileIn.close();
 		Models.push_back(model);
 	}
-
 
 private: //системы
 	void CreateDirectInput(HINSTANCE hInstance) {
@@ -1644,8 +1633,6 @@ private:
 			d3d11DevCon->RSSetState(WireFrame);
 			d3d11DevCon->DrawIndexed(object.CountDrawIndex, 0, 0);
 	}
-
-
 	//СКАЙБОКС
 	void CreateObject(OBJECT obj)
 	{
@@ -1656,7 +1643,6 @@ private:
 			DrawViewObj(OUT_IN_SIDE, &smrv, &SpeherTexSamplerState, NumSphereFaces * 3);
 		}
 	}
-
 public:
 	bool GetHR;
 
@@ -1738,12 +1724,10 @@ public:
 			}
 		}
 		
-
 		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
 		UpdateText(L"   FPS: ", Timer.fps);
 		SwapChain->Present(0, 0);
 	};
-
 
 
 	~D3DEX()
@@ -1802,8 +1786,6 @@ public:
 		SMTexture->Release();
 		DIKeyboard->Release();
 		DIMouse->Release();
-		meshVertBuff->Release();
-		meshIndexBuff->Release();
 	}
 private:
 	IDXGISwapChain*				SwapChain;
@@ -1860,12 +1842,5 @@ private:
 	std::wstring printText;
 	float test_timer = 0;
 	float test_timer2 = 0;
-	ID3D11Buffer*				meshVertBuff;
-	ID3D11Buffer*				meshIndexBuff;
 	XMMATRIX meshWorld;
-	int meshSubsets = 0;
-	UINT meshSubsetIndexStart;
-	std::vector<int> meshSubsetTexture;
-	std::vector<ID3D11ShaderResourceView*> meshSRV;
-	std::vector<std::wstring> textureNameArray;
 };

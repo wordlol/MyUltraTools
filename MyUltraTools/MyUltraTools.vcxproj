@@ -69,14 +69,14 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>$(ProjectDir)Libraries\DirectXTex\include\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)Libraries\DirectX\Lib\;$(ProjectDir)Libraries\DirectXTex\include\Libraries\DirectXTex\libs;$(LibraryPath)</LibraryPath>
-    <ExternalIncludePath>$(ProjectDir)Libraries\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include\DirectXTex\include</ExternalIncludePath>
+    <IncludePath>$(ProjectDir)Libraries\imgui-1.92.8;$(ProjectDir)Libraries\FBXSDK-master\include;$(ProjectDir)Libraries\DirectXTex\include\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)Libraries\FBXSDK-master\lib\vs2015\x86\debug;$(ProjectDir)Libraries\DirectX\Lib\;$(ProjectDir)Libraries\DirectXTex\include\Libraries\DirectXTex\libs;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>$(ProjectDir)Libraries\imgui-1.92.8;$(ProjectDir)Libraries\FBXSDK-master\include;$(ProjectDir)Libraries\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include\DirectXTex\include</ExternalIncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>$(ProjectDir)Libraries\DirectXTex\include\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)Libraries\DirectX\Lib\;$(ProjectDir)Libraries\DirectXTex\include\Libraries\DirectXTex\libs;$(LibraryPath)</LibraryPath>
-    <ExternalIncludePath>$(ProjectDir)Libraries\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include\DirectXTex\include</ExternalIncludePath>
+    <IncludePath>$(ProjectDir)Libraries\imgui-1.92.8;$(ProjectDir)Libraries\FBXSDK-master\include;$(ProjectDir)Libraries\DirectXTex\include\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)Libraries\FBXSDK-master\lib\vs2015\x86\release;$(ProjectDir)Libraries\DirectX\Lib\;$(ProjectDir)Libraries\DirectXTex\include\Libraries\DirectXTex\libs;$(LibraryPath)</LibraryPath>
+    <ExternalIncludePath>$(ProjectDir)Libraries\imgui-1.92.8;$(ProjectDir)Libraries\FBXSDK-master\include;$(ProjectDir)Libraries\DirectX\Include;$(ProjectDir)Libraries\DirectXTex\include\DirectXTex\include</ExternalIncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -97,7 +97,11 @@
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
       <ObjectFileOutput>$(ProjectDir)%(Filename).cso</ObjectFileOutput>
+      <ShaderType>Effect</ShaderType>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>xcopy /Y /d "$(ProjectDir)Libraries\FBXSDK-master\lib\vs2015\x86\debug\libfbxsdk.dll" "$(OutDir)" </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -120,7 +124,11 @@
     <FxCompile>
       <ShaderModel>5.0</ShaderModel>
       <ObjectFileOutput>$(ProjectDir)%(Filename).cso</ObjectFileOutput>
+      <ShaderType>Effect</ShaderType>
     </FxCompile>
+    <PostBuildEvent>
+      <Command>xcopy /Y /d "$(ProjectDir)Libraries\FBXSDK-master\lib\vs2015\x86\release\libfbxsdk.dll" "$(OutDir)" </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
