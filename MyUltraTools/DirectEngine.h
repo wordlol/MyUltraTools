@@ -143,6 +143,7 @@ struct  {
 	int colormodb = 1;
 }Property;
 
+
 struct Light
 {
 	Light()
@@ -246,6 +247,12 @@ struct ModelsOBJ
 std::vector<MaterialOBJ> MaterialObj;
 std::vector<ModelsOBJ> Models;
 
+struct
+{
+	Position pos;
+
+}obj_movment;
+
 struct {
 	struct cbPerObject
 	{
@@ -331,8 +338,7 @@ DWORD Block_I[] = {
 	20, 22, 23
 };
 
-Vertex Plane_V[] =
-{
+Vertex Plane_V[] = {
 	// Front Face
 	Vertex(
 		-1.0f, -1.0f, -1.0f, 
@@ -684,7 +690,7 @@ private:
 
 		while (fileIn)
 		{
-			if (skip == true)
+			if (skip == true && checkChar != 'o')
 			{
 				skip = false;
 				checkChar = fileIn.get();
@@ -881,6 +887,7 @@ private:
 							}
 						}
 						fileInMtl.close();
+						skip = true;
 					}
 					break;
 				}
@@ -993,7 +1000,6 @@ private:
 						obj.meshVertBuff = VertexBuffer;
 						obj.meshIndexBuff = IndexBuffer;
 						obj.CountDrawIndex = index.size();
-						
 						meshMaterialsTemp = L"";
 						for (int i = 0; i < temp_words.size(); i++)
 						{
@@ -1177,6 +1183,37 @@ private: //системы
 		d3d11DevCon->OMSetRenderTargets(1, &renderTargetView, depthStencilView);
 		return true;
 	};
+	void SortModels()
+	{
+		OBJ objtemp;
+		XMFLOAT2 xmfTemp;
+		int xTemp;
+		bool sort = false;
+
+		for (int i = 0; i < Models.size(); i++)
+		{
+			sort = true;
+			while (sort)
+			{
+				for (int j = 1; j < Models[i].SettingsDraw.size(); j++)
+				{
+					sort = false;
+					if (Models[i].SettingsDraw[j-1].x > Models[i].SettingsDraw[j].x)
+					{
+						sort = true;
+						xmfTemp = Models[i].SettingsDraw[j];
+						Models[i].SettingsDraw[j] = Models[i].SettingsDraw[j-1];
+						Models[i].SettingsDraw[j-1] = xmfTemp;
+
+						objtemp = Models[i].Obj[j];
+						Models[i].Obj[j] = Models[i].Obj[j-1];
+						Models[i].Obj[j-1] = objtemp;
+						break;
+					}
+				}
+			}
+		}
+	}
 private: //создание
 	void InitShapeSphere(int LatLines, int LongLines)
 	{
@@ -1361,6 +1398,32 @@ private: // обновление сцены
 		d3d11DevCon->UpdateSubresource(cbPerObjectBuffer, 0, NULL, &Cbuffers.cbPerObj, 0, 0);
 		d3d11DevCon->VSSetConstantBuffers(0, 1, &cbPerObjectBuffer);
 	}
+	//Name L"All" or L"NameObj"
+	void SetModelOBJ(std::wstring NameObj, Position pos, MOD_ROTATION mod_rot, Rotation rot, Size size)
+	{
+		if (NameObj == L"All")
+		{
+			for (int i = 0; i < Models.size(); i++)
+			{
+				for (int j = 0; j < Models[i].Obj.size(); j++)
+				{
+					CreateObject(pos,mod_rot,rot,size,Models[i].Obj[j],MaterialObj[Models[i].SettingsDraw[j].x],Models[i].SettingsDraw[j].y);
+				}
+			}
+		}
+		else
+		{
+			for (int i = 0; i < Models.size(); i++)
+			{
+				for (int j = 0; j < Models[i].Obj.size(); j++)
+				{
+					if (Models[i].Obj[j].NameObj == NameObj)
+						CreateObject(pos, mod_rot, rot, size, Models[i].Obj[j], MaterialObj[Models[i].SettingsDraw[j].x], Models[i].SettingsDraw[j].y);
+				}
+			}
+		}
+
+	}
 private: //обновление графики
 	void CrearViewPort()
 	{
@@ -1463,7 +1526,7 @@ private: //обновление графики
 			return;
 		}
 	}
-	void UpdateCamera(bool fly)
+	void UpdateCamera(bool fly, Position target)
 	{
 		Camera.camStartPos = XMVectorSet(0.0f, 0.0f, -0.5f, 0.0f);
 		Camera.camStartTarget = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
@@ -1482,8 +1545,6 @@ private: //обновление графики
 		Camera.camUp = XMVector3TransformCoord(Camera.camUp, Camera.camRotationMatrix);
 		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, Camera.camRotationMatrix);
 		Camera.camForward = XMVector3TransformCoord(Camera.DefaultForward, Camera.camRotationMatrix);
-		Camera.camPosition += Camera.moveUp * Camera.camUp;
-		Camera.moveUp = 0.0f;
 		}
 		else
 		{
@@ -1491,10 +1552,12 @@ private: //обновление графики
 		Camera.camRight = XMVector3TransformCoord(Camera.DefaultRight, RotateYTempMatrix);
 		Camera.camForward = XMVector3TransformCoord(Camera.DefaultForward, RotateYTempMatrix);
 		}
+		
+		Camera.camPosition += target.x * Camera.camForward;
+		Camera.camPosition += target.y * Camera.camRight;
+		Camera.camPosition += target.z * Camera.camUp;
 
-		Camera.camPosition += Camera.moveLeftRight * Camera.camRight;
-		Camera.camPosition += Camera.moveBackForward * Camera.camForward;
-
+		Camera.moveUp = 0.0f;
 		Camera.moveLeftRight = 0.0f;
 		Camera.moveBackForward = 0.0f;
 
@@ -1527,26 +1590,32 @@ private: //обновление графики
 		if (KeyState[DIK_A] & 0x80)
 		{
 			Camera.moveLeftRight -= speed;
+			obj_movment.pos.z -= speed;
 		}
 		if (KeyState[DIK_D] & 0x80)
 		{
 			Camera.moveLeftRight += speed;
+			obj_movment.pos.z += speed;
 		}
 		if (KeyState[DIK_W] & 0x80)
 		{
 			Camera.moveBackForward += speed;
+			obj_movment.pos.x += speed;
 		}
 		if (KeyState[DIK_S] & 0x80)
 		{
 			Camera.moveBackForward -= speed;
+			obj_movment.pos.x -= speed;
 		}
 		if (KeyState[DIK_SPACE] & 0x80)
 		{
 			Camera.moveUp += speed;
+			obj_movment.pos.y += speed;
 		}
 		if (KeyState[DIK_LCONTROL] & 0x80)
 		{
 			Camera.moveUp -= speed;
+			obj_movment.pos.y -= speed;
 		}
 
 		if ((mouseState.lX != ControlInput.mouseLastState.lX) || (mouseState.lY != ControlInput.mouseLastState.lY))
@@ -1556,7 +1625,6 @@ private: //обновление графики
 
 			ControlInput.mouseLastState = mouseState;
 		}
-
 	};
 	void UpdateLightPosition()
 	{
@@ -1599,36 +1667,33 @@ private:
 	}
 	//создание объекта .obj
 	void CreateObject(Position pos, MOD_ROTATION mod_rot, Rotation rot, Size size, OBJ object, MaterialOBJ Material, float Tex_noTex)
-	{
-		Color color;
-		color.color.x = Material.ColorDiffuse.x;
-		color.color.y = Material.ColorDiffuse.y;
-		color.color.z = Material.ColorDiffuse.z;
-		color.color.w = Tex_noTex;
+	{	
+			Color color;
+			color.color.x = Material.ColorDiffuse.x;
+			color.color.y = Material.ColorDiffuse.y;
+			color.color.z = Material.ColorDiffuse.z;
+			color.color.w = Tex_noTex;
 			Transparens trans;
 			trans.x = 1 - Material.Transparensy;
 			trans.y = 1 - Material.Transparensy;
 			trans.z = 1 - Material.Transparensy;
 			trans.a = 1 - Material.Transparensy;
-
 			BlendObject(Transparency, trans);
-
 			if (Tex_noTex == 1.0f)
 			{
-			d3d11DevCon->PSSetShaderResources(0, 1, &Material.meshSRVDiffuse);
-			color.color.x = 1;
-			color.color.y = 1;
-			color.color.z = 1;
-			color.color.w = 1;
-			SetColor(color);
+				d3d11DevCon->PSSetShaderResources(0, 1, &Material.meshSRVDiffuse);
+				color.color.x = 1;
+				color.color.y = 1;
+				color.color.z = 1;
+				color.color.w = 1;
+				SetColor(color);
 			}
 			else
 			{
 			SetColor(color);
 			}
-
-			SetModObject(VS, PS, object.meshVertBuff, object.meshIndexBuff, NULL, NULL, NULL);
-			SetTransform(pos, rot, size, meshWorld, mod_rot);
+				SetModObject(VS, PS, object.meshVertBuff, object.meshIndexBuff, NULL, NULL, NULL);
+				SetTransform(pos, rot, size, meshWorld, mod_rot);
 			d3d11DevCon->PSSetSamplers(0, 1, &CubesTexSamplerState);
 			d3d11DevCon->RSSetState(WireFrame);
 			d3d11DevCon->DrawIndexed(object.CountDrawIndex, 0, 0);
@@ -1690,8 +1755,10 @@ public:
 		CreateModuleDX(LAYER_1, &VertSpeherLayout, SKYMAP_VS_Buffer);
 		d3d11Device->CreateShaderResourceView(sharedTex11, NULL, &d2dTexture);
 
-		LoadObjModel(L"modeltest.obj"); ///!!!!
+		LoadObjModel(L"test.obj"); ///!!!!
 
+
+		SortModels();
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
 		//SetPointLight();
 		//SetSunLight();
@@ -1699,38 +1766,53 @@ public:
 		d3d11DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	};
 
-
 	void UpdateDX(double time)		
 	{   
 		CrearViewPort();
-		UpdateInput(time);
 		UpdateLightPosition();
-		UpdateCamera(true);
+		UpdateCamera(true, Position(Camera.moveBackForward, Camera.moveLeftRight, Camera.moveUp));
+		//UpdateCamera(true, Position(obj_movment.pos.x, obj_movment.pos.y, obj_movment.pos.z));
+		UpdateInput(time);
+
 		test_timer += 50 * time;
 		test_timer2 += 20 * time;
+		
+		SetModelOBJ(
+			L"Cube",
+			Position(obj_movment.pos.x, obj_movment.pos.y, obj_movment.pos.z),
+			LOCAL,
+			Rotation(0, Camera.moveBackForward, 0),
+			Size(1, 1, 1)
+		);
 
-		for (int i = 0; i < Models.size(); i++)
+		for (int i = 0; i < 700; i++)
 		{
-			for (int j = 0; j < Models[i].Obj.size(); j++)
-			{
-				CreateObject(
-				Position(0, 0, 0),
+			SetModelOBJ(
+				L"Suzanne",
+				Position(i * 0.1f, i * 0.1f, 0),
 				LOCAL,
 				Rotation(0, 0, 0),
-				Size(1, 1, 1),
-				Models[i].Obj[j],
-				MaterialObj[Models[i].SettingsDraw[j].x],
-				Models[i].SettingsDraw[j].y);
-			}
+				Size(1, 1, 1)
+			);
 		}
-		
+
+
+
+
 		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
 		UpdateText(L"   FPS: ", Timer.fps);
 		SwapChain->Present(0, 0);
+
+
+		if(test_timer > 360)
+			test_timer = 0;
+
+		if (test_timer2 > 360)
+			test_timer2 = 0;
 	};
 
 
-	~D3DEX()
+	void Clear()
 	{
 		SwapChain->SetFullscreenState(false, NULL);
 		PostMessage(Window.hWND, WM_DESTROY, 0, 0);
@@ -1786,7 +1868,7 @@ public:
 		SMTexture->Release();
 		DIKeyboard->Release();
 		DIMouse->Release();
-	}
+	};
 private:
 	IDXGISwapChain*				SwapChain;
 	ID3D11Device*				d3d11Device;

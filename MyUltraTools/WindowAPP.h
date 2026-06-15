@@ -10,11 +10,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 	case WM_KEYDOWN:
 		if (wparam == VK_ESCAPE)
 		{
-				DestroyWindow(hwnd);
+			DestroyWindow(hwnd);
+			PostQuitMessage(0);
 		}
-		return 0;
-	case WM_DESTROY:
-		PostQuitMessage(0);
 		return 0;
 	}
 
@@ -75,7 +73,9 @@ int MassegeLoop(D3DEX D3DEX_) {
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT)
+			{
 				break;
+			}
 
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
@@ -89,11 +89,12 @@ int MassegeLoop(D3DEX D3DEX_) {
 				Timer.frameCount = 0;
 				Timer.StartTimer();
 			}
-
 			Timer.frameTime = Timer.GetFrameTime();
-
+			
 			D3DEX_.UpdateDX(Timer.frameTime);
 		}
 	}
+
+	D3DEX_.Clear();
 	return (int)msg.wParam;
 };
