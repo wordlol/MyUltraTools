@@ -1799,6 +1799,16 @@ public:
 
 
 
+
+
+
+
+
+
+
+
+
+
 		CreateObject(SKY_BOX); //SetModObject ВЛОЖЕН В СОЗДАНИЕ
 		UpdateText(L"   FPS: ", Timer.fps);
 		SwapChain->Present(0, 0);
