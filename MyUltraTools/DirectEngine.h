@@ -161,6 +161,7 @@ struct Light
 }light;
 struct Vertex
 {
+
 	Vertex() {}
 	Vertex(float x, float y, float z,
 		float u, float v,
@@ -234,6 +235,7 @@ struct MaterialOBJ
 };
 struct OBJ
 {
+
 	ID3D11Buffer* meshVertBuff = {nullptr};
 	ID3D11Buffer* meshIndexBuff = {nullptr};
 	UINT CountDrawIndex = {0};
@@ -1713,6 +1715,7 @@ public:
 
 	D3DEX(HINSTANCE hInstance)
 	{
+		std::locale::global(std::locale("C"));
 		GetHR = InitializeDirect3dApp(hInstance);
 
 		InitShapeSphere(10, 10);
@@ -1757,7 +1760,6 @@ public:
 
 		LoadObjModel(L"test.obj"); ///!!!!
 
-
 		SortModels();
 		SetViewPort(Window.Wight, Window.Heignt,0,0,1.f,0.f);
 		//SetPointLight();
@@ -1779,13 +1781,13 @@ public:
 		
 		SetModelOBJ(
 			L"Cube",
-			Position(obj_movment.pos.x, obj_movment.pos.y, obj_movment.pos.z),
+			Position(0, 0, 0),
 			LOCAL,
-			Rotation(0, Camera.moveBackForward, 0),
+			Rotation(0, 0, 0),
 			Size(1, 1, 1)
 		);
 
-		for (int i = 0; i < 700; i++)
+		/*for (int i = 0; i < 700; i++)
 		{
 			SetModelOBJ(
 				L"Suzanne",
@@ -1794,7 +1796,7 @@ public:
 				Rotation(0, 0, 0),
 				Size(1, 1, 1)
 			);
-		}
+		}*/
 
 
 
