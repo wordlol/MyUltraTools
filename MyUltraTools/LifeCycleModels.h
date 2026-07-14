@@ -101,6 +101,7 @@ private:
 	std::unique_ptr<LifecycleModel> Model;
 };
 
+//Controller
 template <typename T>
 void RealizeLifeCycle( std::vector<std::string> Lifecycle)
 {
