@@ -1,12 +1,14 @@
-#include <iostream>
-#include <string>
+#include "LifeCycleModels.h"
+
 
 int main()
 {
-	setlocale(0,"Russian");
+	std::vector<std::string> Lifecycle = {"start", "midle", "end"};
+	RLC::RealizeLifeCycle<RLC::Iterative>(Lifecycle);
 
 
-	std::cout << "Привет";
+
+
 
 
 
