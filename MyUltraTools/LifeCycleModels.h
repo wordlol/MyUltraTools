@@ -3,8 +3,6 @@
 #include <vector>
 #include <memory>
 
-namespace RLC
-{
 // Base
 class Phase
 {
@@ -141,5 +139,4 @@ void RealizeLifeCycle( std::vector<std::string> Lifecycle)
 		std::cin.ignore(); std::cin.get();
 
 	}
-}
 }
