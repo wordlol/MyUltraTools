@@ -1,5 +1,9 @@
 #pragma once
 #include "LifeCycleModels.h"
+//2
+//Методологии гибкой разработки программного обеспечения.Понятие о
+//Agile, Scrum и Kanban.
+
 
 //Base
 enum StatusTask

@@ -2,6 +2,10 @@
 #include "Boarder.h"
 #include <functional>
 #include <map>
+//3
+//Тестирование программного обеспечения. Уровни и виды тестирования…
+//Разработка через тестирование.
+
 
 class TestRunner {
     struct Test {

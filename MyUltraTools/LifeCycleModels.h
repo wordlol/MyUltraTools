@@ -2,6 +2,11 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+//1
+//Жизненный цикл(ЖЦ) программного продукта : модели ЖЦ; стандарты
+//ЖЦ
+
+
 
 // Base
 class Phase
