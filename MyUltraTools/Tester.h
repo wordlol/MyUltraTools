@@ -31,7 +31,9 @@ public:
 
 #define ASSERT_EQUAL(expected, actual) \
 if ((expected) != (actual)) throw std::runtime_error("ASSERT_EQUAL: " #expected " != " #actual);
+
 #define ASSERT_TRUE(condition)
+
 #define ASSERT_THROWS(expression) \
 do { \
     try { \
@@ -41,6 +43,11 @@ do { \
         break; \
     } \
 } while(0)
+
+#define ASSERT_DOUBLE_EQUAL(expected, actual, eps) \
+    if (std::abs((expected) - (actual)) > (eps)) \
+        throw std::runtime_error("ASSERT_DOUBLE_EQUAL: " #expected " != " #actual);
+
 
 std::string ToRoman(int num) {
     const std::pair<int, std::string> table[] = {
