@@ -1,10 +1,9 @@
-#include "LifeCycleModels.h"
-#include "Boarder.h"
+#include "Tester.h"
+
 
 
 int main()
 {
-
 
 
 }

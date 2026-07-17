@@ -26,5 +26,8 @@
     <ClInclude Include="Boarder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tester.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

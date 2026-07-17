@@ -1,7 +1,5 @@
 #pragma once
-#include <iostream>
-#include <vector>
-#include <memory>
+#include "LifeCycleModels.h"
 
 //Base
 enum StatusTask
