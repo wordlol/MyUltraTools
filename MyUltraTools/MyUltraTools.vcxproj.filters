@@ -23,5 +23,8 @@
     <ClInclude Include="LifeCycleModels.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Boarder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
