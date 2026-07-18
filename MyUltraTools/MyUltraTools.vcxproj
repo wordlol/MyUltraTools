@@ -136,6 +136,7 @@
     <ClInclude Include="RUP.h" />
     <ClInclude Include="Tamplates.h" />
     <ClInclude Include="Tester.h" />
+    <ClInclude Include="Trees.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -56,5 +56,8 @@
     <ClInclude Include="ATD.h">
       <Filter>Header Files\BLOK2</Filter>
     </ClInclude>
+    <ClInclude Include="Trees.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
