@@ -77,6 +77,7 @@ class BST {
                 node->value = minNode->value;
                 // удаляем минимальный узел из правого поддерева
                 node->right = removeRec(node->right, minNode->key);
+
             }
         }
         return node;
@@ -100,6 +101,20 @@ public:
     size_t size() const { return size_; }
     void inorder(std::vector<K>& out) const {
         inorderRec(root, out);
+    }
+    void inorder_iterative(std::vector<K>& out) const {
+        std::vector<BSTNode<K, V>*> stack;
+        BSTNode<K, V>* curr = root;
+        while (curr || !stack.empty()) {
+            while (curr) {
+                stack.push_back(curr);
+                curr = curr->left;
+            }
+            curr = stack.back();
+            stack.pop_back();
+            out.push_back(curr->key);
+            curr = curr->right;
+        }
     }
 };
 

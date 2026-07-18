@@ -59,5 +59,11 @@
     <ClInclude Include="Trees.h">
       <Filter>Header Files\BLOK2</Filter>
     </ClInclude>
+    <ClInclude Include="Algo.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="SORTS.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

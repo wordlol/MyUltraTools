@@ -128,12 +128,14 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Algo.h" />
     <ClInclude Include="ATD.h" />
     <ClInclude Include="Boarder.h" />
     <ClInclude Include="LifeCycleModels.h" />
     <ClInclude Include="OOP1.h" />
     <ClInclude Include="OOP2.h" />
     <ClInclude Include="RUP.h" />
+    <ClInclude Include="SORTS.h" />
     <ClInclude Include="Tamplates.h" />
     <ClInclude Include="Tester.h" />
     <ClInclude Include="Trees.h" />
