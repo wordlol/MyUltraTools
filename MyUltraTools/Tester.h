@@ -37,6 +37,7 @@ public:
 if ((expected) != (actual)) throw std::runtime_error("ASSERT_EQUAL: " #expected " != " #actual);
 
 #define ASSERT_TRUE(condition)
+#define ASSERT_FALSE(expression)
 
 #define ASSERT_THROWS(expression) \
 do { \

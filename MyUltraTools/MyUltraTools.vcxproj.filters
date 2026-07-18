@@ -13,6 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\BLOK1">
+      <UniqueIdentifier>{4264a94e-ce17-43cd-8e9b-8aa7eef90dcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BLOK2">
+      <UniqueIdentifier>{13e07b73-6d42-4247-af8e-3c0e04ec884f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BLOK3">
+      <UniqueIdentifier>{c2cf11bc-1ba4-4480-9f47-c90363fe59cb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\BLOK4">
+      <UniqueIdentifier>{591f6e92-e604-454f-8a93-7fc6e9ff1708}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source.cpp">
@@ -20,26 +32,29 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LifeCycleModels.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Boarder.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\BLOK1</Filter>
     </ClInclude>
-    <ClInclude Include="Tester.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="LifeCycleModels.h">
+      <Filter>Header Files\BLOK1</Filter>
     </ClInclude>
     <ClInclude Include="OOP1.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\BLOK1</Filter>
     </ClInclude>
     <ClInclude Include="OOP2.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\BLOK1</Filter>
     </ClInclude>
     <ClInclude Include="RUP.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\BLOK1</Filter>
     </ClInclude>
     <ClInclude Include="Tamplates.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\BLOK1</Filter>
+    </ClInclude>
+    <ClInclude Include="Tester.h">
+      <Filter>Header Files\BLOK1</Filter>
+    </ClInclude>
+    <ClInclude Include="ATD.h">
+      <Filter>Header Files\BLOK2</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
