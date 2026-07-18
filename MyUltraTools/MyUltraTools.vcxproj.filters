@@ -38,5 +38,8 @@
     <ClInclude Include="RUP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Tamplates.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
