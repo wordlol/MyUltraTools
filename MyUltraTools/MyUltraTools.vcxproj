@@ -69,11 +69,11 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\MyUltraTools\Libraries\ImGuizmo-master;..\MyUltraTools\Libraries\imnodes-master;..\MyUltraTools\Libraries\imgui-docking;..\MyUltraTools\Libraries\imgui-docking\backends;..\MyUltraTools\Libraries\implot3d-0.4;..\MyUltraTools\Libraries\implot-1.0;..\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
+    <IncludePath>..\MyUltraTools\Libraries\sql;..\MyUltraTools\Libraries\ImGuizmo-master;..\MyUltraTools\Libraries\imnodes-master;..\MyUltraTools\Libraries\imgui-docking;..\MyUltraTools\Libraries\imgui-docking\backends;..\MyUltraTools\Libraries\implot3d-0.4;..\MyUltraTools\Libraries\implot-1.0;..\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\wordl\source\repos\MyUltraTools\MyUltraTools\Libraries\DirectX\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>..\MyUltraTools\Libraries\ImGuizmo-master;..\MyUltraTools\Libraries\imnodes-master;..\MyUltraTools\Libraries\imgui-docking;..\MyUltraTools\Libraries\imgui-docking\backends;..\MyUltraTools\Libraries\implot3d-0.4;..\MyUltraTools\Libraries\implot-1.0;..\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
+    <IncludePath>..\MyUltraTools\Libraries\sql;..\MyUltraTools\Libraries\ImGuizmo-master;..\MyUltraTools\Libraries\imnodes-master;..\MyUltraTools\Libraries\imgui-docking;..\MyUltraTools\Libraries\imgui-docking\backends;..\MyUltraTools\Libraries\implot3d-0.4;..\MyUltraTools\Libraries\implot-1.0;..\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
     <LibraryPath>C:\Users\wordl\source\repos\MyUltraTools\MyUltraTools\Libraries\DirectX\Lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -154,6 +154,7 @@
     <ClCompile Include="Libraries\implot3d-0.4\implot3d_demo.cpp" />
     <ClCompile Include="Libraries\implot3d-0.4\implot3d_items.cpp" />
     <ClCompile Include="Libraries\implot3d-0.4\implot3d_meshes.cpp" />
+    <ClCompile Include="Libraries\sql\sqlite3.c" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>

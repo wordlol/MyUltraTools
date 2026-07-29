@@ -4,7 +4,7 @@
 #define IMAGE  "..\\MyUltraTools\\Images\\"
 #define IMAGEL L"..\\MyUltraTools\\Images\\"
 
-void StyleGui()
+void StyleGui1()
 {
 	ImGuiStyle& style = ImGui::GetStyle();
 
@@ -93,6 +93,95 @@ void StyleGui()
 	style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
 }
 
+void StyleGui2()
+{
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	style.Alpha = 1.0f;
+	style.DisabledAlpha = 1.0f;
+	style.WindowPadding = ImVec2(12.0f, 12.0f);
+	style.WindowRounding = 11.5f;
+	style.WindowBorderSize = 0.0f;
+	style.WindowMinSize = ImVec2(20.0f, 20.0f);
+	style.WindowTitleAlign = ImVec2(0.5f, 0.5f);
+	style.WindowMenuButtonPosition = ImGuiDir_Right;
+	style.ChildRounding = 0.0f;
+	style.ChildBorderSize = 1.0f;
+	style.PopupRounding = 0.0f;
+	style.PopupBorderSize = 1.0f;
+	style.FramePadding = ImVec2(20.0f, 3.4f);
+	style.FrameRounding = 11.9f;
+	style.FrameBorderSize = 0.0f;
+	style.ItemSpacing = ImVec2(4.3f, 5.5f);
+	style.ItemInnerSpacing = ImVec2(7.1f, 1.8f);
+	style.CellPadding = ImVec2(12.1f, 9.2f);
+	style.IndentSpacing = 0.0f;
+	style.ColumnsMinSpacing = 4.9f;
+	style.ScrollbarSize = 11.6f;
+	style.ScrollbarRounding = 15.9f;
+	style.GrabMinSize = 3.7f;
+	style.GrabRounding = 20.0f;
+	style.TabRounding = 0.0f;
+	style.TabBorderSize = 0.0f;
+	style.ColorButtonPosition = ImGuiDir_Right;
+	style.ButtonTextAlign = ImVec2(0.5f, 0.5f);
+	style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
+
+	style.Colors[ImGuiCol_Text] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.27450982f, 0.31764707f, 0.4509804f, 1.0f);
+	style.Colors[ImGuiCol_WindowBg] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_ChildBg] = ImVec4(0.09411765f, 0.101960786f, 0.11764706f, 1.0f);
+	style.Colors[ImGuiCol_PopupBg] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_Border] = ImVec4(0.15686275f, 0.16862746f, 0.19215687f, 1.0f);
+	style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_FrameBg] = ImVec4(0.11372549f, 0.1254902f, 0.15294118f, 1.0f);
+	style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.15686275f, 0.16862746f, 0.19215687f, 1.0f);
+	style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.15686275f, 0.16862746f, 0.19215687f, 1.0f);
+	style.Colors[ImGuiCol_TitleBg] = ImVec4(0.047058824f, 0.05490196f, 0.07058824f, 1.0f);
+	style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.047058824f, 0.05490196f, 0.07058824f, 1.0f);
+	style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.09803922f, 0.105882354f, 0.12156863f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.047058824f, 0.05490196f, 0.07058824f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.11764706f, 0.13333334f, 0.14901961f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.15686275f, 0.16862746f, 0.19215687f, 1.0f);
+	style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.11764706f, 0.13333334f, 0.14901961f, 1.0f);
+	style.Colors[ImGuiCol_CheckMark] = ImVec4(0.972549f, 1.0f, 0.49803922f, 1.0f);
+	style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.972549f, 1.0f, 0.49803922f, 1.0f);
+	style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.79607844f, 0.49803922f, 1.0f);
+	style.Colors[ImGuiCol_Button] = ImVec4(0.11764706f, 0.13333334f, 0.14901961f, 1.0f);
+	style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.18039216f, 0.1882353f, 0.19607843f, 1.0f);
+	style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.15294118f, 0.15294118f, 0.15294118f, 1.0f);
+	style.Colors[ImGuiCol_Header] = ImVec4(0.14117648f, 0.16470589f, 0.20784314f, 1.0f);
+	style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.105882354f, 0.105882354f, 0.105882354f, 1.0f);
+	style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_Separator] = ImVec4(0.12941177f, 0.14901961f, 0.19215687f, 1.0f);
+	style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.15686275f, 0.18431373f, 0.2509804f, 1.0f);
+	style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.15686275f, 0.18431373f, 0.2509804f, 1.0f);
+	style.Colors[ImGuiCol_ResizeGrip] = ImVec4(0.14509805f, 0.14509805f, 0.14509805f, 1.0f);
+	style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.972549f, 1.0f, 0.49803922f, 1.0f);
+	style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_Tab] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_TabHovered] = ImVec4(0.11764706f, 0.13333334f, 0.14901961f, 1.0f);
+	style.Colors[ImGuiCol_TabActive] = ImVec4(0.11764706f, 0.13333334f, 0.14901961f, 1.0f);
+	style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.078431375f, 0.08627451f, 0.101960786f, 1.0f);
+	style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.1254902f, 0.27450982f, 0.57254905f, 1.0f);
+	style.Colors[ImGuiCol_PlotLines] = ImVec4(0.52156866f, 0.6f, 0.7019608f, 1.0f);
+	style.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.039215688f, 0.98039216f, 0.98039216f, 1.0f);
+	style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.88235295f, 0.79607844f, 0.56078434f, 1.0f);
+	style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(0.95686275f, 0.95686275f, 0.95686275f, 1.0f);
+	style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.047058824f, 0.05490196f, 0.07058824f, 1.0f);
+	style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.047058824f, 0.05490196f, 0.07058824f, 1.0f);
+	style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);
+	style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.11764706f, 0.13333334f, 0.14901961f, 1.0f);
+	style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(0.09803922f, 0.105882354f, 0.12156863f, 1.0f);
+	style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.9372549f, 0.9372549f, 0.9372549f, 1.0f);
+	style.Colors[ImGuiCol_DragDropTarget] = ImVec4(0.49803922f, 0.5137255f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.26666668f, 0.2901961f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.49803922f, 0.5137255f, 1.0f, 1.0f);
+	style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.19607843f, 0.1764706f, 0.54509807f, 0.5019608f);
+	style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.19607843f, 0.1764706f, 0.54509807f, 0.5019608f);
+}
+
 #include <string>
 #include <vector>
 #include <map>
@@ -103,6 +192,9 @@ void StyleGui()
 #include <shobjidl_core.h>
 #include <filesystem>
 #include <corecrt_math.h>
+#include <sqlite3.h>
+#include <unordered_map>
+#include <numeric>
 
 std::string OpenFileDialog(const std::wstring& filter = L"All Files (*.*)\0*.*\0")
 {
@@ -209,6 +301,438 @@ std::string SaveFileDialog(const std::wstring& defaultFileName = L"logfile.log",
 }
 
 
+int MaxLots = 0;
+
+// Выгода – оставляем как есть (использует последнюю минимальную цену)
+float Benefit(const int& MidlePrice, const std::vector<int>& MinPrice) {
+	if (MinPrice.empty()) return 0.0f;
+	int lastMin = MinPrice.back();
+	if (lastMin == 0) return 0.0f;
+	return static_cast<float>(MidlePrice) / lastMin;
+}
+// Коэффициент вариации – добавлена проверка на размер < 2
+double СalculateCV(const std::vector<int>& prices) {
+	if (prices.size() < 2) return 0.0;
+	double sum = std::accumulate(prices.begin(), prices.end(), 0.0);
+	double mean = sum / prices.size();
+	if (mean == 0.0) return 0.0;
+	double sqSum = 0.0;
+	for (int p : prices) {
+		double diff = p - mean;
+		sqSum += diff * diff;
+	}
+	double variance = sqSum / (prices.size() - 1);
+	double stddev = std::sqrt(variance);
+	return stddev / mean;
+}
+// Нормализованное количество лотов (требует глобальной MaxLots)
+float Lots(const std::vector<int>& LotsVec) {
+	int total = 0;
+	for (int v : LotsVec) total += v;
+	return static_cast<float>(total) / MaxLots; // MaxLots – глобальная переменная
+}
+// Тренд – исправлено деление и использование последней минимальной цены
+float Trend(const std::vector<int>& MinPrice, const std::vector<int>& Price_History) {
+	if (MinPrice.empty() || Price_History.empty()) return 0.0f;
+	int lastMin = MinPrice.back();
+	float sum = std::accumulate(Price_History.begin(), Price_History.end(), 0.0f);
+	float mean = sum / Price_History.size();
+	if (mean == 0.0f) return 0.0f;
+	return static_cast<float>(lastMin) / mean;
+}
+// Абсолютное количество лотов (для редкости)
+int CountLots(const std::vector<int>& LotsVec) {
+	int total = 0;
+	for (int v : LotsVec) total += v;
+	return total;
+}
+
+
+#include <fstream>
+#include <unordered_map>
+#include <string>
+#include <iostream>
+#include <cctype>
+#include <regex>
+#include <ctime>
+
+std::string formatTimestamp(time_t timestamp) {
+	struct tm timeinfo;
+	if (localtime_s(&timeinfo, &timestamp) != 0) {
+		return "Invalid time";
+	}
+	char buffer[80];
+	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
+	return std::string(buffer);
+}
+
+time_t lastScan = 1785304714;
+
+
+std::unordered_map<int, std::string> g_itemNames;
+
+#include <windows.h>
+#include <string>
+
+std::string cp1251_to_utf8(const std::string& cp1251_str) {
+	if (cp1251_str.empty()) return "";
+	// Определяем размер буфера для широких символов
+	int wide_len = MultiByteToWideChar(1251, 0, cp1251_str.c_str(), -1, nullptr, 0);
+	if (wide_len == 0) return "";
+	std::wstring wide_str(wide_len, L'\0');
+	MultiByteToWideChar(1251, 0, cp1251_str.c_str(), -1, &wide_str[0], wide_len);
+	// Конвертируем широкие символы в UTF-8
+	int utf8_len = WideCharToMultiByte(CP_UTF8, 0, wide_str.c_str(), -1, nullptr, 0, nullptr, nullptr);
+	if (utf8_len == 0) return "";
+	std::string utf8_str(utf8_len, '\0');
+	WideCharToMultiByte(CP_UTF8, 0, wide_str.c_str(), -1, &utf8_str[0], utf8_len, nullptr, nullptr);
+	// Убираем завершающий нулевой символ (WideCharToMultiByte добавляет его)
+	if (!utf8_str.empty() && utf8_str.back() == '\0') utf8_str.pop_back();
+	return utf8_str;
+}
+std::string trim(const std::string& str) {
+	size_t first = str.find_first_not_of(" \t\n\r\f\v\"");
+	if (first == std::string::npos) return "";
+	size_t last = str.find_last_not_of(" \t\n\r\f\v\"");
+	return str.substr(first, last - first + 1);
+}
+std::unordered_map<int, std::string> loadItemsFromCSV(const std::string& filename) {
+	std::unordered_map<int, std::string> map;
+	std::ifstream file(filename);
+	if (!file.is_open()) {
+		std::cerr << "Не удалось открыть файл: " << filename << std::endl;
+		return map;
+	}
+
+	std::string line;
+	std::getline(file, line);
+
+	while (std::getline(file, line)) {
+		if (line.empty()) continue;
+		size_t comma = line.find(',');
+		if (comma == std::string::npos) continue;
+		std::string idStr = trim(line.substr(0, comma));
+		std::string name = trim(line.substr(comma + 1));
+		try {
+			int id = std::stoi(idStr);
+			std::string name = trim(line.substr(comma + 1));
+			map[id] = cp1251_to_utf8(name);
+		}
+		catch (...) {}
+	}
+	file.close();
+	std::cout << "Загружено предметов: " << map.size() << std::endl;
+	return map;
+}
+std::string getItemName(int itemID) {
+	auto it = g_itemNames.find(itemID);
+	return (it != g_itemNames.end()) ? it->second : "Unknown";
+}
+
+std::string trimLua(const std::string& str) {
+	size_t first = str.find_first_not_of(" \t\n\r\f\v\"\"[");
+	if (first == std::string::npos) return "";
+	size_t last = str.find_last_not_of(" \t\n\r\f\v\"\"]\{\=\'\"\,");
+	return str.substr(first, last - first + 1);
+}
+
+
+
+enum MOD
+{
+	MAIN_MENU,
+	TEXT_MENU,
+	CRAFT_MENU,
+	LIDER_MENU,
+	GENERAL_MENU,
+};
+
+struct
+{
+	MOD mod = MAIN_MENU;
+}Data;
+
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <cstdint>
+
+enum FOCUSMARKET
+{
+	EMPTY,
+	AUCTIONATOR_PRICE_DATABASE,
+	AUCTIONATOR_POSTING_HISTORY
+};
+
+struct Item
+{
+	std::string Name = "Unknown";
+
+	int id = 0;
+
+	//AUCTIONATOR_PRICE_DATABASE
+	std::vector<int> Lots; //а
+	std::vector<int> MinPrice; //l
+	int MidlePrice = 0; //m
+	std::vector<int> MaxPrice; //h
+
+	//AUCTIONATOR_POSTING_HISTORY
+	std::vector<int> Price_History;
+	std::vector<int> Quantity_History;
+	std::vector<int> Time_History;
+
+	float Score = 0;
+};
+
+std::unordered_map<int, Item> Items;
+std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
+{
+	Item TempItem;
+
+	bool ID = false;
+	bool a = false;
+	bool l = false;
+	bool h = false;
+
+	bool exit = false;
+
+	FOCUSMARKET Focus = EMPTY;
+	std::unordered_map<int, Item> map;
+	std::ifstream file(filename);
+	std::string line;
+	std::getline(file, line);
+	while (std::getline(file, line)) 
+	{
+		if (line == "AUCTIONATOR_PRICE_DATABASE = {")
+		{
+			std::getline(file, line);
+			std::getline(file, line);
+			std::getline(file, line);
+			Focus = FOCUSMARKET::AUCTIONATOR_PRICE_DATABASE;
+		}
+		else if (line == "AUCTIONATOR_POSTING_HISTORY = {")
+		{
+			std::getline(file, line);
+			Focus = FOCUSMARKET::AUCTIONATOR_POSTING_HISTORY;
+		}
+		if (exit)
+			break;
+
+		switch (Focus)
+		{
+			case FOCUSMARKET::EMPTY:
+			{
+				continue;
+			}
+			case FOCUSMARKET::AUCTIONATOR_PRICE_DATABASE:
+			{
+				line = trimLua(line);
+				if (line == "__dbversion\"] = 1")
+				{
+					std::getline(file, line);
+					line = trimLua(line);
+				}
+
+				if(line == "a")
+				{ 
+					a = true;
+					l = false;
+					h = false;
+					continue;
+				}
+				else if (line == "l")
+				{
+					a = false;
+					l = true;
+					h = false;
+					continue;
+				}
+				else if (line[0] == 'm')
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j + 2);
+							TempItem.MidlePrice = std::stoi(line);
+							break;
+						}
+						TempItem.MidlePrice = -1;
+					}
+					a = false;
+					l = false;
+					h = false;
+					continue;
+				}
+				else if (line == "h")
+				{
+					a = false;
+					l = false;
+					h = true;
+					continue;
+				}
+				else if (line == "}" && TempItem.MaxPrice.size() != 0 && TempItem.MidlePrice != 0 && TempItem.MinPrice.size() != 0)
+				{
+					int CountLots = 0;
+					for (int i = 0; i < TempItem.Lots.size(); i++)
+					{
+						CountLots += TempItem.Lots[i];
+					}
+					if (CountLots > MaxLots)
+						MaxLots = CountLots;
+
+					map[TempItem.id] = TempItem;
+					TempItem = {  };
+					ID = false;
+					a = false;
+					l = false;
+					h = false;
+					continue;
+				}
+				
+				if (ID == false && line != "}")
+				{
+					
+					if (line[0] == 'g')
+						line.erase(0, 2);
+					
+					TempItem.Name = getItemName(std::stoi(line));
+					ID = true;
+					TempItem.id = std::stoi(line);
+					continue;
+				}
+				if (a)
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j+2);
+							TempItem.Lots.push_back(std::stoi(line));
+							break;
+						}
+					}
+					if(TempItem.Lots.size() == 0)
+					TempItem.Lots.push_back(0);
+				}
+				else if (l)
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j + 2);
+							TempItem.MinPrice.push_back(std::stoi(line));
+							break;
+						}
+					}
+					if (TempItem.MinPrice.size() == 0)
+					TempItem.MinPrice.push_back(0);
+				}
+				else if (h)
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j + 2);
+							TempItem.MaxPrice.push_back(std::stoi(line));
+							break;
+						}
+					}
+					if (TempItem.MaxPrice.size() == 0)
+					TempItem.MaxPrice.push_back(0);
+				}
+				
+				continue;
+			}
+			case FOCUSMARKET::AUCTIONATOR_POSTING_HISTORY:
+			{
+				line = trimLua(line);
+				if (line == "__dbversion\"] = 1")
+				{
+					std::getline(file, line);
+					line = trimLua(line);
+				}
+
+				if (ID == false && line != "}")
+				{
+					if (line[0] == 'g')
+						line.erase(0, 2);
+
+					ID = true;
+					TempItem = map.find(std::stoi(line))->second;
+					continue;
+				}
+
+				if (line[0] == 'p')
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j + 2);
+							TempItem.Price_History.push_back(std::stoi(line));
+							break;
+						}
+					}
+					if(TempItem.Price_History.size() == 0)
+					TempItem.Price_History.push_back(0);
+				}
+				else if (line[0] == 'q')
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j + 2);
+							TempItem.Quantity_History.push_back(std::stoi(line));
+							break;
+						}
+					}
+					if (TempItem.Quantity_History.size() == 0)
+						TempItem.Quantity_History.push_back(0);
+				}
+				else if (line[0] == 't')
+				{
+					for (int j = 0; j < line.size(); j++)
+					{
+						if (line[j] == ' ')
+						{
+							line.erase(0, j + 2);
+							TempItem.Time_History.push_back(std::stoi(line));
+							break;
+						}
+					}
+					if (TempItem.Time_History.size() == 0)
+						TempItem.Time_History.push_back(0);
+				}
+
+				if (line[0] == '}')
+				{
+					std::getline(file, line);
+					line = trimLua(line);
+					if (line == "AUCTIONATOR_VENDOR_PRICE_CACHE")
+						exit = true;
+
+					if (line[0] == '}')
+					{			
+
+						ID = false;
+						continue;
+					}
+				}
+
+
+				continue;
+			}
+		}
+	}
+
+	return map;
+}
 
 class Craft
 {
@@ -224,36 +748,11 @@ public:
 	~AnalizeMarket() {}
 };
 
-class LOGManager
-{
-public:
-	LOGManager() {}
-	~LOGManager() {}
-
-	//std::ostringstream configStream;
-
-//ifstream in("input.txt"); // открытие файла для чтения
-//if (in.is_open()) {
-//	string line;
-//	while (getline(in, line)) { // чтение по строкам
-//		cout << line << endl;
-//	}
-//	in.close();
-//}
-
-
-//ofstream out("output.txt"); // открытие файла для записи
-//if (out.is_open()) {
-//	out << "Привет, мир!" << endl; // выгрузка данных
-//	out.close();
-//}
-};
-
 class UserInterface
 {
 public:
 
-	inline void ViewGUI()
+	static void ViewGUI()
 	{
 		ImGuiID dockspace_id = ImGui::GetID("My Dockspace");
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -268,54 +767,134 @@ public:
 			ImGuiID dock_id_left_top = 0;
 			ImGuiID dock_id_left_bottom = 0;
 			ImGui::DockBuilderSplitNode(dock_id_left, ImGuiDir_Up, 0.50f, &dock_id_left_top, &dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Game", dock_id_main);
-			ImGui::DockBuilderDockWindow("Properties", dock_id_left_top);
-			ImGui::DockBuilderDockWindow("Explorer", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Console", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Amimation", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Shader Editor", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Materials", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Particle System", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("GameEngine v1", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Info", dock_id_left_bottom);
-			ImGui::DockBuilderDockWindow("Physics System", dock_id_left_bottom);
+			ImGui::DockBuilderDockWindow("Market UI", dock_id_left_bottom);
 			ImGui::DockBuilderFinish(dockspace_id);
 		}
 
 		ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
-
-		ImGui::Begin("GameEngine v1");
+		
+		ImGui::Begin("Panel Tools");
 		{
-			if (ImGui::BeginMainMenuBar())
+			if (ImGui::Button("Analize Menu"))
+				Data.mod = MOD::MAIN_MENU;
+			ImGui::SameLine();
+			if (ImGui::Button("Context Menu"))
+				Data.mod = MOD::TEXT_MENU;
+			ImGui::SameLine();
+			if (ImGui::Button("Craft Menu"))
+				Data.mod = MOD::CRAFT_MENU;
+			ImGui::SameLine();
+			if (ImGui::Button("Lider Price"))
+				Data.mod = MOD::LIDER_MENU;
+			ImGui::SameLine();
+			if (ImGui::Button("General Price"))
+				Data.mod = MOD::GENERAL_MENU;
+			ImGui::SameLine();
+			if (ImGui::Button("Export Log"))
 			{
-			
-			};
-			ImGui::End();
+				SaveFileDialog();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Import Log"))
+			{
+				OpenFileDialog();
+			}
+			ImGui::SameLine();
+			ImGui::Text(formatTimestamp(lastScan).c_str());
+		}
+		ImGui::End();
 
+
+		ImGui::Begin("List Items");
+		{
+			
+		}
+		ImGui::End();
+
+
+		ImGui::Begin("Analize Market");
+		{
+			switch (Data.mod)
+			{
+				case MOD::MAIN_MENU:
+				{
+					for (int i = 0; i < Items.size(); i++)
+					{
+						if (Items[i].Name != "Unknown")
+						{
+							ImGui::Text(Items[i].Name.c_str());
+							ImGui::SameLine();
+							ImGui::Text(std::to_string(Items[i].Score).c_str());
+						}
+					}
+
+
+				break;
+				}
+				case MOD::TEXT_MENU:
+				{
+					
+
+					break;
+				}
+				case MOD::CRAFT_MENU:
+				{
+
+					break;
+				}
+				case MOD::LIDER_MENU:
+				{
+
+					break;
+				}
+				case MOD::GENERAL_MENU:
+				{
+
+					break;
+				}
+			
+			}
 		}
 		ImGui::End();
 
 	}
-
-
 };
 
 
 
 void Init()
 {
-	StyleGui();
-	
+	g_itemNames = loadItemsFromCSV("items_ru.csv");
+	Items = loadItemfromLua("Auctionator.lua");
+
+	for (int i = 0; i < Items.size(); i++)
+	{
+		Items[i].Score =
+			0.4f * Benefit(Items[i].MidlePrice, Items[i].MinPrice) +
+			0.2f * static_cast<float>(СalculateCV(Items[i].Price_History)) +
+			0.1f * (1.0f / (Lots(Items[i].Lots) + 1.0f)) +
+			0.2f * Trend(Items[i].MinPrice, Items[i].Price_History) +
+			0.1f * (1.0f / (CountLots(Items[i].Lots) + 1.0f));
+	}
 
 
 
 
+
+	ImGuiIO& io = ImGui::GetIO();
+	ImFont* font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/arial.ttf", 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
+	if (!font)
+	{
+		font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/tahoma.ttf", 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
+	}
+	io.Fonts->Build();
+	StyleGui1();
 }
 
 
 void Update()
 {
-	UserInterface::ViewGUI;
+	UserInterface::ViewGUI();
 
 
 	
