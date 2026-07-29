@@ -156,6 +156,9 @@
     <ClCompile Include="Libraries\implot3d-0.4\implot3d_meshes.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="MainFile.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

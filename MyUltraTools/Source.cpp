@@ -4,10 +4,25 @@
 
 #include <windows.h>
 #include "imgui.h"
+#include "imgui_internal.h"
+#include "implot3d.h"
+#include "implot3d_internal.h"
+#include "implot.h"
+#include "implot_internal.h"
+#include "imnodes.h"
+#include "imnodes_internal.h"
+#include "ImGuizmo.h"
+#include "ImSequencer.h"
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
 #include <d3d11.h>
 #include <tchar.h>
+
+struct
+{
+    HWND hWND;
+}Window;
+
 
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -24,28 +39,7 @@ void CreateRenderTarget();
 void CleanupRenderTarget();
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-
-
-void Init()
-{
-
-
-  
-
-
-}
-
-
-void Update()
-{
-
-
-
-
-
-
-}
-
+#include "MainFile.h"
 // Main code
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -57,7 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
     ::RegisterClassExW(&wc);
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX11 Example", WS_OVERLAPPEDWINDOW, 100, 100, (int)(1280 * main_scale), (int)(800 * main_scale), nullptr, nullptr, wc.hInstance, nullptr);
-
+    Window.hWND = hwnd;
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
     {
