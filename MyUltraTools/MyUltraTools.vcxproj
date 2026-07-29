@@ -68,6 +68,14 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>..\MyUltraTools\Libraries\ImGuizmo-master;..\MyUltraTools\Libraries\imnodes-master;..\MyUltraTools\Libraries\imgui-docking;..\MyUltraTools\Libraries\imgui-docking\backends;..\MyUltraTools\Libraries\implot3d-0.4;..\MyUltraTools\Libraries\implot-1.0;..\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\wordl\source\repos\MyUltraTools\MyUltraTools\Libraries\DirectX\Lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>..\MyUltraTools\Libraries\ImGuizmo-master;..\MyUltraTools\Libraries\imnodes-master;..\MyUltraTools\Libraries\imgui-docking;..\MyUltraTools\Libraries\imgui-docking\backends;..\MyUltraTools\Libraries\implot3d-0.4;..\MyUltraTools\Libraries\implot-1.0;..\MyUltraTools\Libraries\DirectX\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\wordl\source\repos\MyUltraTools\MyUltraTools\Libraries\DirectX\Lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -125,6 +133,27 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Libraries\imgui-docking\backends\imgui_impl_dx11.cpp" />
+    <ClCompile Include="Libraries\imgui-docking\backends\imgui_impl_win32.cpp" />
+    <ClCompile Include="Libraries\imgui-docking\imgui.cpp" />
+    <ClCompile Include="Libraries\imgui-docking\imgui_demo.cpp" />
+    <ClCompile Include="Libraries\imgui-docking\imgui_draw.cpp" />
+    <ClCompile Include="Libraries\imgui-docking\imgui_tables.cpp" />
+    <ClCompile Include="Libraries\imgui-docking\imgui_widgets.cpp" />
+    <ClCompile Include="Libraries\ImGuizmo-master\src\GraphEditor.cpp" />
+    <ClCompile Include="Libraries\ImGuizmo-master\src\ImCurveEdit.cpp" />
+    <ClCompile Include="Libraries\ImGuizmo-master\src\ImGradient.cpp" />
+    <ClCompile Include="Libraries\ImGuizmo-master\src\ImGuizmo.cpp" />
+    <ClCompile Include="Libraries\ImGuizmo-master\src\ImSequencer.cpp" />
+    <ClCompile Include="Libraries\ImGuizmo-master\src\ImVectorEditor.cpp" />
+    <ClCompile Include="Libraries\imnodes-master\imnodes.cpp" />
+    <ClCompile Include="Libraries\implot-1.0\implot.cpp" />
+    <ClCompile Include="Libraries\implot-1.0\implot_demo.cpp" />
+    <ClCompile Include="Libraries\implot-1.0\implot_items.cpp" />
+    <ClCompile Include="Libraries\implot3d-0.4\implot3d.cpp" />
+    <ClCompile Include="Libraries\implot3d-0.4\implot3d_demo.cpp" />
+    <ClCompile Include="Libraries\implot3d-0.4\implot3d_items.cpp" />
+    <ClCompile Include="Libraries\implot3d-0.4\implot3d_meshes.cpp" />
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
