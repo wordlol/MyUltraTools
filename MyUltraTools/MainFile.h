@@ -212,7 +212,7 @@ std::string OpenFileDialog(const std::wstring& filter = L"All Files (*.*)\0*.*\0
 	if (SUCCEEDED(hr))
 	{
 		COMDLG_FILTERSPEC rgSpec[] = {
-			{ L"logfile (*.log)", L"*.log" },
+			{ L"Auctionator (*.lua)", L"*.lua" },
 		};
 		hr = pFileOpen->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
 		if (SUCCEEDED(hr))
@@ -303,51 +303,6 @@ std::string SaveFileDialog(const std::wstring& defaultFileName = L"logfile.log",
 
 int MaxLots = 0;
 
-// Выгода – оставляем как есть (использует последнюю минимальную цену)
-float Benefit(const int& MidlePrice, const std::vector<int>& MinPrice) {
-	if (MinPrice.empty()) return 0.0f;
-	int lastMin = MinPrice.back();
-	if (lastMin == 0) return 0.0f;
-	return static_cast<float>(MidlePrice) / lastMin;
-}
-// Коэффициент вариации – добавлена проверка на размер < 2
-double СalculateCV(const std::vector<int>& prices) {
-	if (prices.size() < 2) return 0.0;
-	double sum = std::accumulate(prices.begin(), prices.end(), 0.0);
-	double mean = sum / prices.size();
-	if (mean == 0.0) return 0.0;
-	double sqSum = 0.0;
-	for (int p : prices) {
-		double diff = p - mean;
-		sqSum += diff * diff;
-	}
-	double variance = sqSum / (prices.size() - 1);
-	double stddev = std::sqrt(variance);
-	return stddev / mean;
-}
-// Нормализованное количество лотов (требует глобальной MaxLots)
-float Lots(const std::vector<int>& LotsVec) {
-	int total = 0;
-	for (int v : LotsVec) total += v;
-	return static_cast<float>(total) / MaxLots; // MaxLots – глобальная переменная
-}
-// Тренд – исправлено деление и использование последней минимальной цены
-float Trend(const std::vector<int>& MinPrice, const std::vector<int>& Price_History) {
-	if (MinPrice.empty() || Price_History.empty()) return 0.0f;
-	int lastMin = MinPrice.back();
-	float sum = std::accumulate(Price_History.begin(), Price_History.end(), 0.0f);
-	float mean = sum / Price_History.size();
-	if (mean == 0.0f) return 0.0f;
-	return static_cast<float>(lastMin) / mean;
-}
-// Абсолютное количество лотов (для редкости)
-int CountLots(const std::vector<int>& LotsVec) {
-	int total = 0;
-	for (int v : LotsVec) total += v;
-	return total;
-}
-
-
 #include <fstream>
 #include <unordered_map>
 #include <string>
@@ -366,7 +321,7 @@ std::string formatTimestamp(time_t timestamp) {
 	return std::string(buffer);
 }
 
-time_t lastScan = 1785304714;
+time_t lastScan = 0;
 
 
 std::unordered_map<int, std::string> g_itemNames;
@@ -415,8 +370,11 @@ std::unordered_map<int, std::string> loadItemsFromCSV(const std::string& filenam
 		std::string name = trim(line.substr(comma + 1));
 		try {
 			int id = std::stoi(idStr);
-			std::string name = trim(line.substr(comma + 1));
-			map[id] = cp1251_to_utf8(name);
+			if (id != 0)
+			{
+				std::string name = trim(line.substr(comma + 1));
+				map[id] = cp1251_to_utf8(name);
+			}
 		}
 		catch (...) {}
 	}
@@ -458,6 +416,7 @@ struct
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <algorithm>
 
 enum FOCUSMARKET
 {
@@ -486,6 +445,7 @@ struct Item
 	float Score = 0;
 };
 
+std::vector<Item> sortedItems;
 std::unordered_map<int, Item> Items;
 std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 {
@@ -505,6 +465,20 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 	std::getline(file, line);
 	while (std::getline(file, line)) 
 	{
+		if (line == "AUCTIONATOR_SAVEDVARS = {")
+		{
+			std::getline(file, line);
+			for (int j = 0; j < line.size(); j++)
+			{
+				if (line[j] == ' ')
+				{
+					line.erase(0, j + 2);
+					lastScan = std::stoi(line);
+					break;
+				}
+			}
+			continue;
+		}
 		if (line == "AUCTIONATOR_PRICE_DATABASE = {")
 		{
 			std::getline(file, line);
@@ -733,6 +707,137 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 
 	return map;
 }
+int Size_ = 0;
+
+
+
+// Выгода – оставляем как есть (использует последнюю минимальную цену)
+float Benefit(const int& MidlePrice, const std::vector<int>& MinPrice) {
+	if (MinPrice.empty()) return 0.0f;
+	int lastMin = MinPrice.back();
+	if (lastMin == 0) return 0.0f;
+	return static_cast<float>(MidlePrice) / lastMin;
+}
+// Коэффициент вариации – добавлена проверка на размер < 2
+double СalculateCV(const std::vector<int>& prices) {
+	if (prices.size() < 2) return 0.0;
+	double sum = std::accumulate(prices.begin(), prices.end(), 0.0);
+	double mean = sum / prices.size();
+	if (mean == 0.0) return 0.0;
+	double sqSum = 0.0;
+	for (int p : prices) {
+		double diff = p - mean;
+		sqSum += diff * diff;
+	}
+	double variance = sqSum / (prices.size() - 1);
+	double stddev = std::sqrt(variance);
+	return stddev / mean;
+}
+// Нормализованное количество лотов (требует глобальной MaxLots)
+float Lots(const std::vector<int>& LotsVec) {
+	int total = 0;
+	for (int v : LotsVec) total += v;
+	return static_cast<float>(total) / MaxLots; // MaxLots – глобальная переменная
+}
+// Тренд – исправлено деление и использование последней минимальной цены
+float Trend(const std::vector<int>& MinPrice, const std::vector<int>& Price_History) {
+	if (MinPrice.empty() || Price_History.empty()) return 0.0f;
+	int lastMin = MinPrice.back();
+	float sum = std::accumulate(Price_History.begin(), Price_History.end(), 0.0f);
+	float mean = sum / Price_History.size();
+	if (mean == 0.0f) return 0.0f;
+	return static_cast<float>(lastMin) / mean;
+}
+// Абсолютное количество лотов (для редкости)
+int CountLots(const std::vector<int>& LotsVec) {
+	int total = 0;
+	for (int v : LotsVec) total += v;
+	return total;
+}
+
+// Структура для хранения сырых метрик
+struct RawMetrics {
+	float benefit;
+	float cv;
+	float rarity;
+	float trend;
+};
+
+void LoadItems(const std::string& filename)
+{
+	Items.clear();
+	Items = loadItemfromLua(filename);
+
+	std::vector<std::pair<Item, RawMetrics>> itemsWithMetrics;
+	itemsWithMetrics.reserve(Items.size());
+
+	float maxBenefit = 0.0f;
+	float maxCV = 0.0f;
+	float maxRarity = 0.0f;
+	float maxTrend = 0.0f;
+
+	for (auto& pair : Items) {
+		const Item& item = pair.second;
+		if (item.id == 0 || item.Name == "Unknown") continue; // пропускаем некорректные
+
+		RawMetrics metrics;
+		metrics.benefit = Benefit(item.MidlePrice, item.MinPrice);
+		// Ограничиваем Benefit, чтобы избежать выбросов
+		if (metrics.benefit > 10.0f) metrics.benefit = 10.0f;
+
+		metrics.cv = static_cast<float>(СalculateCV(item.Price_History));
+		// Редкость: чем меньше лотов, тем выше редкость
+		int totalLots = CountLots(item.Lots);
+		metrics.rarity = 1.0f / (totalLots + 1);
+
+		metrics.trend = Trend(item.MinPrice, item.Price_History);
+
+		// Обновляем максимумы
+		if (metrics.benefit > maxBenefit) maxBenefit = metrics.benefit;
+		if (metrics.cv > maxCV) maxCV = metrics.cv;
+		if (metrics.rarity > maxRarity) maxRarity = metrics.rarity;
+		if (metrics.trend > maxTrend) maxTrend = metrics.trend;
+
+		itemsWithMetrics.emplace_back(item, metrics);
+	}
+
+	if (maxBenefit == 0.0f) maxBenefit = 1.0f;
+	if (maxCV == 0.0f) maxCV = 1.0f;
+	if (maxRarity == 0.0f) maxRarity = 1.0f;
+	if (maxTrend == 0.0f) maxTrend = 1.0f;
+
+	sortedItems.clear();
+	sortedItems.reserve(itemsWithMetrics.size());
+
+	for (auto& pair : itemsWithMetrics) {
+		const Item& item = pair.first;
+		RawMetrics& m = pair.second;
+
+		float normBenefit = m.benefit / maxBenefit;
+		float normCV = 1.0f - (m.cv / maxCV);
+		float normRarity = m.rarity / maxRarity;
+		float normTrend = m.trend / maxTrend;
+
+		// Вычисляем Score с весами
+		Item scoredItem = item;
+		scoredItem.Score =
+			0.4f * normBenefit +
+			0.2f * normCV +
+			0.1f * normRarity +
+			0.2f * normTrend;
+
+		sortedItems.push_back(scoredItem);
+	}
+	//0.1f * (1.0f / (CountLots(item.Lots) + 1))
+	std::sort(sortedItems.begin(), sortedItems.end(), [](const Item& a, const Item& b) {
+		return a.Score > b.Score;
+		});
+
+	Size_ = sortedItems.size();
+}
+
+
+
 
 class Craft
 {
@@ -773,6 +878,22 @@ public:
 
 		ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 		
+
+		if (ImGui::BeginMainMenuBar())
+		{
+			if (ImGui::BeginMenu("View"))
+			{
+				ImGui::RadioButton("100",  &Size_, 100);
+				ImGui::RadioButton("500",  &Size_, 500);
+				ImGui::RadioButton("1000", &Size_, 1000);
+				ImGui::RadioButton("FULL", &Size_, sortedItems.size());
+
+				ImGui::EndMenu();
+			}
+			
+			ImGui::EndMainMenuBar();
+		}
+
 		ImGui::Begin("Panel Tools");
 		{
 			if (ImGui::Button("Analize Menu"))
@@ -790,14 +911,11 @@ public:
 			if (ImGui::Button("General Price"))
 				Data.mod = MOD::GENERAL_MENU;
 			ImGui::SameLine();
-			if (ImGui::Button("Export Log"))
+			if (ImGui::Button("Import Lua"))
 			{
-				SaveFileDialog();
-			}
-			ImGui::SameLine();
-			if (ImGui::Button("Import Log"))
-			{
-				OpenFileDialog();
+				std::string filename = OpenFileDialog();
+				if(filename != "")
+					LoadItems(filename);
 			}
 			ImGui::SameLine();
 			ImGui::Text(formatTimestamp(lastScan).c_str());
@@ -807,7 +925,43 @@ public:
 
 		ImGui::Begin("List Items");
 		{
-			
+			static ImGuiTableFlags flags =
+				ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti
+				| ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody
+				| ImGuiTableFlags_ScrollY;
+			static char str0[128] = "";
+			ImGui::InputText("Find Item", str0, IM_COUNTOF(str0));
+			if (!sortedItems.empty())
+			{
+				if (ImGui::BeginTable("table_sorting", 4, flags, ImVec2(0.0f, 40 * 15), 0.0f))
+				{
+					ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed, 0.0f);
+					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 0.0f);
+					ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 0.0f);
+					ImGui::TableSetupColumn("Score", ImGuiTableColumnFlags_WidthFixed, 0.0f);
+					ImGui::TableSetupScrollFreeze(0, 1);
+					ImGui::TableHeadersRow();
+					for (int i = 0; i < Size_; i++)
+					{
+						if (!sortedItems[i].Name.find(str0))
+						{
+							
+								ImGui::PushID(sortedItems[i].id);
+								ImGui::TableNextRow();
+								ImGui::TableNextColumn();
+								ImGui::Text("%04d", sortedItems[i].id);
+								ImGui::TableNextColumn();
+								ImGui::TextUnformatted(sortedItems[i].Name.c_str());
+								ImGui::TableNextColumn();
+								ImGui::SmallButton("None");
+								ImGui::TableNextColumn();
+								ImGui::Text("%.2f", sortedItems[i].Score);
+								ImGui::PopID();
+						}
+					}
+				ImGui::EndTable();
+				}
+			}
 		}
 		ImGui::End();
 
@@ -818,24 +972,18 @@ public:
 			{
 				case MOD::MAIN_MENU:
 				{
-					for (int i = 0; i < Items.size(); i++)
+					if (sortedItems.empty())
 					{
-						if (Items[i].Name != "Unknown")
-						{
-							ImGui::Text(Items[i].Name.c_str());
-							ImGui::SameLine();
-							ImGui::Text(std::to_string(Items[i].Score).c_str());
-						}
+						ImGui::Text("Нужно открыть файл по пусти ../World of Warcraft Sirus/WTF/Account/USERNAME/SavedVariables/Auctionator.lua");
+						ImGui::Text("Используй кнопку Import Lua");
 					}
-
-
 				break;
 				}
 				case MOD::TEXT_MENU:
 				{
-					
 
-					break;
+
+				break;
 				}
 				case MOD::CRAFT_MENU:
 				{
@@ -865,21 +1013,6 @@ public:
 void Init()
 {
 	g_itemNames = loadItemsFromCSV("items_ru.csv");
-	Items = loadItemfromLua("Auctionator.lua");
-
-	for (int i = 0; i < Items.size(); i++)
-	{
-		Items[i].Score =
-			0.4f * Benefit(Items[i].MidlePrice, Items[i].MinPrice) +
-			0.2f * static_cast<float>(СalculateCV(Items[i].Price_History)) +
-			0.1f * (1.0f / (Lots(Items[i].Lots) + 1.0f)) +
-			0.2f * Trend(Items[i].MinPrice, Items[i].Price_History) +
-			0.1f * (1.0f / (CountLots(Items[i].Lots) + 1.0f));
-	}
-
-
-
-
 
 	ImGuiIO& io = ImGui::GetIO();
 	ImFont* font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/arial.ttf", 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
