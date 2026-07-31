@@ -260,7 +260,7 @@ std::string SaveFileDialog(const std::wstring& defaultFileName = L"logfile.log",
 	{
 
 		COMDLG_FILTERSPEC rgSpec[] = {
-			{ L"logfile (*.log)", L"*.log" }
+			{ L"logfile (*.csv)", L"*.csv" }
 		};
 		hr = pFileSave->SetFileTypes(ARRAYSIZE(rgSpec), rgSpec);
 		if (SUCCEEDED(hr))
@@ -396,6 +396,7 @@ std::string trimLua(const std::string& str) {
 
 
 
+
 enum MOD
 {
 	MAIN_MENU,
@@ -443,6 +444,11 @@ struct Item
 	std::vector<int> Time_History;
 
 	float Score = 0;
+
+	float Item_benefit;
+	float Item_cv;
+	float Item_rarity;
+	float Item_trend;
 };
 
 std::vector<Item> sortedItems;
@@ -450,7 +456,7 @@ std::unordered_map<int, Item> Items;
 std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 {
 	Item TempItem;
-
+	Item* currentItemPtr = nullptr;
 	bool ID = false;
 	bool a = false;
 	bool l = false;
@@ -637,7 +643,7 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 						line.erase(0, 2);
 
 					ID = true;
-					TempItem = map.find(std::stoi(line))->second;
+					currentItemPtr = &map.find(std::stoi(line))->second;
 					continue;
 				}
 
@@ -648,12 +654,12 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 						if (line[j] == ' ')
 						{
 							line.erase(0, j + 2);
-							TempItem.Price_History.push_back(std::stoi(line));
+							currentItemPtr->Price_History.push_back(std::stoi(line));
 							break;
 						}
 					}
-					if(TempItem.Price_History.size() == 0)
-					TempItem.Price_History.push_back(0);
+					if(currentItemPtr->Price_History.size() == 0)
+						currentItemPtr->Price_History.push_back(0);
 				}
 				else if (line[0] == 'q')
 				{
@@ -662,12 +668,12 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 						if (line[j] == ' ')
 						{
 							line.erase(0, j + 2);
-							TempItem.Quantity_History.push_back(std::stoi(line));
+							currentItemPtr->Quantity_History.push_back(std::stoi(line));
 							break;
 						}
 					}
-					if (TempItem.Quantity_History.size() == 0)
-						TempItem.Quantity_History.push_back(0);
+					if (currentItemPtr->Quantity_History.size() == 0)
+						currentItemPtr->Quantity_History.push_back(0);
 				}
 				else if (line[0] == 't')
 				{
@@ -676,12 +682,12 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 						if (line[j] == ' ')
 						{
 							line.erase(0, j + 2);
-							TempItem.Time_History.push_back(std::stoi(line));
+							currentItemPtr->Time_History.push_back(std::stoi(line));
 							break;
 						}
 					}
-					if (TempItem.Time_History.size() == 0)
-						TempItem.Time_History.push_back(0);
+					if (currentItemPtr->Time_History.size() == 0)
+						currentItemPtr->Time_History.push_back(0);
 				}
 
 				if (line[0] == '}')
@@ -692,31 +698,35 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 						exit = true;
 
 					if (line[0] == '}')
-					{			
-
+					{	
 						ID = false;
 						continue;
 					}
 				}
 
-
 				continue;
 			}
 		}
 	}
-
 	return map;
 }
 int Size_ = 0;
+int PickItem = -1;
+bool IsBuyMode;
 
 
 
 // Выгода – оставляем как есть (использует последнюю минимальную цену)
-float Benefit(const int& MidlePrice, const std::vector<int>& MinPrice) {
-	if (MinPrice.empty()) return 0.0f;
-	int lastMin = MinPrice.back();
-	if (lastMin == 0) return 0.0f;
-	return static_cast<float>(MidlePrice) / lastMin;
+float Benefit(const Item& item, bool buyMode) {
+	if (item.MinPrice.empty()) return 1.0f;
+	int lastMin = item.MinPrice.back();
+	if (lastMin == 0) return 1.0f;
+	if (buyMode) {
+		return static_cast<float>(lastMin) / item.MidlePrice;  // ≈ 1 → цена минимальна
+	}
+	else {
+		return static_cast<float>(item.MidlePrice) / lastMin;  // > 1 → цена выше минимальной
+	}
 }
 // Коэффициент вариации – добавлена проверка на размер < 2
 double СalculateCV(const std::vector<int>& prices) {
@@ -768,6 +778,8 @@ void LoadItems(const std::string& filename)
 	Items.clear();
 	Items = loadItemfromLua(filename);
 
+	const size_t MIN_HISTORY_POINTS = 2; // Минимальное количество точек истории
+
 	std::vector<std::pair<Item, RawMetrics>> itemsWithMetrics;
 	itemsWithMetrics.reserve(Items.size());
 
@@ -778,21 +790,22 @@ void LoadItems(const std::string& filename)
 
 	for (auto& pair : Items) {
 		const Item& item = pair.second;
-		if (item.id == 0 || item.Name == "Unknown") continue; // пропускаем некорректные
+		if (item.id == 0 || item.Name == "Unknown") continue;
+		if (item.Price_History.size() < MIN_HISTORY_POINTS) continue; // Фильтр
 
 		RawMetrics metrics;
-		metrics.benefit = Benefit(item.MidlePrice, item.MinPrice);
-		// Ограничиваем Benefit, чтобы избежать выбросов
+		metrics.benefit = Benefit(item, IsBuyMode);
 		if (metrics.benefit > 10.0f) metrics.benefit = 10.0f;
 
 		metrics.cv = static_cast<float>(СalculateCV(item.Price_History));
-		// Редкость: чем меньше лотов, тем выше редкость
 		int totalLots = CountLots(item.Lots);
 		metrics.rarity = 1.0f / (totalLots + 1);
-
 		metrics.trend = Trend(item.MinPrice, item.Price_History);
 
-		// Обновляем максимумы
+		// Ограничиваем тренд, чтобы выбросы не искажали нормализацию
+		if (metrics.trend > 2.0f) metrics.trend = 2.0f;
+		if (metrics.trend < 0.5f) metrics.trend = 0.5f;
+
 		if (metrics.benefit > maxBenefit) maxBenefit = metrics.benefit;
 		if (metrics.cv > maxCV) maxCV = metrics.cv;
 		if (metrics.rarity > maxRarity) maxRarity = metrics.rarity;
@@ -818,17 +831,16 @@ void LoadItems(const std::string& filename)
 		float normRarity = m.rarity / maxRarity;
 		float normTrend = m.trend / maxTrend;
 
-		// Вычисляем Score с весами
 		Item scoredItem = item;
-		scoredItem.Score =
-			0.4f * normBenefit +
-			0.2f * normCV +
-			0.1f * normRarity +
-			0.2f * normTrend;
+		scoredItem.Item_benefit = 0.4f * normBenefit;
+		scoredItem.Item_cv = 0.2f * normCV;
+		scoredItem.Item_rarity = 0.1f * normRarity;
+		scoredItem.Item_trend = 0.2f * normTrend;
+		scoredItem.Score = scoredItem.Item_benefit + scoredItem.Item_cv + scoredItem.Item_rarity + scoredItem.Item_trend;
 
 		sortedItems.push_back(scoredItem);
 	}
-	//0.1f * (1.0f / (CountLots(item.Lots) + 1))
+
 	std::sort(sortedItems.begin(), sortedItems.end(), [](const Item& a, const Item& b) {
 		return a.Score > b.Score;
 		});
@@ -836,8 +848,367 @@ void LoadItems(const std::string& filename)
 	Size_ = sortedItems.size();
 }
 
+void ViewLots()
+{
+	std::vector<float> histData;
+	int MaxSize = 0;
+	histData.reserve(sortedItems[PickItem].Lots.size());
+	for (int v : sortedItems[PickItem].Lots)
+	{
+		if (v > MaxSize)
+			MaxSize = v;
+
+		histData.push_back(static_cast<float>(v));
+	}
+	ImGui::PlotHistogram("Lots", histData.data(), (int)histData.size(), 0, NULL, 0.0f, MaxSize, ImVec2(0, 80.0f));
+}
+void ViewMaxPrice()
+{
+	const auto& prices = sortedItems[PickItem].MaxPrice;
+	if (!prices.empty()) {
+		std::vector<float> histData;
+		histData.reserve(prices.size());
+		const float SCALE = 10000.0f;
+		for (int p : prices) {
+			histData.push_back(p / SCALE);
+		}
+		float minVal = 0.0f;
+		float maxVal = *std::max_element(histData.begin(), histData.end());
+		if (maxVal == 0.0f) maxVal = 1.0f;
+		ImGui::PlotHistogram("Max Price (gold)", histData.data(), (int)histData.size(), 0, NULL, minVal, maxVal, ImVec2(0, 80.0f));
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Values in gold");
+	}
+}
+void ViewMinPrice()
+{
+	const auto& prices = sortedItems[PickItem].MinPrice;
+	if (!prices.empty()) {
+		std::vector<float> histData;
+		histData.reserve(prices.size());
+		const float SCALE = 10000.0f;
+		for (int p : prices) {
+			histData.push_back(p / SCALE);
+		}
+		float minVal = 0.0f;
+		float maxVal = *std::max_element(histData.begin(), histData.end());
+		if (maxVal == 0.0f) maxVal = 1.0f;
+		ImGui::PlotHistogram("Min Price (gold)", histData.data(), (int)histData.size(), 0, NULL, minVal, maxVal, ImVec2(0, 80.0f));
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Values in gold");
+	}
+}
+void ViewPriceHistory()
+{
+	const auto& prices = sortedItems[PickItem].Price_History;
+	if (!prices.empty()) {
+		std::vector<float> histData;
+		histData.reserve(prices.size());
+		const float SCALE = 10000.0f;
+		for (int p : prices) {
+			histData.push_back(p / SCALE);
+		}
+		float minVal = 0.0f;
+		float maxVal = *std::max_element(histData.begin(), histData.end());
+		if (maxVal == 0.0f) maxVal = 1.0f;
+		ImGui::PlotHistogram("Price History (gold)", histData.data(), (int)histData.size(), 0, NULL, minVal, maxVal, ImVec2(0, 80.0f));
+		ImGui::TextColored(ImVec4(0.7f, 0.7f, 0.7f, 1.0f), "Values in gold");
+	}
+}
+void ViewQuantityHistory()
+{
+	std::vector<float> histData;
+	int MaxSize = 0;
+	histData.reserve(sortedItems[PickItem].Quantity_History.size());
+	for (int v : sortedItems[PickItem].Quantity_History)
+	{
+		if (v > MaxSize)
+			MaxSize = v;
+
+		histData.push_back(static_cast<float>(v));
+	}
+	ImGui::PlotHistogram("QuantityHistory", histData.data(), (int)histData.size(), 0, NULL, 0.0f, MaxSize, ImVec2(0, 80.0f));
+}
+void ViewTimeHistory()
+{
+	for (int i = 0; i < sortedItems[PickItem].Time_History.size(); i++)
+	{
+		std::string s = std::to_string(i) + "    " + formatTimestamp((time_t)sortedItems[PickItem].Time_History[i]);
+
+		ImGui::Text(s.c_str());
+	}
+}
+void ViewMidlePrice()
+{
+	ImGui::Text("%.2f", (float)sortedItems[PickItem].MidlePrice / 10000.f);
+	ImGui::SameLine();
+	ImGui::Text("Средняя цена");
+}
+void ViewScore()
+{
+	ImGui::Text("%.2f",sortedItems[PickItem].Score);
+	ImGui::SameLine();
+	ImGui::Text("Score");
+}
+void ViewIndicators()
+{
+	ImGui::SeparatorText("Показатели выгоды");
+
+	const Item& item = sortedItems[PickItem];
+
+	// ----- Сырые метрики -----
+	float rawBenefit = Benefit(item, IsBuyMode);
+	float rawCV = static_cast<float>(СalculateCV(item.Price_History));
+	int totalLots = CountLots(item.Lots);
+	float rawRarity = 1.0f / (totalLots + 1);
+	float rawTrend = Trend(item.MinPrice, item.Price_History);
+
+	// ----- Абсолютная прибыль -----
+	int lastMin = item.MinPrice.empty() ? 0 : item.MinPrice.back();
+	int mid = item.MidlePrice;
+	int profitCopper = 0;
+	if (IsBuyMode) {
+		// Покупаем по минимальной, продаём по средней → прибыль = средняя - минимальная
+		profitCopper = mid - lastMin;
+	}
+	else {
+		// Продаём по минимальной, купили бы по средней → прибыль = минимальная - средняя
+		profitCopper = lastMin - mid;
+	}
+	float profitGold = profitCopper / 10000.0f;
+
+	// ----- Отображение прибыли -----
+	ImGui::Text("Потенциальная прибыль: %.2f зол.", profitGold);
+	ImGui::SameLine();
+	if (profitGold > 1.0f)
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Отличная");
+	else if (profitGold > 0.5f)
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Хорошая");
+	else if (profitGold > 0.1f)
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Средняя");
+	else
+		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Низкая");
+
+	// 1. Benefit (выгода)
+	ImGui::Text("%.2f", rawBenefit);
+	ImGui::SameLine();
+	ImGui::Text("Отношение %s цены к средней", IsBuyMode ? "минимальной" : "средней к минимальной");
+	ImGui::SameLine();
+	if (rawBenefit > 2.0f)
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), IsBuyMode ? "Очень дёшево" : "Очень дорого");
+	else if (rawBenefit > 1.5f)
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), IsBuyMode ? "Дёшево" : "Дорого");
+	else if (rawBenefit > 1.2f)
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Немного %s средней", IsBuyMode ? "ниже" : "выше");
+	else
+		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Около средней");
+
+	// 2. CV (стабильность)
+	ImGui::Text("%.2f", rawCV);
+	ImGui::SameLine();
+	ImGui::Text("Коэффициент вариации");
+	ImGui::SameLine();
+	if (rawCV < 0.1f)
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Стабильная цена");
+	else if (rawCV < 0.25f)
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Умеренная волатильность");
+	else
+		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Высокая волатильность (риск)");
+
+	// 3. Редкость
+	ImGui::Text("%.2f", rawRarity);
+	ImGui::SameLine();
+	ImGui::Text("Редкость (1 / (лоты+1))");
+	ImGui::SameLine();
+	if (rawRarity > 0.5f)
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Мало лотов, редкий");
+	else if (rawRarity > 0.2f)
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Среднее количество");
+	else
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Много лотов, ликвидный");
+
+	// 4. Тренд
+	ImGui::Text("%.2f", rawTrend);
+	ImGui::SameLine();
+	ImGui::Text("Тренд (последняя цена / средняя история)");
+	ImGui::SameLine();
+	if (rawTrend > 1.05f)
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Цена растёт");
+	else if (rawTrend < 0.95f)
+		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Цена падает");
+	else
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Стабильна");
+
+	// ----- Общий вердикт -----
+	ImGui::Separator();
+	ImGui::Text("Рекомендация:");
+
+	// Порог минимальной прибыли (можно сделать настраиваемым через глобальную переменную)
+	const float MIN_PROFIT_GOLD = 0.5f;
+
+	if (IsBuyMode) {
+		// Режим покупки
+		if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD && rawTrend < 0.95f)
+			ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "КУПИТЬ! (дёшево, прибыльно, цена падает)");
+		else if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD)
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ПОДУМАТЬ (дёшево, но тренд не падает)");
+		else if (rawBenefit > 1.2f && profitGold > MIN_PROFIT_GOLD)
+			ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Средняя выгода, но прибыль есть");
+		else if (profitGold <= MIN_PROFIT_GOLD && rawBenefit > 1.5f)
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Дёшево, но прибыль мала (невыгодно)");
+		else
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "НЕ ИНТЕРЕСНО (малая прибыль или цена высока)");
+	}
+	else {
+		// Режим продажи
+		if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD && rawTrend > 1.05f)
+			ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ПРОДАВАТЬ! (дорого, прибыльно, цена растёт)");
+		else if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD)
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ПОДУМАТЬ (дорого, но тренд не растёт)");
+		else if (rawBenefit > 1.2f && profitGold > MIN_PROFIT_GOLD)
+			ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Средняя выгода, но прибыль есть");
+		else if (profitGold <= MIN_PROFIT_GOLD && rawBenefit > 1.5f)
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Дорого, но прибыль мала (невыгодно)");
+		else
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "НЕ ИНТЕРЕСНО (малая прибыль или цена низкая)");
+	}
+}
 
 
+void ExportLog()
+{
+	if (sortedItems.empty()) {
+		ImGui::OpenPopup("Export Error");
+		return;
+	}
+
+	std::string filepath = SaveFileDialog(L"market_export.csv", L"CSV files (*.csv)\0*.csv\0");
+	if (filepath.empty()) return;
+
+	std::ofstream out(filepath);
+	if (!out.is_open()) {
+		std::cerr << "Не удалось открыть файл для записи: " << filepath << std::endl;
+		return;
+	}
+
+	// Заголовок с временем последнего сканирования
+	struct tm timeinfo;
+	if (localtime_s(&timeinfo, &lastScan) == 0) {
+		char timeBuf[80];
+		strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+		out << "# Last scan time: " << timeBuf << " (timestamp: " << lastScan << ")\n";
+	}
+	else {
+		out << "# Last scan time: unknown (timestamp: " << lastScan << ")\n";
+	}
+
+	// Заголовки колонок
+	out << "ID;Name;MidlePrice;LastMinPrice;LastMaxPrice;AvgMinPrice;TotalLots;Benefit;CV;Rarity;Trend;Score\n";
+
+	for (const auto& item : sortedItems) {
+		int lastMin = item.MinPrice.empty() ? 0 : item.MinPrice.back();
+		int lastMax = item.MaxPrice.empty() ? 0 : item.MaxPrice.back();
+		int totalLots = 0;
+		for (int l : item.Lots) totalLots += l;
+
+		// Средняя минимальная цена за весь период (для проверки)
+		float avgMin = 0.0f;
+		if (!item.MinPrice.empty()) {
+			float sum = 0.0f;
+			for (int v : item.MinPrice) sum += v;
+			avgMin = sum / item.MinPrice.size();
+		}
+
+		out << item.id << ";"
+			<< item.Name << ";"
+			<< item.MidlePrice << ";"
+			<< lastMin << ";"
+			<< lastMax << ";"
+			<< avgMin << ";"
+			<< totalLots << ";"
+			<< item.Item_benefit << ";"
+			<< item.Item_cv << ";"
+			<< item.Item_rarity << ";"
+			<< item.Item_trend << ";"
+			<< item.Score << "\n";
+	}
+
+	out.close();
+	ImGui::OpenPopup("Export Success");
+}
+void ExportDebugLog()
+{
+	if (sortedItems.empty()) {
+		ImGui::OpenPopup("Export Error");
+		return;
+	}
+
+	std::string filepath = SaveFileDialog(L"debug_export.csv", L"CSV files (*.csv)\0*.csv\0");
+	if (filepath.empty()) return;
+
+	std::ofstream out(filepath);
+	if (!out.is_open()) {
+		std::cerr << "Не удалось открыть файл для записи: " << filepath << std::endl;
+		return;
+	}
+
+	// Заголовок с временем последнего сканирования
+	char timeBuf[80];
+	struct tm timeinfo;  // не указатель, а объект
+	localtime_s(&timeinfo, &lastScan);  // &lastScan - указатель на time_t
+	strftime(timeBuf, sizeof(timeBuf), "%Y-%m-%d %H:%M:%S", &timeinfo);
+	out << "# Last scan time: " << timeBuf << " (timestamp: " << lastScan << ")\n";
+
+	// Заголовки колонок (расширенные)
+	out << "ID;Name;MidlePrice;MinPrice_Vector;MaxPrice_Vector;PriceHistory_Vector;Lots_Vector;"
+		<< "Benefit_raw;CV_raw;Rarity_raw;Trend_raw;"
+		<< "NormBenefit;NormCV;NormRarity;NormTrend;"
+		<< "Score;Item_benefit;Item_cv;Item_rarity;Item_trend\n";
+
+	for (const auto& item : sortedItems) {
+		// Векторы в строку
+		auto vecToStr = [](const std::vector<int>& v) {
+			std::string s;
+			for (size_t i = 0; i < v.size(); ++i) {
+				s += std::to_string(v[i]);
+				if (i + 1 < v.size()) s += "|";
+			}
+			return s;
+			};
+
+		// Вычисляем сырые метрики заново (чтобы не зависеть от сохранённых)
+		float rawBenefit = Benefit(item, IsBuyMode);
+		float rawCV = static_cast<float>(СalculateCV(item.Price_History));
+		int totalLots = CountLots(item.Lots);
+		float rawRarity = 1.0f / (totalLots + 1);
+		float rawTrend = Trend(item.MinPrice, item.Price_History);
+
+		// Здесь нужны max значения, но они не сохраняются в Item.
+		// Поэтому мы должны их либо пересчитать, либо сохранить отдельно.
+		// Так как мы не храним max-ы, мы можем вычислить их на лету из Items.
+		// Но для упрощения, выведем сырые метрики и отдельно выведем глобальные max-ы.
+		// Поэтому в этом логе мы не будем выводить нормализованные значения,
+		// а только сырые и итоговые компоненты.
+
+		out << item.id << ";"
+			<< item.Name << ";"
+			<< item.MidlePrice << ";"
+			<< vecToStr(item.MinPrice) << ";"
+			<< vecToStr(item.MaxPrice) << ";"
+			<< vecToStr(item.Price_History) << ";"
+			<< vecToStr(item.Lots) << ";"
+			<< rawBenefit << ";"
+			<< rawCV << ";"
+			<< rawRarity << ";"
+			<< rawTrend << ";"
+			<< item.Item_benefit << ";"
+			<< item.Item_cv << ";"
+			<< item.Item_rarity << ";"
+			<< item.Item_trend << ";"
+			<< item.Score << "\n";
+	}
+
+	out.close();
+	ImGui::OpenPopup("Export Success");
+}
 
 class Craft
 {
@@ -855,6 +1226,7 @@ public:
 
 class UserInterface
 {
+
 public:
 
 	static void ViewGUI()
@@ -887,10 +1259,19 @@ public:
 				ImGui::RadioButton("500",  &Size_, 500);
 				ImGui::RadioButton("1000", &Size_, 1000);
 				ImGui::RadioButton("FULL", &Size_, sortedItems.size());
+				ImGui::Checkbox("Режим продажи", &IsBuyMode);
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Export"))
+			{
+				if (ImGui::Button("Export Log"))
+					ExportLog();
+				if(ImGui::Button("Export Debug Log"))
+					ExportDebugLog();
 
 				ImGui::EndMenu();
 			}
-			
+
 			ImGui::EndMainMenuBar();
 		}
 
@@ -899,17 +1280,8 @@ public:
 			if (ImGui::Button("Analize Menu"))
 				Data.mod = MOD::MAIN_MENU;
 			ImGui::SameLine();
-			if (ImGui::Button("Context Menu"))
-				Data.mod = MOD::TEXT_MENU;
-			ImGui::SameLine();
 			if (ImGui::Button("Craft Menu"))
 				Data.mod = MOD::CRAFT_MENU;
-			ImGui::SameLine();
-			if (ImGui::Button("Lider Price"))
-				Data.mod = MOD::LIDER_MENU;
-			ImGui::SameLine();
-			if (ImGui::Button("General Price"))
-				Data.mod = MOD::GENERAL_MENU;
 			ImGui::SameLine();
 			if (ImGui::Button("Import Lua"))
 			{
@@ -918,7 +1290,18 @@ public:
 					LoadItems(filename);
 			}
 			ImGui::SameLine();
+			//if (ImGui::Button("Export Lua"))
+			//{
+			//	ExportLog();
+			//	//ExportDebugLog();
+			//}
+			ImGui::SameLine();
 			ImGui::Text(formatTimestamp(lastScan).c_str());
+			ImGui::SameLine();
+			if(IsBuyMode == true)
+			ImGui::Text("Сейчас режим ПРОДАЖИ");
+			else
+			ImGui::Text("Сейчас режим ПОКУПКИ");
 		}
 		ImGui::End();
 
@@ -929,7 +1312,7 @@ public:
 				ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti
 				| ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody
 				| ImGuiTableFlags_ScrollY;
-			static char str0[128] = "";
+			static char str0[128] = ""; 
 			ImGui::InputText("Find Item", str0, IM_COUNTOF(str0));
 			if (!sortedItems.empty())
 			{
@@ -945,7 +1328,6 @@ public:
 					{
 						if (!sortedItems[i].Name.find(str0))
 						{
-							
 								ImGui::PushID(sortedItems[i].id);
 								ImGui::TableNextRow();
 								ImGui::TableNextColumn();
@@ -953,7 +1335,10 @@ public:
 								ImGui::TableNextColumn();
 								ImGui::TextUnformatted(sortedItems[i].Name.c_str());
 								ImGui::TableNextColumn();
-								ImGui::SmallButton("None");
+								if (ImGui::SmallButton("Look"))
+								{
+									PickItem = i;
+								}
 								ImGui::TableNextColumn();
 								ImGui::Text("%.2f", sortedItems[i].Score);
 								ImGui::PopID();
@@ -974,15 +1359,24 @@ public:
 				{
 					if (sortedItems.empty())
 					{
-						ImGui::Text("Нужно открыть файл по пусти ../World of Warcraft Sirus/WTF/Account/USERNAME/SavedVariables/Auctionator.lua");
+						ImGui::Text("Нужно открыть файл по пути ../World of Warcraft Sirus/WTF/Account/USERNAME/SavedVariables/Auctionator.lua");
 						ImGui::Text("Используй кнопку Import Lua");
 					}
-				break;
-				}
-				case MOD::TEXT_MENU:
-				{
 
-
+					if (PickItem != -1)
+					{
+						ImGui::Text(sortedItems[PickItem].Name.c_str());
+						ViewMidlePrice();
+						ViewScore();
+						ViewIndicators();
+						ImGui::SeparatorText("Общие показатели о товаре");
+						ViewLots();
+						ViewMinPrice();
+						ViewMaxPrice();
+						ViewPriceHistory();
+						ViewQuantityHistory();
+						ViewTimeHistory();
+					}
 				break;
 				}
 				case MOD::CRAFT_MENU:
@@ -995,12 +1389,6 @@ public:
 
 					break;
 				}
-				case MOD::GENERAL_MENU:
-				{
-
-					break;
-				}
-			
 			}
 		}
 		ImGui::End();
