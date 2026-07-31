@@ -442,9 +442,9 @@ struct Item
 	std::vector<int> Price_History;
 	std::vector<int> Quantity_History;
 	std::vector<int> Time_History;
-
+	float liquidity = 0.0f;
 	float Score = 0;
-
+	float NormRarity = 0.0f;
 	float Item_benefit;
 	float Item_cv;
 	float Item_rarity;
@@ -773,81 +773,6 @@ struct RawMetrics {
 	float trend;
 };
 
-void LoadItems(const std::string& filename)
-{
-	Items.clear();
-	Items = loadItemfromLua(filename);
-
-	const size_t MIN_HISTORY_POINTS = 2; // Минимальное количество точек истории
-
-	std::vector<std::pair<Item, RawMetrics>> itemsWithMetrics;
-	itemsWithMetrics.reserve(Items.size());
-
-	float maxBenefit = 0.0f;
-	float maxCV = 0.0f;
-	float maxRarity = 0.0f;
-	float maxTrend = 0.0f;
-
-	for (auto& pair : Items) {
-		const Item& item = pair.second;
-		if (item.id == 0 || item.Name == "Unknown") continue;
-		if (item.Price_History.size() < MIN_HISTORY_POINTS) continue; // Фильтр
-
-		RawMetrics metrics;
-		metrics.benefit = Benefit(item, IsBuyMode);
-		if (metrics.benefit > 10.0f) metrics.benefit = 10.0f;
-
-		metrics.cv = static_cast<float>(СalculateCV(item.Price_History));
-		int totalLots = CountLots(item.Lots);
-		metrics.rarity = 1.0f / (totalLots + 1);
-		metrics.trend = Trend(item.MinPrice, item.Price_History);
-
-		// Ограничиваем тренд, чтобы выбросы не искажали нормализацию
-		if (metrics.trend > 2.0f) metrics.trend = 2.0f;
-		if (metrics.trend < 0.5f) metrics.trend = 0.5f;
-
-		if (metrics.benefit > maxBenefit) maxBenefit = metrics.benefit;
-		if (metrics.cv > maxCV) maxCV = metrics.cv;
-		if (metrics.rarity > maxRarity) maxRarity = metrics.rarity;
-		if (metrics.trend > maxTrend) maxTrend = metrics.trend;
-
-		itemsWithMetrics.emplace_back(item, metrics);
-	}
-
-	if (maxBenefit == 0.0f) maxBenefit = 1.0f;
-	if (maxCV == 0.0f) maxCV = 1.0f;
-	if (maxRarity == 0.0f) maxRarity = 1.0f;
-	if (maxTrend == 0.0f) maxTrend = 1.0f;
-
-	sortedItems.clear();
-	sortedItems.reserve(itemsWithMetrics.size());
-
-	for (auto& pair : itemsWithMetrics) {
-		const Item& item = pair.first;
-		RawMetrics& m = pair.second;
-
-		float normBenefit = m.benefit / maxBenefit;
-		float normCV = 1.0f - (m.cv / maxCV);
-		float normRarity = m.rarity / maxRarity;
-		float normTrend = m.trend / maxTrend;
-
-		Item scoredItem = item;
-		scoredItem.Item_benefit = 0.4f * normBenefit;
-		scoredItem.Item_cv = 0.2f * normCV;
-		scoredItem.Item_rarity = 0.1f * normRarity;
-		scoredItem.Item_trend = 0.2f * normTrend;
-		scoredItem.Score = scoredItem.Item_benefit + scoredItem.Item_cv + scoredItem.Item_rarity + scoredItem.Item_trend;
-
-		sortedItems.push_back(scoredItem);
-	}
-
-	std::sort(sortedItems.begin(), sortedItems.end(), [](const Item& a, const Item& b) {
-		return a.Score > b.Score;
-		});
-
-	Size_ = sortedItems.size();
-}
-
 void ViewLots()
 {
 	std::vector<float> histData;
@@ -948,6 +873,95 @@ void ViewScore()
 	ImGui::SameLine();
 	ImGui::Text("Score");
 }
+
+void LoadItems(const std::string& filename)
+{
+	Items.clear();
+	Items = loadItemfromLua(filename);
+
+	std::vector<std::pair<Item, RawMetrics>> itemsWithMetrics;
+	itemsWithMetrics.reserve(Items.size());
+
+	float maxBenefit = 0.0f;
+	float maxCV = 0.0f;
+	float maxRarity = 0.0f;
+	float maxTrend = 0.0f;
+	float maxLiquidity = 0.0f;
+
+	for (auto& pair : Items) {
+		const Item& item = pair.second;
+		if (item.id == 0 || item.Name == "Unknown") continue;
+		if (item.Price_History.size() < 2) continue;
+
+		RawMetrics metrics;
+		metrics.benefit = Benefit(item, IsBuyMode);
+		if (metrics.benefit > 10.0f) metrics.benefit = 10.0f;
+
+		metrics.cv = static_cast<float>(СalculateCV(item.Price_History));
+		int totalLots = CountLots(item.Lots);
+		metrics.rarity = 1.0f / (totalLots + 1);
+		metrics.trend = Trend(item.MinPrice, item.Price_History);
+		if (metrics.trend > 2.0f) metrics.trend = 2.0f;
+		if (metrics.trend < 0.5f) metrics.trend = 0.5f;
+
+		float rawLiquidity = static_cast<float>(totalLots);
+
+		if (metrics.benefit > maxBenefit) maxBenefit = metrics.benefit;
+		if (metrics.cv > maxCV) maxCV = metrics.cv;
+		if (metrics.rarity > maxRarity) maxRarity = metrics.rarity;
+		if (metrics.trend > maxTrend) maxTrend = metrics.trend;
+		if (rawLiquidity > maxLiquidity) maxLiquidity = rawLiquidity;
+
+		itemsWithMetrics.emplace_back(item, metrics);
+	}
+
+	if (maxBenefit == 0.0f) maxBenefit = 1.0f;
+	if (maxCV == 0.0f) maxCV = 1.0f;
+	if (maxRarity == 0.0f) maxRarity = 1.0f;
+	if (maxTrend == 0.0f) maxTrend = 1.0f;
+	if (maxLiquidity == 0.0f) maxLiquidity = 1.0f;
+
+	sortedItems.clear();
+	sortedItems.reserve(itemsWithMetrics.size());
+
+	for (auto& pair : itemsWithMetrics) {
+		const Item& item = pair.first;
+		RawMetrics& m = pair.second;
+
+		float normBenefit = m.benefit / maxBenefit;
+		float normCV = 1.0f - (m.cv / maxCV);
+		float normRarity = m.rarity / maxRarity;
+		float normTrend = m.trend / maxTrend;
+
+		int totalLots = CountLots(item.Lots);
+		float liquidity = static_cast<float>(totalLots) / maxLiquidity;
+
+		Item scoredItem = item;
+		scoredItem.NormRarity = normRarity;          // сохраняем для отображения
+		scoredItem.Item_benefit = 0.30f * normBenefit;
+		scoredItem.Item_cv = 0.15f * normCV;
+		scoredItem.Item_rarity = 0.10f * normRarity;
+		scoredItem.Item_trend = 0.15f * normTrend;
+		scoredItem.liquidity = liquidity;
+
+		scoredItem.Score = scoredItem.Item_benefit
+			+ scoredItem.Item_cv
+			+ scoredItem.Item_rarity
+			+ scoredItem.Item_trend
+			+ 0.30f * liquidity;
+
+		sortedItems.push_back(scoredItem);
+	}
+
+	std::sort(sortedItems.begin(), sortedItems.end(),
+		[](const Item& a, const Item& b) { return a.Score > b.Score; });
+
+	Size_ = sortedItems.size();
+}
+
+// Глобальные переменные для настройки порогов (вынесите в отдельный файл или в структуру настроек)
+float MinProfitGold = 0.5f;   // минимальная прибыль в золоте для "интересной" сделки
+float MinDemand = 0.4f;       // минимальный спрос (0..1)
 void ViewIndicators()
 {
 	ImGui::SeparatorText("Показатели выгоды");
@@ -961,21 +975,55 @@ void ViewIndicators()
 	float rawRarity = 1.0f / (totalLots + 1);
 	float rawTrend = Trend(item.MinPrice, item.Price_History);
 
-	// ----- Абсолютная прибыль -----
+	// ----- Абсолютная прибыль (в золоте) -----
 	int lastMin = item.MinPrice.empty() ? 0 : item.MinPrice.back();
 	int mid = item.MidlePrice;
 	int profitCopper = 0;
 	if (IsBuyMode) {
-		// Покупаем по минимальной, продаём по средней → прибыль = средняя - минимальная
-		profitCopper = mid - lastMin;
+		profitCopper = mid - lastMin;   // покупаем по минимальной, продаём по средней
 	}
 	else {
-		// Продаём по минимальной, купили бы по средней → прибыль = минимальная - средняя
-		profitCopper = lastMin - mid;
+		profitCopper = lastMin - mid;   // продаём по средней (если она выше минимальной)
 	}
 	float profitGold = profitCopper / 10000.0f;
 
+	// ----- Спрос (ликвидность) – НОВАЯ ВЕРСИЯ -----
+	float demandScore = 0.0f;
+
+	// 1. Пытаемся оценить спрос по динамике количества (скорость убывания)
+	if (!item.Quantity_History.empty() && item.Quantity_History.size() > 1) {
+		// Берём последние 5 значений (или меньше, если история короче)
+		int n = min(5, (int)item.Quantity_History.size());
+		float startQty = item.Quantity_History[item.Quantity_History.size() - n];
+		float endQty = item.Quantity_History.back();
+		if (startQty > 0) {
+			float decrease = (startQty - endQty) / startQty; // 0..1 (положительное = убывание)
+			demandScore = max(0.0f, min(1.0f, decrease));
+		}
+	}
+
+	// 2. Если динамика не дала результата (спрос = 0), используем абсолютное количество лотов
+	if (demandScore < 0.1f) {
+		// 500 лотов = 100% спрос (настройте под свой сервер)
+		demandScore = min(1.0f, static_cast<float>(totalLots) / 500.0f);
+	}
+
+	// 3. Если история пуста, используем только количество лотов
+	if (item.Quantity_History.empty()) {
+		demandScore = min(1.0f, static_cast<float>(totalLots) / 500.0f);
+	}
+
+	// ----- ДИАГНОСТИКА (можно убрать или оставить) -----
+	ImGui::SeparatorText("Диагностика");
+	ImGui::Text("profitGold = %.4f зол.", profitGold);
+	ImGui::Text("demandScore = %.2f (%.0f%%)", demandScore, demandScore * 100);
+	ImGui::Text("rawBenefit = %.2f", rawBenefit);
+	ImGui::Text("rawTrend = %.2f", rawTrend);
+	ImGui::Text("totalLots = %d", totalLots);
+	ImGui::Text("MinProfitGold = %.2f, MinDemand = %.2f", MinProfitGold, MinDemand);
+
 	// ----- Отображение прибыли -----
+	ImGui::SeparatorText("Оценка прибыли");
 	ImGui::Text("Потенциальная прибыль: %.2f зол.", profitGold);
 	ImGui::SameLine();
 	if (profitGold > 1.0f)
@@ -987,7 +1035,20 @@ void ViewIndicators()
 	else
 		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Низкая");
 
-	// 1. Benefit (выгода)
+	// ----- Отображение спроса -----
+	ImGui::Text("Спрос: %.0f%%", demandScore * 100);
+	ImGui::SameLine();
+	if (demandScore > 0.7f)
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Высокий (товар быстро уходит)");
+	else if (demandScore > 0.4f)
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Средний");
+	else
+		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Низкий (застой)");
+
+	// ----- Основные индикаторы -----
+	ImGui::SeparatorText("Индикаторы");
+
+	// 1. Benefit
 	ImGui::Text("%.2f", rawBenefit);
 	ImGui::SameLine();
 	ImGui::Text("Отношение %s цены к средней", IsBuyMode ? "минимальной" : "средней к минимальной");
@@ -1001,7 +1062,7 @@ void ViewIndicators()
 	else
 		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Около средней");
 
-	// 2. CV (стабильность)
+	// 2. CV
 	ImGui::Text("%.2f", rawCV);
 	ImGui::SameLine();
 	ImGui::Text("Коэффициент вариации");
@@ -1013,17 +1074,18 @@ void ViewIndicators()
 	else
 		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Высокая волатильность (риск)");
 
-	// 3. Редкость
-	ImGui::Text("%.2f", rawRarity);
+	// 3. Редкость (нормированная)
+	float normRarity = item.NormRarity;
+	ImGui::Text("%.2f", normRarity);
 	ImGui::SameLine();
-	ImGui::Text("Редкость (1 / (лоты+1))");
+	ImGui::Text("Редкость (нормированная, 0..1)");
 	ImGui::SameLine();
-	if (rawRarity > 0.5f)
-		ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Мало лотов, редкий");
-	else if (rawRarity > 0.2f)
-		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Среднее количество");
+	if (normRarity > 0.5f)
+		ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Редкий (мало лотов)");
+	else if (normRarity > 0.2f)
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Средняя редкость");
 	else
-		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Много лотов, ликвидный");
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Не редкий (много лотов)");
 
 	// 4. Тренд
 	ImGui::Text("%.2f", rawTrend);
@@ -1036,41 +1098,9 @@ void ViewIndicators()
 		ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Цена падает");
 	else
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Стабильна");
-
-	// ----- Общий вердикт -----
-	ImGui::Separator();
-	ImGui::Text("Рекомендация:");
-
-	// Порог минимальной прибыли (можно сделать настраиваемым через глобальную переменную)
-	const float MIN_PROFIT_GOLD = 0.5f;
-
-	if (IsBuyMode) {
-		// Режим покупки
-		if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD && rawTrend < 0.95f)
-			ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "КУПИТЬ! (дёшево, прибыльно, цена падает)");
-		else if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD)
-			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ПОДУМАТЬ (дёшево, но тренд не падает)");
-		else if (rawBenefit > 1.2f && profitGold > MIN_PROFIT_GOLD)
-			ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Средняя выгода, но прибыль есть");
-		else if (profitGold <= MIN_PROFIT_GOLD && rawBenefit > 1.5f)
-			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Дёшево, но прибыль мала (невыгодно)");
-		else
-			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "НЕ ИНТЕРЕСНО (малая прибыль или цена высока)");
-	}
-	else {
-		// Режим продажи
-		if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD && rawTrend > 1.05f)
-			ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "ПРОДАВАТЬ! (дорого, прибыльно, цена растёт)");
-		else if (rawBenefit > 1.5f && profitGold > MIN_PROFIT_GOLD)
-			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "ПОДУМАТЬ (дорого, но тренд не растёт)");
-		else if (rawBenefit > 1.2f && profitGold > MIN_PROFIT_GOLD)
-			ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.0f, 1.0f), "Средняя выгода, но прибыль есть");
-		else if (profitGold <= MIN_PROFIT_GOLD && rawBenefit > 1.5f)
-			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Дорого, но прибыль мала (невыгодно)");
-		else
-			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "НЕ ИНТЕРЕСНО (малая прибыль или цена низкая)");
-	}
 }
+
+
 
 
 void ExportLog()
