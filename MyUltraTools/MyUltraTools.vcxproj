@@ -145,6 +145,16 @@
     <ClInclude Include="R21.h" />
     <ClInclude Include="R22.h" />
     <ClInclude Include="R23.h" />
+    <ClInclude Include="R26.h" />
+    <ClInclude Include="R27.h" />
+    <ClInclude Include="R28.h" />
+    <ClInclude Include="R29.h" />
+    <ClInclude Include="R30.h" />
+    <ClInclude Include="R31.h" />
+    <ClInclude Include="R32.h" />
+    <ClInclude Include="R33.h" />
+    <ClInclude Include="R34.h" />
+    <ClInclude Include="R35.h" />
     <ClInclude Include="RG14.h" />
     <ClInclude Include="RUP.h" />
     <ClInclude Include="SORTS.h" />
@@ -154,6 +164,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="R24.sql" />
+    <None Include="R25.sql" />
+    <None Include="R26sql.sql" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

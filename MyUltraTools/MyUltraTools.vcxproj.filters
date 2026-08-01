@@ -101,9 +101,45 @@
     <ClInclude Include="R23.h">
       <Filter>Header Files\BLOK3</Filter>
     </ClInclude>
+    <ClInclude Include="R26.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+    <ClInclude Include="R27.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R28.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R29.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R30.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R31.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R32.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R33.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R34.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
+    <ClInclude Include="R35.h">
+      <Filter>Header Files\BLOK4</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="R24.sql">
+      <Filter>Header Files\BLOK3</Filter>
+    </None>
+    <None Include="R25.sql">
+      <Filter>Header Files\BLOK3</Filter>
+    </None>
+    <None Include="R26sql.sql">
       <Filter>Header Files\BLOK3</Filter>
     </None>
   </ItemGroup>
