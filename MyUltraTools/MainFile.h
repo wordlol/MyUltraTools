@@ -574,7 +574,6 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 				
 				if (ID == false && line != "}")
 				{
-					
 					if (line[0] == 'g')
 						line.erase(0, 2);
 					
