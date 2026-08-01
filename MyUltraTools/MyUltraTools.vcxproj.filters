@@ -65,5 +65,46 @@
     <ClInclude Include="SORTS.h">
       <Filter>Header Files\BLOK2</Filter>
     </ClInclude>
+    <ClInclude Include="Find12.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="Gtapg13.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="RG14.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="R15.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="R16.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="R17.h">
+      <Filter>Header Files\BLOK2</Filter>
+    </ClInclude>
+    <ClInclude Include="R18.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+    <ClInclude Include="R19.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+    <ClInclude Include="R20.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+    <ClInclude Include="R21.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+    <ClInclude Include="R22.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+    <ClInclude Include="R23.h">
+      <Filter>Header Files\BLOK3</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="R24.sql">
+      <Filter>Header Files\BLOK3</Filter>
+    </None>
   </ItemGroup>
 </Project>

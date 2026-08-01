@@ -131,14 +131,29 @@
     <ClInclude Include="Algo.h" />
     <ClInclude Include="ATD.h" />
     <ClInclude Include="Boarder.h" />
+    <ClInclude Include="Find12.h" />
+    <ClInclude Include="Gtapg13.h" />
     <ClInclude Include="LifeCycleModels.h" />
     <ClInclude Include="OOP1.h" />
     <ClInclude Include="OOP2.h" />
+    <ClInclude Include="R15.h" />
+    <ClInclude Include="R16.h" />
+    <ClInclude Include="R17.h" />
+    <ClInclude Include="R18.h" />
+    <ClInclude Include="R19.h" />
+    <ClInclude Include="R20.h" />
+    <ClInclude Include="R21.h" />
+    <ClInclude Include="R22.h" />
+    <ClInclude Include="R23.h" />
+    <ClInclude Include="RG14.h" />
     <ClInclude Include="RUP.h" />
     <ClInclude Include="SORTS.h" />
     <ClInclude Include="Tamplates.h" />
     <ClInclude Include="Tester.h" />
     <ClInclude Include="Trees.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="R24.sql" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
