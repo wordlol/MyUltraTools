@@ -1,11 +1,11 @@
 #pragma once
 #include "Algo.h"
 //11
-//Р¤РѕСЂРјР°Р»СЊРЅР°СЏ РїРѕСЃС‚Р°РЅРѕРІРєР° Р·Р°РґР°С‡Рё СЃРѕСЂС‚РёСЂРѕРІРєРё СЃРїРёСЃРєРѕРІ / РјР°СЃСЃРёРІРѕРІ.
-//РљР»Р°СЃСЃРёС„РёРєР°С†РёСЏ Р°Р»РіРѕСЂРёС‚РјРѕРІ СЃРѕСЂС‚РёСЂРѕРІРєРё РїРѕ СЂР°Р·Р»РёС‡РЅС‹Рј РєСЂРёС‚РµСЂРёСЏРј.РџСЂСЏРјС‹Рµ Рё
-//СѓР»СѓС‡С€РµРЅРЅС‹Рµ Р°Р»РіРѕСЂРёС‚РјС‹ СЃРѕСЂС‚РёСЂРѕРІРєРё.РџСЂРёРІРµСЃС‚Рё РїСЂРёРјРµСЂС‹ РїСЂСЏРјРѕРіРѕ Рё
-//СѓР»СѓС‡С€РµРЅРЅРѕРіРѕ Р°Р»РіРѕСЂРёС‚РјР° СЃРѕСЂС‚РёСЂРѕРІРєРё, СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ(СЃР»РѕРІРµСЃРЅРѕ РёР»Рё СЃ
-//РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј СЃС…РµРј).РџРѕРєР°Р·Р°С‚СЊ РёС… РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅСѓСЋ СЃР»РѕР¶РЅРѕСЃС‚СЊ.
+//Формальная постановка задачи сортировки списков / массивов.
+//Классификация алгоритмов сортировки по различным критериям.Прямые и
+//улучшенные алгоритмы сортировки.Привести примеры прямого и
+//улучшенного алгоритма сортировки, соответственно(словесно или с
+//использованием схем).Показать их вычислительную сложность.
 
 
 template<typename T, typename Comp = std::less<T>>
@@ -23,14 +23,14 @@ void insertionSort(std::vector<T>& arr) {
 
 template<typename T, typename Comp = std::less<T>>
 size_t partition(std::vector<T>& arr, size_t low, size_t high) {
-    // Р’С‹Р±РѕСЂ РѕРїРѕСЂРЅРѕРіРѕ СЌР»РµРјРµРЅС‚Р°: РјРµРґРёР°РЅР° РёР· arr[low], arr[mid], arr[high]
+    // Выбор опорного элемента: медиана из arr[low], arr[mid], arr[high]
     size_t mid = low + (high - low) / 2;
     T pivot = std::max(std::min(arr[low], arr[mid]), std::min(std::max(arr[low], arr[mid]), arr[high]));
     size_t pivotIdx;
     if (pivot == arr[low]) pivotIdx = low;
     else if (pivot == arr[mid]) pivotIdx = mid;
     else pivotIdx = high;
-    std::swap(arr[pivotIdx], arr[high]); // РїРµСЂРµРјРµС‰Р°РµРј РѕРїРѕСЂРЅС‹Р№ РІ РєРѕРЅРµС†
+    std::swap(arr[pivotIdx], arr[high]); // перемещаем опорный в конец
 
     T pivotVal = arr[high];
     size_t i = low;
@@ -47,7 +47,7 @@ template<typename T, typename Comp = std::less<T>>
 void quickSortRec(std::vector<T>& arr, size_t low, size_t high) {
     if (low < high) {
         size_t pi = partition<T, Comp>(arr, low, high);
-        if (pi > low) quickSortRec<T, Comp>(arr, low, pi - 1); // РїСЂРѕРІРµСЂРєР° РґР»СЏ РёР·Р±РµР¶Р°РЅРёСЏ РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ
+        if (pi > low) quickSortRec<T, Comp>(arr, low, pi - 1); // проверка для избежания переполнения
         quickSortRec<T, Comp>(arr, pi + 1, high);
     }
 }

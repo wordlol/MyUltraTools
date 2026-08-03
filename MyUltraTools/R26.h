@@ -7,24 +7,24 @@
 #include <stdexcept>
 #include <locale>
 
-//4. РљР»СЋС‡РµРІС‹Рµ РѕС‚Р»РёС‡РёСЏ(СЂРµР·СЋРјРµ)
-//РҐР°СЂР°РєС‚РµСЂРёСЃС‚РёРєР°	Р РµР»СЏС†РёРѕРЅРЅС‹Рµ РЎРЈР‘Р”	NoSQL РЎРЈР‘Р”
-//РњРѕРґРµР»СЊ РґР°РЅРЅС‹С…	РўР°Р±Р»РёС†С‹, СЃС‚СЂРѕРєРё, СЃС‚РѕР»Р±С†С‹, С„РёРєСЃРёСЂРѕРІР°РЅРЅР°СЏ СЃС…РµРјР°	Р”РѕРєСѓРјРµРЅС‚С‹, РєР»СЋС‡ - Р·РЅР°С‡РµРЅРёРµ, РіСЂР°С„С‹, РєРѕР»РѕРЅРєРё; РіРёР±РєР°СЏ СЃС…РµРјР°
-//РЇР·С‹Рє Р·Р°РїСЂРѕСЃРѕРІ	РЎС‚Р°РЅРґР°СЂС‚РЅС‹Р№ SQL(DDL, DML, DCL, TCL)	РЎРїРµС†РёС„РёС‡РЅС‹Рµ API(MQL, Cypher, Redis commands)
-//РўСЂР°РЅР·Р°РєС†РёРё	ACID(Р°С‚РѕРјР°СЂРЅРѕСЃС‚СЊ, СЃРѕРіР»Р°СЃРѕРІР°РЅРЅРѕСЃС‚СЊ, РёР·РѕР»СЏС†РёСЏ, РґРѕР»РіРѕРІРµС‡РЅРѕСЃС‚СЊ)	BASE(РѕР±С‹С‡РЅРѕ СЃРѕРіР»Р°СЃРѕРІР°РЅРЅРѕСЃС‚СЊ РІ РєРѕРЅРµС‡РЅРѕРј СЃС‡С‘С‚Рµ)
-//РњР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ	Р’ РѕСЃРЅРѕРІРЅРѕРј РІРµСЂС‚РёРєР°Р»СЊРЅРѕРµ	Р“РѕСЂРёР·РѕРЅС‚Р°Р»СЊРЅРѕРµ(С€Р°СЂРґРёРЅРі, РєР»Р°СЃС‚РµСЂС‹)
-//JOIN	Р­С„С„РµРєС‚РёРІРЅС‹Рµ СЃСЂРµРґСЃС‚РІР° СЃРѕРµРґРёРЅРµРЅРёСЏ С‚Р°Р±Р»РёС†	Р РµРґРєРѕ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ, С‡Р°СЃС‚Рѕ РґРµРЅРѕСЂРјР°Р»РёР·Р°С†РёСЏ
-//РџСЂРёРјРµСЂС‹	PostgreSQL, MySQL, SQL Server	MongoDB, Redis, Cassandra, Neo4j
+//4. Ключевые отличия(резюме)
+//Характеристика	Реляционные СУБД	NoSQL СУБД
+//Модель данных	Таблицы, строки, столбцы, фиксированная схема	Документы, ключ - значение, графы, колонки; гибкая схема
+//Язык запросов	Стандартный SQL(DDL, DML, DCL, TCL)	Специфичные API(MQL, Cypher, Redis commands)
+//Транзакции	ACID(атомарность, согласованность, изоляция, долговечность)	BASE(обычно согласованность в конечном счёте)
+//Масштабирование	В основном вертикальное	Горизонтальное(шардинг, кластеры)
+//JOIN	Эффективные средства соединения таблиц	Редко поддерживается, часто денормализация
+//Примеры	PostgreSQL, MySQL, SQL Server	MongoDB, Redis, Cassandra, Neo4j
 
 using namespace std;
 
-// РўРёРї РґР»СЏ РѕРґРЅРѕРіРѕ РїРѕР»СЏ РґРѕРєСѓРјРµРЅС‚Р° (РјРѕР¶РµС‚ Р±С‹С‚СЊ int, string РёР»Рё РІР»РѕР¶РµРЅРЅС‹Р№ map)
+// Тип для одного поля документа (может быть int, string или вложенный map)
 using FieldValue = variant<int, string, map<string, string>>;
 
-// Р”РѕРєСѓРјРµРЅС‚ вЂ“ СЌС‚Рѕ СЃР»РѕРІР°СЂСЊ СЃС‚СЂРѕРєРѕРІС‹С… РєР»СЋС‡РµР№ СЃ РїСЂРѕРёР·РІРѕР»СЊРЅС‹РјРё Р·РЅР°С‡РµРЅРёСЏРјРё
+// Документ – это словарь строковых ключей с произвольными значениями
 using Document = map<string, FieldValue>;
 
-// --- Р­РјСѓР»СЏС†РёСЏ СЂРµР»СЏС†РёРѕРЅРЅРѕРіРѕ РїРѕРґС…РѕРґР° ---
+// --- Эмуляция реляционного подхода ---
 class RelationalDB {
     struct User {
         int id;
@@ -35,7 +35,7 @@ class RelationalDB {
 public:
     void addUser(int id, const string& name, const string& email) {
         if (name.empty() || email.empty())
-            throw invalid_argument("РџРѕР»СЏ name Рё email РѕР±СЏР·Р°С‚РµР»СЊРЅС‹");
+            throw invalid_argument("Поля name и email обязательны");
         users.push_back({ id, name, email });
     }
 
@@ -47,7 +47,7 @@ public:
     }
 };
 
-// --- Р­РјСѓР»СЏС†РёСЏ РґРѕРєСѓРјРµРЅС‚РЅРѕРіРѕ NoSQL РїРѕРґС…РѕРґР° ---
+// --- Эмуляция документного NoSQL подхода ---
 class DocumentDB {
     vector<Document> docs;
 public:
@@ -55,7 +55,7 @@ public:
         docs.push_back(doc);
     }
 
-    // РџРѕРёСЃРє РїРѕ РєР»СЋС‡Сѓ Рё Р·РЅР°С‡РµРЅРёСЋ (С‚РѕР»СЊРєРѕ РґР»СЏ string/int)
+    // Поиск по ключу и значению (только для string/int)
     Document* findDocument(const string& key, const FieldValue& value) {
         for (auto& doc : docs) {
             auto it = doc.find(key);
@@ -69,31 +69,31 @@ void R26()
 {
     setlocale(LC_ALL, "");
 
-    // Р РµР»СЏС†РёРѕРЅРЅС‹Р№ РїСЂРёРјРµСЂ
+    // Реляционный пример
     RelationalDB rdb;
     try {
-        rdb.addUser(1, "РРІР°РЅРѕРІ", "ivanov@example.com");
+        rdb.addUser(1, "Иванов", "ivanov@example.com");
         auto user = rdb.findUserByEmail("ivanov@example.com");
-        if (user) cout << "РќР°Р№РґРµРЅ: " << user->name << ", " << user->email << endl;
+        if (user) cout << "Найден: " << user->name << ", " << user->email << endl;
     }
     catch (const exception& e) {
-        cout << "РћС€РёР±РєР° СЂРµР»СЏС†РёРѕРЅРЅРѕР№ Р‘Р”: " << e.what() << endl;
+        cout << "Ошибка реляционной БД: " << e.what() << endl;
     }
 
-    // Р”РѕРєСѓРјРµРЅС‚РЅС‹Р№ РїСЂРёРјРµСЂ
+    // Документный пример
     DocumentDB ndb;
     Document doc1 = {
         {"_id", 1},
-        {"name", "РРІР°РЅРѕРІ"s},
+        {"name", "Иванов"s},
         {"email", "ivanov@example.com"s},
         {"preferences", map<string, string>{{"theme", "dark"}, {"lang", "ru"}}}
     };
     ndb.addDocument(doc1);
 
-    // РџРѕРёСЃРє РїРѕ РїРѕР»СЋ "email"
+    // Поиск по полю "email"
     auto found = ndb.findDocument("email", "ivanov@example.com"s);
     if (found) {
-        cout << "РќР°Р№РґРµРЅ РґРѕРєСѓРјРµРЅС‚:\n";
+        cout << "Найден документ:\n";
         for (auto& [key, val] : *found) {
             cout << "  " << key << ": ";
             if (holds_alternative<int>(val)) cout << get<int>(val);
@@ -110,15 +110,15 @@ void R26()
 
 
 //java script
-//// РљРѕР»Р»РµРєС†РёСЏ users (Р±РµР· Р¶С‘СЃС‚РєРѕР№ СЃС…РµРјС‹)
+//// Коллекция users (без жёсткой схемы)
 //db.users.insertOne({
 //    _id: 1,
-//    name : "РРІР°РЅРѕРІ",
+//    name : "Иванов",
 //    email : "ivanov@example.com",
-//    preferences : { theme: "dark" } // РїСЂРѕРёР·РІРѕР»СЊРЅРѕРµ РІР»РѕР¶РµРЅРЅРѕРµ РїРѕР»Рµ
+//    preferences : { theme: "dark" } // произвольное вложенное поле
 //    });
 //
-//// Р—Р°РїСЂРѕСЃ Р±РµР· JOIN, РІР»РѕР¶РµРЅРЅС‹Рµ РґРѕРєСѓРјРµРЅС‚С‹
+//// Запрос без JOIN, вложенные документы
 //db.orders.aggregate([
 //{
 //$lookup: {

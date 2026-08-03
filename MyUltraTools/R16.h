@@ -1,18 +1,18 @@
 #pragma once
 /*
- * 16. РЎР¶Р°С‚РёРµ РґР°РЅРЅС‹С… Р±РµР· РїРѕС‚РµСЂСЊ: Р°Р»РіРѕСЂРёС‚Рј РҐР°С„С„РјР°РЅР°.
+ * 16. Сжатие данных без потерь: алгоритм Хаффмана.
  *
- * РРґРµСЏ: Р±РѕР»РµРµ С‡Р°СЃС‚Рѕ РІСЃС‚СЂРµС‡Р°СЋС‰РёРјСЃСЏ СЃРёРјРІРѕР»Р°Рј РїСЂРёСЃРІР°РёРІР°СЋС‚СЃСЏ РєРѕСЂРѕС‚РєРёРµ РєРѕРґС‹,
- * СЂРµРґРєРёРј вЂ” РґР»РёРЅРЅС‹Рµ. Р­С‚Рѕ РѕРїС‚РёРјР°Р»СЊРЅРѕРµ РїСЂРµС„РёРєСЃРЅРѕРµ РєРѕРґРёСЂРѕРІР°РЅРёРµ.
+ * Идея: более часто встречающимся символам присваиваются короткие коды,
+ * редким — длинные. Это оптимальное префиксное кодирование.
  *
- * РЁР°РіРё:
- * 1. РџРѕРґСЃС‡РµС‚ С‡Р°СЃС‚РѕС‚ СЃРёРјРІРѕР»РѕРІ.
- * 2. РџРѕСЃС‚СЂРѕРµРЅРёРµ РґРµСЂРµРІР° РҐР°С„С„РјР°РЅР° СЃ РїРѕРјРѕС‰СЊСЋ РјРёРЅ-РєСѓС‡Рё.
- * 3. Р“РµРЅРµСЂР°С†РёСЏ РєРѕРґРѕРІ РѕР±С…РѕРґРѕРј РґРµСЂРµРІР° (Р»РµРІРѕ вЂ“ '0', РїСЂР°РІРѕ вЂ“ '1').
- * 4. РљРѕРґРёСЂРѕРІР°РЅРёРµ Рё РґРµРєРѕРґРёСЂРѕРІР°РЅРёРµ.
+ * Шаги:
+ * 1. Подсчет частот символов.
+ * 2. Построение дерева Хаффмана с помощью мин-кучи.
+ * 3. Генерация кодов обходом дерева (лево – '0', право – '1').
+ * 4. Кодирование и декодирование.
  *
- * РЎР»РѕР¶РЅРѕСЃС‚СЊ: O(N + K log K), РіРґРµ N вЂ“ СЂР°Р·РјРµСЂ С‚РµРєСЃС‚Р°, K вЂ“ РєРѕР»РёС‡РµСЃС‚РІРѕ СѓРЅРёРєР°Р»СЊРЅС‹С… СЃРёРјРІРѕР»РѕРІ.
- * РџР°РјСЏС‚СЊ: O(K) РґР»СЏ РґРµСЂРµРІР° Рё С‚Р°Р±Р»РёС†С‹ РєРѕРґРѕРІ.
+ * Сложность: O(N + K log K), где N – размер текста, K – количество уникальных символов.
+ * Память: O(K) для дерева и таблицы кодов.
  */
 
 #include <iostream>
@@ -25,7 +25,7 @@
 #include <memory>
 using namespace std;
 
-// РЈР·РµР» РґРµСЂРµРІР° РҐР°С„С„РјР°РЅР°
+// Узел дерева Хаффмана
 struct HuffmanNode {
     char ch;
     int freq;
@@ -36,40 +36,40 @@ struct HuffmanNode {
     }
 };
 
-// РљРѕРјРїР°СЂР°С‚РѕСЂ РґР»СЏ РјРёРЅ-РєСѓС‡Рё (СЃСЂР°РІРЅРёРІР°РµРј РїРѕ С‡Р°СЃС‚РѕС‚Рµ)
+// Компаратор для мин-кучи (сравниваем по частоте)
 struct CompareNode {
     bool operator()(const shared_ptr<HuffmanNode>& a, const shared_ptr<HuffmanNode>& b) const {
-        return a->freq > b->freq; // РјРёРЅ-РєСѓС‡Р°
+        return a->freq > b->freq; // мин-куча
     }
 };
 
-// Р РµРєСѓСЂСЃРёРІРЅРѕРµ РїРѕСЃС‚СЂРѕРµРЅРёРµ С‚Р°Р±Р»РёС†С‹ РєРѕРґРѕРІ
+// Рекурсивное построение таблицы кодов
 void buildCodes(const shared_ptr<HuffmanNode>& node, const string& code,
     unordered_map<char, string>& huffCode) {
     if (!node) return;
-    if (!node->left && !node->right) { // Р»РёСЃС‚
+    if (!node->left && !node->right) { // лист
         huffCode[node->ch] = code;
     }
     buildCodes(node->left, code + "0", huffCode);
     buildCodes(node->right, code + "1", huffCode);
 }
 
-// РћСЃРЅРѕРІРЅР°СЏ С„СѓРЅРєС†РёСЏ РєРѕРґРёСЂРѕРІР°РЅРёСЏ РҐР°С„С„РјР°РЅР°
-// Р’РѕР·РІСЂР°С‰Р°РµС‚ Р·Р°РєРѕРґРёСЂРѕРІР°РЅРЅСѓСЋ СЃС‚СЂРѕРєСѓ Рё С‚Р°Р±Р»РёС†Сѓ РєРѕРґРѕРІ.
+// Основная функция кодирования Хаффмана
+// Возвращает закодированную строку и таблицу кодов.
 pair<string, unordered_map<char, string>> huffmanEncode(const string& text) {
     if (text.empty()) return {};
 
-    // 1. РџРѕРґСЃС‡РµС‚ С‡Р°СЃС‚РѕС‚
+    // 1. Подсчет частот
     unordered_map<char, int> freq;
     for (char c : text) freq[c]++;
 
-    // 2. РџРѕСЃС‚СЂРѕРµРЅРёРµ РјРёРЅ-РєСѓС‡Рё
+    // 2. Построение мин-кучи
     priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, CompareNode> pq;
     for (auto& [ch, f] : freq) {
         pq.push(make_shared<HuffmanNode>(ch, f));
     }
 
-    // 3. РџРѕСЃС‚СЂРѕРµРЅРёРµ РґРµСЂРµРІР°
+    // 3. Построение дерева
     while (pq.size() > 1) {
         auto left = pq.top(); pq.pop();
         auto right = pq.top(); pq.pop();
@@ -78,18 +78,18 @@ pair<string, unordered_map<char, string>> huffmanEncode(const string& text) {
     }
     auto root = pq.top();
 
-    // 4. Р“РµРЅРµСЂР°С†РёСЏ РєРѕРґРѕРІ
+    // 4. Генерация кодов
     unordered_map<char, string> huffCode;
     buildCodes(root, "", huffCode);
 
-    // 5. РљРѕРґРёСЂРѕРІР°РЅРёРµ С‚РµРєСЃС‚Р°
+    // 5. Кодирование текста
     string encoded;
     for (char c : text) encoded += huffCode[c];
 
     return { encoded, huffCode };
 }
 
-// Р”РµРєРѕРґРёСЂРѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё РїРѕ РґРµСЂРµРІСѓ РҐР°С„С„РјР°РЅР°
+// Декодирование строки по дереву Хаффмана
 string huffmanDecode(const string& encoded, const shared_ptr<HuffmanNode>& root) {
     string decoded;
     auto current = root;
@@ -97,7 +97,7 @@ string huffmanDecode(const string& encoded, const shared_ptr<HuffmanNode>& root)
         if (bit == '0') current = current->left;
         else current = current->right;
 
-        if (!current->left && !current->right) { // Р»РёСЃС‚
+        if (!current->left && !current->right) { // лист
             decoded += current->ch;
             current = root;
         }
@@ -108,21 +108,21 @@ string huffmanDecode(const string& encoded, const shared_ptr<HuffmanNode>& root)
 void R16()
 {
     setlocale(LC_ALL, "");
-    string text = "ABBCCCDDDDEEEEE"; // РїСЂРёРјРµСЂ СЃС‚СЂРѕРєРё СЃ СЂР°Р·РЅС‹РјРё С‡Р°СЃС‚РѕС‚Р°РјРё
-    cout << "РСЃС…РѕРґРЅС‹Р№ С‚РµРєСЃС‚: " << text << endl;
+    string text = "ABBCCCDDDDEEEEE"; // пример строки с разными частотами
+    cout << "Исходный текст: " << text << endl;
 
     auto [encoded, codes] = huffmanEncode(text);
-    cout << "\nРўР°Р±Р»РёС†Р° РєРѕРґРѕРІ РҐР°С„С„РјР°РЅР°:\n";
+    cout << "\nТаблица кодов Хаффмана:\n";
     for (auto& [ch, code] : codes) {
         cout << "  '" << ch << "' : " << code << endl;
     }
-    cout << "\nР—Р°РєРѕРґРёСЂРѕРІР°РЅРЅР°СЏ СЃС‚СЂРѕРєР°: " << encoded << endl;
+    cout << "\nЗакодированная строка: " << encoded << endl;
 
-    // Р”Р»СЏ РґРµРєРѕРґРёСЂРѕРІР°РЅРёСЏ РЅСѓР¶РЅРѕ СЃРѕС…СЂР°РЅРёС‚СЊ РґРµСЂРµРІРѕ РёР»Рё С‚Р°Р±Р»РёС†Сѓ РєРѕРґРѕРІ.
-    // Р—РґРµСЃСЊ РґР»СЏ РїСЂРёРјРµСЂР° РІРѕСЃСЃС‚Р°РЅРѕРІРёРј РґРµСЂРµРІРѕ РёР· С‚Р°Р±Р»РёС†С‹ (РЅРѕ РїСЂРѕС‰Рµ РїРµСЂРµРґР°С‚СЊ РґРµСЂРµРІРѕ).
-    // РџСЂРѕСЃС‚Рѕ РїРѕРєР°Р¶РµРј, С‡С‚Рѕ РґРµРєРѕРґРёСЂРѕРІР°РЅРёРµ РІРѕР·РјРѕР¶РЅРѕ, РµСЃР»Рё РµСЃС‚СЊ РґРµСЂРµРІРѕ.
+    // Для декодирования нужно сохранить дерево или таблицу кодов.
+    // Здесь для примера восстановим дерево из таблицы (но проще передать дерево).
+    // Просто покажем, что декодирование возможно, если есть дерево.
 
-    // РџРѕСЃС‚СЂРѕРёРј РґРµСЂРµРІРѕ РїРѕРІС‚РѕСЂРЅРѕ (РІ СЂРµР°Р»СЊРЅРѕСЃС‚Рё РµРіРѕ РЅСѓР¶РЅРѕ СЃРѕС…СЂР°РЅСЏС‚СЊ РІРјРµСЃС‚Рµ СЃ РґР°РЅРЅС‹РјРё)
+    // Построим дерево повторно (в реальности его нужно сохранять вместе с данными)
     unordered_map<char, int> freq;
     for (char c : text) freq[c]++;
     priority_queue<shared_ptr<HuffmanNode>, vector<shared_ptr<HuffmanNode>>, CompareNode> pq;
@@ -135,7 +135,7 @@ void R16()
     auto root = pq.top();
 
     string decoded = huffmanDecode(encoded, root);
-    cout << "Р”РµРєРѕРґРёСЂРѕРІР°РЅРЅС‹Р№ С‚РµРєСЃС‚: " << decoded << endl;
-    if (text == decoded) cout << "РЎР¶Р°С‚РёРµ Р±РµР· РїРѕС‚РµСЂСЊ: СѓСЃРїРµС…!" << endl;
+    cout << "Декодированный текст: " << decoded << endl;
+    if (text == decoded) cout << "Сжатие без потерь: успех!" << endl;
 
 }

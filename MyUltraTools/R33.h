@@ -8,13 +8,13 @@
 
 using namespace std;
 
-// РљР°С‚РµРіРѕСЂРёРё СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёСЏ
+// Категории сопровождения
 enum class Category { Corrective, Adaptive, Perfective, Preventive };
 
-// РџСЂРёРѕСЂРёС‚РµС‚ Р·Р°РїСЂРѕСЃР°
+// Приоритет запроса
 enum class Priority { Low, Medium, High, Critical };
 
-// Р—Р°РїСЂРѕСЃ РЅР° СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёРµ
+// Запрос на сопровождение
 class MaintenanceRequest {
 public:
     int id;
@@ -30,83 +30,83 @@ public:
 
     string categoryToString() const {
         switch (category) {
-        case Category::Corrective: return "РљРѕСЂСЂРµРєС‚РёСЂСѓСЋС‰РµРµ";
-        case Category::Adaptive: return "РђРґР°РїС‚РёРІРЅРѕРµ";
-        case Category::Perfective: return "РЎРѕРІРµСЂС€РµРЅСЃС‚РІСѓСЋС‰РµРµ";
-        case Category::Preventive: return "РџСЂРѕС„РёР»Р°РєС‚РёС‡РµСЃРєРѕРµ";
-        default: return "РќРµРёР·РІРµСЃС‚РЅРѕ";
+        case Category::Corrective: return "Корректирующее";
+        case Category::Adaptive: return "Адаптивное";
+        case Category::Perfective: return "Совершенствующее";
+        case Category::Preventive: return "Профилактическое";
+        default: return "Неизвестно";
         }
     }
 };
 
-// РџСЂРѕС†РµСЃСЃ СЃРѕРїСЂРѕРІРѕР¶РґРµРЅРёСЏ
+// Процесс сопровождения
 class MaintenanceProcess {
     vector<shared_ptr<MaintenanceRequest>> requests;
     int nextId = 1;
 public:
-    // РџСЂРёС‘Рј Рё СЂРµРіРёСЃС‚СЂР°С†РёСЏ Р·Р°РїСЂРѕСЃР°
+    // Приём и регистрация запроса
     shared_ptr<MaintenanceRequest> registerRequest(const string& desc, Category cat, Priority pri) {
         auto req = make_shared<MaintenanceRequest>(nextId++, desc, cat, pri);
         requests.push_back(req);
-        cout << "[Р РµРіРёСЃС‚СЂР°С†РёСЏ] Р—Р°РїСЂРѕСЃ #" << req->id << " (" << req->categoryToString() << "): " << desc << endl;
+        cout << "[Регистрация] Запрос #" << req->id << " (" << req->categoryToString() << "): " << desc << endl;
         return req;
     }
 
-    // РђРЅР°Р»РёР· РІРѕР·РґРµР№СЃС‚РІРёСЏ (СѓРїСЂРѕС‰С‘РЅРЅС‹Р№)
+    // Анализ воздействия (упрощённый)
     void analyzeImpact(shared_ptr<MaintenanceRequest> req) {
-        cout << "[РђРЅР°Р»РёР·] РћС†РµРЅРєР° РІР»РёСЏРЅРёСЏ Р·Р°РїСЂРѕСЃР° #" << req->id << endl;
-        // Р’ СЂРµР°Р»СЊРЅРѕСЃС‚Рё: РїСЂРѕРІРµСЂРєР° Р·Р°С‚СЂРѕРЅСѓС‚С‹С… РјРѕРґСѓР»РµР№, РѕС†РµРЅРєР° С‚СЂСѓРґРѕР·Р°С‚СЂР°С‚
+        cout << "[Анализ] Оценка влияния запроса #" << req->id << endl;
+        // В реальности: проверка затронутых модулей, оценка трудозатрат
         if (req->priority >= Priority::High) {
-            cout << "  -> РўСЂРµР±СѓРµС‚СЃСЏ СЃСЂРѕС‡РЅРѕРµ РІРјРµС€Р°С‚РµР»СЊСЃС‚РІРѕ!\n";
+            cout << "  -> Требуется срочное вмешательство!\n";
         }
     }
 
-    // Р Р°Р·СЂР°Р±РѕС‚РєР° Рё С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµ РёР·РјРµРЅРµРЅРёР№ (РёРјРёС‚Р°С†РёСЏ)
+    // Разработка и тестирование изменений (имитация)
     void implement(shared_ptr<MaintenanceRequest> req) {
-        cout << "[Р Р°Р·СЂР°Р±РѕС‚РєР°] Р’РЅРµСЃРµРЅРёРµ РёР·РјРµРЅРµРЅРёР№ РґР»СЏ Р·Р°РїСЂРѕСЃР° #" << req->id << endl;
-        cout << "[РўРµСЃС‚РёСЂРѕРІР°РЅРёРµ] РџСЂРѕРІРµСЂРєР° РёСЃРїСЂР°РІР»РµРЅРёСЏ..." << endl;
+        cout << "[Разработка] Внесение изменений для запроса #" << req->id << endl;
+        cout << "[Тестирование] Проверка исправления..." << endl;
         req->resolved = true;
     }
 
-    // Р Р°Р·РІС‘СЂС‚С‹РІР°РЅРёРµ
+    // Развёртывание
     void deploy(shared_ptr<MaintenanceRequest> req) {
-        cout << "[Р Р°Р·РІС‘СЂС‚С‹РІР°РЅРёРµ] РџРѕСЃС‚Р°РІРєР° РёСЃРїСЂР°РІР»РµРЅРёСЏ РґР»СЏ Р·Р°РїСЂРѕСЃР° #" << req->id << " РІ СЌРєСЃРїР»СѓР°С‚Р°С†РёСЋ\n";
+        cout << "[Развёртывание] Поставка исправления для запроса #" << req->id << " в эксплуатацию\n";
     }
 
-    // РџРѕР»РЅС‹Р№ С†РёРєР» РѕР±СЂР°Р±РѕС‚РєРё Р·Р°РїСЂРѕСЃР°
+    // Полный цикл обработки запроса
     void processRequest(shared_ptr<MaintenanceRequest> req) {
-        cout << "\n=== РћР±СЂР°Р±РѕС‚РєР° Р·Р°РїСЂРѕСЃР° #" << req->id << " ===" << endl;
+        cout << "\n=== Обработка запроса #" << req->id << " ===" << endl;
         analyzeImpact(req);
         implement(req);
         if (req->resolved) deploy(req);
-        else cout << "РћС€РёР±РєР°: Р·Р°РїСЂРѕСЃ РЅРµ СЂРµС€С‘РЅ.\n";
+        else cout << "Ошибка: запрос не решён.\n";
     }
 
-    // РћС‚С‡С‘С‚РЅРѕСЃС‚СЊ
+    // Отчётность
     void printSummary() const {
-        cout << "\n=== РЎС‚Р°С‚РёСЃС‚РёРєР° Р·Р°РїСЂРѕСЃРѕРІ ===" << endl;
+        cout << "\n=== Статистика запросов ===" << endl;
         int total = requests.size(), resolved = 0;
         for (auto& r : requests) if (r->resolved) ++resolved;
-        cout << "Р’СЃРµРіРѕ: " << total << ", СЂРµС€РµРЅРѕ: " << resolved << ", РѕР¶РёРґР°СЋС‚: " << total - resolved << endl;
+        cout << "Всего: " << total << ", решено: " << resolved << ", ожидают: " << total - resolved << endl;
     }
 };
 
-// Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ
+// Демонстрация
 void R33() {
     setlocale(LC_ALL, "");
 
     MaintenanceProcess service;
 
-    // Р РµРіРёСЃС‚СЂР°С†РёСЏ Р·Р°РїСЂРѕСЃРѕРІ СЂР°Р·РЅС‹С… РєР°С‚РµРіРѕСЂРёР№
-    auto req1 = service.registerRequest("РћС€РёР±РєР° РІ СЂР°СЃС‡С‘С‚Рµ РЅР°Р»РѕРіРѕРІ", Category::Corrective, Priority::Critical);
-    auto req2 = service.registerRequest("РџРµСЂРµС…РѕРґ РЅР° РЅРѕРІСѓСЋ РІРµСЂСЃРёСЋ РЎРЈР‘Р”", Category::Adaptive, Priority::High);
-    auto req3 = service.registerRequest("РЈСЃРєРѕСЂРёС‚СЊ С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ РѕС‚С‡С‘С‚Р°", Category::Perfective, Priority::Medium);
-    auto req4 = service.registerRequest("Р РµС„Р°РєС‚РѕСЂРёРЅРі СЃС‚Р°СЂРѕРіРѕ РјРѕРґСѓР»СЏ", Category::Preventive, Priority::Low);
+    // Регистрация запросов разных категорий
+    auto req1 = service.registerRequest("Ошибка в расчёте налогов", Category::Corrective, Priority::Critical);
+    auto req2 = service.registerRequest("Переход на новую версию СУБД", Category::Adaptive, Priority::High);
+    auto req3 = service.registerRequest("Ускорить формирование отчёта", Category::Perfective, Priority::Medium);
+    auto req4 = service.registerRequest("Рефакторинг старого модуля", Category::Preventive, Priority::Low);
 
-    // РћР±СЂР°Р±РѕС‚РєР° Р·Р°РїСЂРѕСЃРѕРІ (РёРјРёС‚Р°С†РёСЏ)
+    // Обработка запросов (имитация)
     service.processRequest(req1);
     service.processRequest(req2);
-    // req3 Рё req4 РѕСЃС‚Р°РЅСѓС‚СЃСЏ Р±РµР· РѕР±СЂР°Р±РѕС‚РєРё РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†РёРё СЃС‚Р°С‚СѓСЃР°
+    // req3 и req4 останутся без обработки для демонстрации статуса
 
     service.printSummary();
 

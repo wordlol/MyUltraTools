@@ -1,21 +1,21 @@
 #pragma once
 /*
- * 18. РћС‚РЅРѕС€РµРЅРёРµ, Р°С‚СЂРёР±СѓС‚, РґРѕРјРµРЅ, РєРѕСЂС‚РµР¶ РІ СЂРµР»СЏС†РёРѕРЅРЅРѕР№ РјРѕРґРµР»Рё.
- * РЎРІСЏР·СЊ СЃ С‚РµРѕСЂРµС‚РёРєРѕ-РјРЅРѕР¶РµСЃС‚РІРµРЅРЅРѕР№ РјРѕРґРµР»СЊСЋ.
+ * 18. Отношение, атрибут, домен, кортеж в реляционной модели.
+ * Связь с теоретико-множественной моделью.
  *
- * РћС‚РЅРѕС€РµРЅРёРµ вЂ“ СЌС‚Рѕ РїРѕРґРјРЅРѕР¶РµСЃС‚РІРѕ РґРµРєР°СЂС‚РѕРІР° РїСЂРѕРёР·РІРµРґРµРЅРёСЏ РґРѕРјРµРЅРѕРІ.
- * РђС‚СЂРёР±СѓС‚ вЂ“ РёРјРµРЅРѕРІР°РЅРЅР°СЏ СЂРѕР»СЊ СЌР»РµРјРµРЅС‚Р° РґРѕРјРµРЅР° РІ РѕС‚РЅРѕС€РµРЅРёРё.
- * Р”РѕРјРµРЅ вЂ“ РјРЅРѕР¶РµСЃС‚РІРѕ РґРѕРїСѓСЃС‚РёРјС‹С… Р·РЅР°С‡РµРЅРёР№ Р°С‚СЂРёР±СѓС‚Р°.
- * РљРѕСЂС‚РµР¶ вЂ“ СЌР»РµРјРµРЅС‚ РѕС‚РЅРѕС€РµРЅРёСЏ, СѓРїРѕСЂСЏРґРѕС‡РµРЅРЅС‹Р№ РЅР°Р±РѕСЂ Р·РЅР°С‡РµРЅРёР№ Р°С‚СЂРёР±СѓС‚РѕРІ.
+ * Отношение – это подмножество декартова произведения доменов.
+ * Атрибут – именованная роль элемента домена в отношении.
+ * Домен – множество допустимых значений атрибута.
+ * Кортеж – элемент отношения, упорядоченный набор значений атрибутов.
  *
- * Р—РґРµСЃСЊ СЂРµР°Р»РёР·РѕРІР°РЅС‹:
- * - Domain<T> вЂ“ РѕР±С‘СЂС‚РєР° РЅР°Рґ std::set<T> СЃ РїСЂРѕРІРµСЂРєРѕР№ РїСЂРёРЅР°РґР»РµР¶РЅРѕСЃС‚Рё.
- * - Attribute вЂ“ РёРјСЏ + СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РґРѕРјРµРЅ (С‚РёРїРёР·РёСЂРѕРІР°РЅРЅС‹Р№ РёР»Рё СѓРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Р№).
- * - Tuple вЂ“ СѓРїРѕСЂСЏРґРѕС‡РµРЅРЅС‹Р№ РЅР°Р±РѕСЂ Р·РЅР°С‡РµРЅРёР№ (vector<string> РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹).
- * - Relation вЂ“ РјРЅРѕР¶РµСЃС‚РІРѕ РєРѕСЂС‚РµР¶РµР№ + СЃС…РµРјР° (РёРјРµРЅР° Р°С‚СЂРёР±СѓС‚РѕРІ Рё РґРѕРјРµРЅС‹).
+ * Здесь реализованы:
+ * - Domain<T> – обёртка над std::set<T> с проверкой принадлежности.
+ * - Attribute – имя + указатель на домен (типизированный или универсальный).
+ * - Tuple – упорядоченный набор значений (vector<string> для простоты).
+ * - Relation – множество кортежей + схема (имена атрибутов и домены).
  *
- * РџРѕРєР°Р·Р°РЅС‹ РѕРїРµСЂР°С†РёРё РЅР°Рґ РѕС‚РЅРѕС€РµРЅРёСЏРјРё РєР°Рє РЅР°Рґ РјРЅРѕР¶РµСЃС‚РІР°РјРё:
- * РѕР±СЉРµРґРёРЅРµРЅРёРµ, РїРµСЂРµСЃРµС‡РµРЅРёРµ, СЂР°Р·РЅРѕСЃС‚СЊ, РґРµРєР°СЂС‚РѕРІРѕ РїСЂРѕРёР·РІРµРґРµРЅРёРµ.
+ * Показаны операции над отношениями как над множествами:
+ * объединение, пересечение, разность, декартово произведение.
  */
 
 #include <iostream>
@@ -29,7 +29,7 @@
 
 using namespace std;
 
-// ----- Р”РћРњР•Рќ -----
+// ----- ДОМЕН -----
 template <typename T>
 class Domain {
     set<T> values_;
@@ -39,10 +39,10 @@ public:
     const set<T>& values() const { return values_; }
 };
 
-// ----- РђРўР РР‘РЈРў (СѓРЅРёРІРµСЂСЃР°Р»СЊРЅС‹Р№, С…СЂР°РЅРёРј Р·РЅР°С‡РµРЅРёСЏ РєР°Рє СЃС‚СЂРѕРєРё РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹) -----
+// ----- АТРИБУТ (универсальный, храним значения как строки для простоты) -----
 class Attribute {
     string name_;
-    shared_ptr<Domain<string>> domain_;  // РґРѕРјРµРЅ РєР°Рє РјРЅРѕР¶РµСЃС‚РІРѕ СЃС‚СЂРѕРє
+    shared_ptr<Domain<string>> domain_;  // домен как множество строк
 public:
     Attribute(const string& name, shared_ptr<Domain<string>> dom)
         : name_(name), domain_(dom) {
@@ -51,7 +51,7 @@ public:
     bool isValid(const string& val) const { return domain_->contains(val); }
 };
 
-// ----- РљРћР РўР•Р– -----
+// ----- КОРТЕЖ -----
 class Tuple {
     vector<string> data_;
 public:
@@ -59,24 +59,24 @@ public:
     const string& operator[](size_t i) const { return data_[i]; }
     size_t size() const { return data_.size(); }
     bool operator==(const Tuple& other) const { return data_ == other.data_; }
-    bool operator<(const Tuple& other) const { return data_ < other.data_; } // РґР»СЏ std::set
+    bool operator<(const Tuple& other) const { return data_ < other.data_; } // для std::set
 };
 
-// ----- РћРўРќРћРЁР•РќРР• -----
+// ----- ОТНОШЕНИЕ -----
 class Relation {
     string name_;
-    vector<Attribute> schema_;          // РёРјРµРЅР° Рё РґРѕРјРµРЅС‹ Р°С‚СЂРёР±СѓС‚РѕРІ
-    set<Tuple> tuples_;                // РјРЅРѕР¶РµСЃС‚РІРѕ РєРѕСЂС‚РµР¶РµР№ (РѕСЃРЅРѕРІР° вЂ“ РјРЅРѕР¶РµСЃС‚РІРѕ!)
+    vector<Attribute> schema_;          // имена и домены атрибутов
+    set<Tuple> tuples_;                // множество кортежей (основа – множество!)
 public:
     Relation(const string& name, const vector<Attribute>& schema)
         : name_(name), schema_(schema) {
     }
 
-    // Р’СЃС‚Р°РІРєР° РєРѕСЂС‚РµР¶Р° СЃ РїСЂРѕРІРµСЂРєРѕР№ РґРѕРјРµРЅРѕРІ
+    // Вставка кортежа с проверкой доменов
     bool insert(const Tuple& t) {
         if (t.size() != schema_.size()) return false;
         for (size_t i = 0; i < t.size(); ++i) {
-            if (!schema_[i].isValid(t[i])) return false; // РЅР°СЂСѓС€РµРЅРёРµ РґРѕРјРµРЅР°
+            if (!schema_[i].isValid(t[i])) return false; // нарушение домена
         }
         return tuples_.insert(t).second;
     }
@@ -85,18 +85,18 @@ public:
     const vector<Attribute>& schema() const { return schema_; }
     const string& name() const { return name_; }
 
-    // ----- РћРџР•Р РђР¦РР Р Р•Р›РЇР¦РРћРќРќРћР™ РђР›Р“Р•Р‘Р Р« РљРђРљ РќРђР” РњРќРћР–Р•РЎРўР’РђРњР -----
+    // ----- ОПЕРАЦИИ РЕЛЯЦИОННОЙ АЛГЕБРЫ КАК НАД МНОЖЕСТВАМИ -----
 
-    // РћР±СЉРµРґРёРЅРµРЅРёРµ (С‚СЂРµР±СѓРµС‚ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё СЃС…РµРј)
+    // Объединение (требует совместимости схем)
     static Relation union_(const Relation& a, const Relation& b) {
-        assert(a.schema_.size() == b.schema_.size()); // СѓРїСЂРѕС‰С‘РЅРЅР°СЏ РїСЂРѕРІРµСЂРєР°
+        assert(a.schema_.size() == b.schema_.size()); // упрощённая проверка
         Relation result("union", a.schema_);
         result.tuples_ = a.tuples_;
         for (auto& t : b.tuples_) result.tuples_.insert(t);
         return result;
     }
 
-    // РџРµСЂРµСЃРµС‡РµРЅРёРµ
+    // Пересечение
     static Relation intersect(const Relation& a, const Relation& b) {
         assert(a.schema_.size() == b.schema_.size());
         Relation result("intersect", a.schema_);
@@ -107,7 +107,7 @@ public:
         return result;
     }
 
-    // Р Р°Р·РЅРѕСЃС‚СЊ (a \ b)
+    // Разность (a \ b)
     static Relation difference(const Relation& a, const Relation& b) {
         assert(a.schema_.size() == b.schema_.size());
         Relation result("difference", a.schema_);
@@ -118,11 +118,11 @@ public:
         return result;
     }
 
-    // Р”РµРєР°СЂС‚РѕРІРѕ РїСЂРѕРёР·РІРµРґРµРЅРёРµ (Р°С‚СЂРёР±СѓС‚С‹ РїРµСЂРµРёРјРµРЅРѕРІС‹РІР°РµРј РґР»СЏ СѓРЅРёРєР°Р»СЊРЅРѕСЃС‚Рё)
+    // Декартово произведение (атрибуты переименовываем для уникальности)
     static Relation cartesianProduct(const Relation& a, const Relation& b) {
         vector<Attribute> newSchema;
         for (auto& attr : a.schema_)
-            newSchema.push_back(Attribute(a.name() + "." + attr.name(), nullptr)); // РґРѕРјРµРЅ РѕРїСѓСЃРєР°РµРј РґР»СЏ РїСЂРѕСЃС‚РѕС‚С‹
+            newSchema.push_back(Attribute(a.name() + "." + attr.name(), nullptr)); // домен опускаем для простоты
         for (auto& attr : b.schema_)
             newSchema.push_back(Attribute(b.name() + "." + attr.name(), nullptr));
         Relation result("product", newSchema);
@@ -131,14 +131,14 @@ public:
                 std::vector<std::string> vals;
                 vals.insert(vals.end(), vals.begin(), vals.end());
                 vals.insert(vals.end(), vals.begin(), vals.end());
-                result.insert(ta); // С‚РµРїРµСЂСЊ insert РїСЂРѕРІРµСЂРёС‚ РґРѕРјРµРЅС‹
+                result.insert(ta); // теперь insert проверит домены
             }
         }
         return result;
     }
 
     void print() const {
-        cout << "РћС‚РЅРѕС€РµРЅРёРµ " << name_ << " (";
+        cout << "Отношение " << name_ << " (";
         for (size_t i = 0; i < schema_.size(); ++i) {
             if (i) cout << ", ";
             cout << schema_[i].name();
@@ -159,13 +159,13 @@ void R17()
 {
     setlocale(LC_ALL, "");
 
-    // Р”РѕРјРµРЅС‹
+    // Домены
     auto domColor = make_shared<Domain<string>>(initializer_list<string>{"Red", "Green", "Blue"});
     auto domSize = make_shared<Domain<string>>(initializer_list<string>{"S", "M", "L"});
 
-    // РЎС…РµРјС‹
-    vector<Attribute> schema1 = { Attribute("Р¦РІРµС‚", domColor), Attribute("Р Р°Р·РјРµСЂ", domSize) };
-    vector<Attribute> schema2 = schema1; // РѕРґРёРЅР°РєРѕРІС‹Рµ РґР»СЏ РѕРїРµСЂР°С†РёР№
+    // Схемы
+    vector<Attribute> schema1 = { Attribute("Цвет", domColor), Attribute("Размер", domSize) };
+    vector<Attribute> schema2 = schema1; // одинаковые для операций
 
     Relation r1("R1", schema1);
     Relation r2("R2", schema2);
@@ -187,7 +187,7 @@ void R17()
     auto diff = Relation::difference(r1, r2);
     diff.print();
 
-    // Р”РµРєР°СЂС‚РѕРІРѕ РїСЂРѕРёР·РІРµРґРµРЅРёРµ СЃ СЃР°РјРёРј СЃРѕР±РѕР№ РґР»СЏ РґРµРјРѕРЅСЃС‚СЂР°С†РёРё
+    // Декартово произведение с самим собой для демонстрации
     auto prod = Relation::cartesianProduct(r1, r2);
     prod.print();
 

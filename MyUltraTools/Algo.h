@@ -2,10 +2,10 @@
 #include "Trees.h"
 #include <limits>
 //10
-//РџРѕРЅСЏС‚РёРµ СЂРµРєСѓСЂСЃРёРё РІ РїСЂРѕРіСЂР°РјРјРёСЂРѕРІР°РЅРёРё.Р РµРєСѓСЂСЃРёРІРЅС‹Рµ Рё РЅРµСЂРµРєСѓСЂСЃРёРІРЅС‹Рµ
-//Р°Р»РіРѕСЂРёС‚РјС‹.РЈСЃР»РѕРІРёСЏ РѕРєРѕРЅС‡Р°РЅРёСЏ СЂР°Р±РѕС‚С‹.РџСЂРёРІРµСЃС‚Рё РїСЂРёРјРµСЂС‹ СЂРµРєСѓСЂСЃРёРІРЅРѕРіРѕ Рё
-//РЅРµСЂРµРєСѓСЂСЃРёРІРЅРѕРіРѕ Р°Р»РіРѕСЂРёС‚РјРѕРІ, СЃРѕРѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕ(СЃР»РѕРІРµСЃРЅРѕ РёР»Рё СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј
-//СЃС…РµРј).РџРѕРєР°Р·Р°С‚СЊ РёС… РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅСѓСЋ СЃР»РѕР¶РЅРѕСЃС‚СЊ.
+//Понятие рекурсии в программировании.Рекурсивные и нерекурсивные
+//алгоритмы.Условия окончания работы.Привести примеры рекурсивного и
+//нерекурсивного алгоритмов, соответственно(словесно или с использованием
+//схем).Показать их вычислительную сложность.
 
 
 unsigned long long factorial_recursive(int n) {
@@ -34,7 +34,7 @@ unsigned long long fib_recursive(int n) {
 unsigned long long fib_memo(int n, std::vector<unsigned long long>& cache) {
     if (n < 0) throw std::invalid_argument("Negative index");
     if (n <= 1) return n;
-    if (cache[n] != ULLONG_MAX) return cache[n];   // ULLONG_MAX вЂ“ РјР°СЂРєРµСЂ "РЅРµ РІС‹С‡РёСЃР»РµРЅРѕ"
+    if (cache[n] != ULLONG_MAX) return cache[n];   // ULLONG_MAX – маркер "не вычислено"
     cache[n] = fib_memo(n - 1, cache) + fib_memo(n - 2, cache);
     return cache[n];
 }
@@ -63,8 +63,8 @@ void testFibonacci() {
     ASSERT_EQUAL(1, fib_iterative(1));
     ASSERT_EQUAL(55, fib_iterative(10));
 
-    // РњРµРјРѕРёР·Р°С†РёСЏ: СЃРѕР·РґР°С‘Рј РєСЌС€ СЂР°Р·РјРµСЂРѕРј n+1, Р·Р°РїРѕР»РЅСЏРµРј ULLONG_MAX
-    std::vector<unsigned long long> cache(41, ULLONG_MAX); // РёРЅРґРµРєСЃС‹ 0..40
+    // Мемоизация: создаём кэш размером n+1, заполняем ULLONG_MAX
+    std::vector<unsigned long long> cache(41, ULLONG_MAX); // индексы 0..40
     ASSERT_EQUAL(102334155, fib_memo(40, cache));          // fib(40) = 102334155
 }
 

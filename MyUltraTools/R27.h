@@ -9,7 +9,7 @@
 
 using namespace std;
 
-// ------------------- РўСЂРµР±РѕРІР°РЅРёРµ -------------------
+// ------------------- Требование -------------------
 enum class Priority { High, Medium, Low };
 enum class ReqStatus { New, Approved, Implemented, Tested };
 
@@ -25,21 +25,21 @@ public:
     }
 };
 
-// ------------------- РўРµСЃС‚РѕРІС‹Р№ СЃР»СѓС‡Р°Р№ -------------------
+// ------------------- Тестовый случай -------------------
 class TestCase {
 public:
     int id;
     string description;
     vector<string> steps;
     string expectedResult;
-    int requirementId;   // СЃРІСЏР·СЊ СЃ С‚СЂРµР±РѕРІР°РЅРёРµРј (РІРЅРµС€РЅРёР№ РєР»СЋС‡)
+    int requirementId;   // связь с требованием (внешний ключ)
 
     TestCase(int i, const string& desc, int reqId)
         : id(i), description(desc), requirementId(reqId) {
     }
 };
 
-// ------------------- РњРµРЅРµРґР¶РµСЂ С‚СЂРµР±РѕРІР°РЅРёР№ Рё С‚РµСЃС‚РѕРІ -------------------
+// ------------------- Менеджер требований и тестов -------------------
 class RequirementManager {
     vector<Requirement> requirements;
     vector<TestCase> testCases;
@@ -47,55 +47,55 @@ class RequirementManager {
     int nextTestId = 1;
 
 public:
-    // Р”РѕР±Р°РІР»РµРЅРёРµ С‚СЂРµР±РѕРІР°РЅРёСЏ
+    // Добавление требования
     Requirement* addRequirement(const string& desc, Priority prio = Priority::Medium) {
         requirements.emplace_back(nextReqId, desc, prio);
         return &requirements.back();
     }
 
-    // Р“РµРЅРµСЂР°С†РёСЏ С‚РµСЃС‚РѕРІРѕРіРѕ СЃР»СѓС‡Р°СЏ РЅР° РѕСЃРЅРѕРІРµ С‚СЂРµР±РѕРІР°РЅРёСЏ (РёРјРёС‚Р°С†РёСЏ РїРѕР»СѓР°РІС‚РѕРјР°С‚РёС‡РµСЃРєРѕР№ РіРµРЅРµСЂР°С†РёРё)
+    // Генерация тестового случая на основе требования (имитация полуавтоматической генерации)
     TestCase* generateTestForRequirement(int reqId) {
         auto req = find_if(requirements.begin(), requirements.end(),
             [reqId](const Requirement& r) { return r.id == reqId; });
         if (req == requirements.end()) {
-            cerr << "РўСЂРµР±РѕРІР°РЅРёРµ СЃ id " << reqId << " РЅРµ РЅР°Р№РґРµРЅРѕ.\n";
+            cerr << "Требование с id " << reqId << " не найдено.\n";
             return nullptr;
         }
-        // Р¤РѕСЂРјРёСЂСѓРµРј РїСЂРѕСЃС‚РѕР№ С‚РµСЃС‚: РїСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ С‚СЂРµР±РѕРІР°РЅРёРµ СЂРµР°Р»РёР·РѕРІР°РЅРѕ
-        string desc = "РўРµСЃС‚ РґР»СЏ С‚СЂРµР±РѕРІР°РЅРёСЏ #" + to_string(reqId) + ": " + req->description;
+        // Формируем простой тест: проверяем, что требование реализовано
+        string desc = "Тест для требования #" + to_string(reqId) + ": " + req->description;
         testCases.emplace_back(nextTestId, desc, reqId);
         TestCase* tc = &testCases.back();
-        // РџСЂРµРґР·Р°РїРѕР»РЅСЏРµРј С€Р°РіРё Рё РѕР¶РёРґР°РµРјС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚ (РІ СЂРµР°Р»СЊРЅРѕСЃС‚Рё - РІСЂСѓС‡РЅСѓСЋ РёР»Рё РёР· С€Р°Р±Р»РѕРЅР°)
-        tc->steps.push_back("РЁР°Рі 1: Р’С‹РїРѕР»РЅРёС‚СЊ РґРµР№СЃС‚РІРёРµ, СЃРІСЏР·Р°РЅРЅРѕРµ СЃ С‚СЂРµР±РѕРІР°РЅРёРµРј");
-        tc->steps.push_back("РЁР°Рі 2: РџСЂРѕРІРµСЂРёС‚СЊ СЂРµР·СѓР»СЊС‚Р°С‚");
-        tc->expectedResult = "РЎРёСЃС‚РµРјР° РІС‹РїРѕР»РЅСЏРµС‚ " + req->description + " РєРѕСЂСЂРµРєС‚РЅРѕ";
+        // Предзаполняем шаги и ожидаемый результат (в реальности - вручную или из шаблона)
+        tc->steps.push_back("Шаг 1: Выполнить действие, связанное с требованием");
+        tc->steps.push_back("Шаг 2: Проверить результат");
+        tc->expectedResult = "Система выполняет " + req->description + " корректно";
         return tc;
     }
 
-    // РџСЂРѕРІРµСЂРєР° РїРѕРєСЂС‹С‚РёСЏ С‚СЂРµР±РѕРІР°РЅРёР№ С‚РµСЃС‚Р°РјРё (Traceability Matrix)
+    // Проверка покрытия требований тестами (Traceability Matrix)
     void checkCoverage() const {
-        cout << "\n=== РњР°С‚СЂРёС†Р° РїРѕРєСЂС‹С‚РёСЏ С‚СЂРµР±РѕРІР°РЅРёР№ С‚РµСЃС‚Р°РјРё ===\n";
-        cout << "ReqID\tРћРїРёСЃР°РЅРёРµ\t\tРЎС‚Р°С‚СѓСЃ\t\tРўРµСЃС‚РѕРІ (ID)\n";
+        cout << "\n=== Матрица покрытия требований тестами ===\n";
+        cout << "ReqID\tОписание\t\tСтатус\t\tТестов (ID)\n";
         cout << "------------------------------------------------------------\n";
 
         for (auto& req : requirements) {
             cout << req.id << "\t" << req.description << "\t\t";
-            // Р’С‹РІРѕРґ СЃС‚Р°С‚СѓСЃР°
+            // Вывод статуса
             switch (req.status) {
-            case ReqStatus::New: cout << "РќРѕРІРѕРµ"; break;
-            case ReqStatus::Approved: cout << "РЈС‚РІРµСЂР¶РґРµРЅРѕ"; break;
-            case ReqStatus::Implemented: cout << "Р РµР°Р»РёР·РѕРІР°РЅРѕ"; break;
-            case ReqStatus::Tested: cout << "РџСЂРѕС‚РµСЃС‚РёСЂРѕРІР°РЅРѕ"; break;
+            case ReqStatus::New: cout << "Новое"; break;
+            case ReqStatus::Approved: cout << "Утверждено"; break;
+            case ReqStatus::Implemented: cout << "Реализовано"; break;
+            case ReqStatus::Tested: cout << "Протестировано"; break;
             }
             cout << "\t\t";
 
-            // РџРѕРёСЃРє С‚РµСЃС‚РѕРІ, СЃРІСЏР·Р°РЅРЅС‹С… СЃ СЌС‚РёРј С‚СЂРµР±РѕРІР°РЅРёРµРј
+            // Поиск тестов, связанных с этим требованием
             vector<int> testIds;
             for (auto& tc : testCases) {
                 if (tc.requirementId == req.id) testIds.push_back(tc.id);
             }
             if (testIds.empty()) {
-                cout << "РќР•Рў РўР•РЎРўРћР’!";
+                cout << "НЕТ ТЕСТОВ!";
             }
             else {
                 for (int tid : testIds) cout << tid << " ";
@@ -103,57 +103,57 @@ public:
             cout << "\n";
         }
 
-        // РџРѕРґСЃС‡С‘С‚ РЅРµРїРѕРєСЂС‹С‚С‹С… С‚СЂРµР±РѕРІР°РЅРёР№
+        // Подсчёт непокрытых требований
         set<int> coveredReqIds;
         for (auto& tc : testCases) coveredReqIds.insert(tc.requirementId);
         int uncovered = 0;
         for (auto& req : requirements) {
             if (coveredReqIds.find(req.id) == coveredReqIds.end()) ++uncovered;
         }
-        cout << "\nРќРµРїРѕРєСЂС‹С‚С‹С… С‚СЂРµР±РѕРІР°РЅРёР№: " << uncovered << "/" << requirements.size() << "\n";
+        cout << "\nНепокрытых требований: " << uncovered << "/" << requirements.size() << "\n";
     }
 
-    // Р’С‹РІРѕРґ РІСЃРµС… С‚РµСЃС‚-РєРµР№СЃРѕРІ
+    // Вывод всех тест-кейсов
     void printTestCases() const {
-        cout << "\n=== РўРµСЃС‚РѕРІС‹Рµ СЃР»СѓС‡Р°Рё ===\n";
+        cout << "\n=== Тестовые случаи ===\n";
         for (auto& tc : testCases) {
-            cout << "ID: " << tc.id << " | РўСЂРµР±РѕРІР°РЅРёРµ: " << tc.requirementId
-                << "\nРћРїРёСЃР°РЅРёРµ: " << tc.description
-                << "\nРЁР°РіРё:\n";
+            cout << "ID: " << tc.id << " | Требование: " << tc.requirementId
+                << "\nОписание: " << tc.description
+                << "\nШаги:\n";
             for (auto& step : tc.steps) cout << "  - " << step << "\n";
-            cout << "РћР¶РёРґР°РµРјС‹Р№ СЂРµР·СѓР»СЊС‚Р°С‚: " << tc.expectedResult << "\n\n";
+            cout << "Ожидаемый результат: " << tc.expectedResult << "\n\n";
         }
     }
 };
 
-// ------------------- Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ -------------------
+// ------------------- Демонстрация -------------------
 void R27() {
     setlocale(LC_ALL, "");
 
     RequirementManager rm;
 
-    // РЎРѕР·РґР°РЅРёРµ С‚СЂРµР±РѕРІР°РЅРёР№
-    auto r1 = rm.addRequirement("Р РµРіРёСЃС‚СЂР°С†РёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ", Priority::High);
-    auto r2 = rm.addRequirement("РђРІС‚РѕСЂРёР·Р°С†РёСЏ С‡РµСЂРµР· email", Priority::High);
-    auto r3 = rm.addRequirement("РЎР±СЂРѕСЃ РїР°СЂРѕР»СЏ", Priority::Medium);
-    auto r4 = rm.addRequirement("РћС‚РѕР±СЂР°Р¶РµРЅРёРµ РїСЂРѕС„РёР»СЏ", Priority::Low);
+    // Создание требований
+    auto r1 = rm.addRequirement("Регистрация пользователя", Priority::High);
+    auto r2 = rm.addRequirement("Авторизация через email", Priority::High);
+    auto r3 = rm.addRequirement("Сброс пароля", Priority::Medium);
+    auto r4 = rm.addRequirement("Отображение профиля", Priority::Low);
 
-    // РђРЅР°Р»РёР·: РґР»СЏ r1 Рё r2 Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РіРµРЅРµСЂРёСЂСѓРµРј С‚РµСЃС‚С‹ (РёРјРёС‚Р°С†РёСЏ РїСЂРѕС†РµСЃСЃР°)
+    // Анализ: для r1 и r2 автоматически генерируем тесты (имитация процесса)
     rm.generateTestForRequirement(r1->id);
     rm.generateTestForRequirement(r2->id);
-    // r3 Рё r4 РѕСЃС‚Р°СЋС‚СЃСЏ Р±РµР· С‚РµСЃС‚РѕРІ (РїРѕРєР°)
+    // r3 и r4 остаются без тестов (пока)
 
-    // РР·РјРµРЅСЏРµРј СЃС‚Р°С‚СѓСЃ С‚СЂРµР±РѕРІР°РЅРёР№ (РёРјРёС‚Р°С†РёСЏ Р¶РёР·РЅРµРЅРЅРѕРіРѕ С†РёРєР»Р°)
+    // Изменяем статус требований (имитация жизненного цикла)
     r1->status = ReqStatus::Approved;
     r2->status = ReqStatus::Implemented;
     r3->status = ReqStatus::New;
     r4->status = ReqStatus::New;
 
-    // Р’С‹РІРѕРґРёРј РјР°С‚СЂРёС†Сѓ РїРѕРєСЂС‹С‚РёСЏ
+    // Выводим матрицу покрытия
     rm.checkCoverage();
     rm.printTestCases();
 
-    // Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ СЃРІСЏР·Рё СЃ С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµРј:
-    // Р•СЃР»Рё С‚СЂРµР±РѕРІР°РЅРёРµ РЅРµ РёРјРµРµС‚ С‚РµСЃС‚РѕРІ, РµРіРѕ РЅРµР»СЊР·СЏ СЃС‡РёС‚Р°С‚СЊ РїСЂРѕС‚РµСЃС‚РёСЂРѕРІР°РЅРЅС‹Рј.
-    // Р’ СЂРµР°Р»СЊРЅРѕРј РїСЂРѕС†РµСЃСЃРµ СЌС‚Рѕ СЃРёРіРЅР°Р» Рє РЅР°РїРёСЃР°РЅРёСЋ С‚РµСЃС‚РѕРІ.
+    // Демонстрация связи с тестированием:
+    // Если требование не имеет тестов, его нельзя считать протестированным.
+    // В реальном процессе это сигнал к написанию тестов.
 }

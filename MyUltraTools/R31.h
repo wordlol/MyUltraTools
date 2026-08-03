@@ -15,7 +15,7 @@ class Product {
 public:
     Product(int i, const string& n, double p, int s) : id(i), name(n), price(p), stock(s) {}
     bool isAvailable() const { return stock > 0; }
-    // РіРµС‚С‚РµСЂС‹...
+    // геттеры...
 };
 
 class OrderItem {
@@ -35,7 +35,7 @@ public:
     void addItem(shared_ptr<OrderItem> item) { items.push_back(item); }
     double calculateTotal() const {
         double total = 0;
-        for (auto& item : items) total += /*item->getPrice()*/ 0; // СѓРїСЂРѕС‰РµРЅРёРµ
+        for (auto& item : items) total += /*item->getPrice()*/ 0; // упрощение
         return total;
     }
 };

@@ -8,15 +8,15 @@
 
 using namespace std;
 
-// РўРёРї СЃС‚СЂРµР»РєРё
+// Тип стрелки
 enum class ArrowType { Input, Output, Control, Mechanism };
 
-// РљР»Р°СЃСЃ СЃС‚СЂРµР»РєРё
+// Класс стрелки
 class Arrow {
     string name;
     ArrowType type;
-    weak_ptr<class ActivityBox> source;   // РѕС‚РєСѓРґР° (РјРѕР¶РµС‚ Р±С‹С‚СЊ РІРЅРµС€РЅРёРј, С‚РѕРіРґР° nullptr)
-    weak_ptr<ActivityBox> target;         // РєСѓРґР°
+    weak_ptr<class ActivityBox> source;   // откуда (может быть внешним, тогда nullptr)
+    weak_ptr<ActivityBox> target;         // куда
 public:
     Arrow(const string& n, ArrowType t) : name(n), type(t) {}
     string getName() const { return name; }
@@ -26,128 +26,128 @@ public:
     void setTarget(shared_ptr<ActivityBox> box) { target = box; }
 };
 
-// РљР»Р°СЃСЃ С„СѓРЅРєС†РёРѕРЅР°Р»СЊРЅРѕРіРѕ Р±Р»РѕРєР°
+// Класс функционального блока
 class ActivityBox {
     string name;
     string description;
-    // РЎС‚СЂРµР»РєРё РїРѕ СЃС‚РѕСЂРѕРЅР°Рј
-    vector<shared_ptr<Arrow>> inputs;      // СЃР»РµРІР°
-    vector<shared_ptr<Arrow>> outputs;     // СЃРїСЂР°РІР°
-    vector<shared_ptr<Arrow>> controls;    // СЃРІРµСЂС…Сѓ
-    vector<shared_ptr<Arrow>> mechanisms;  // СЃРЅРёР·Сѓ
+    // Стрелки по сторонам
+    vector<shared_ptr<Arrow>> inputs;      // слева
+    vector<shared_ptr<Arrow>> outputs;     // справа
+    vector<shared_ptr<Arrow>> controls;    // сверху
+    vector<shared_ptr<Arrow>> mechanisms;  // снизу
 public:
     ActivityBox(const string& n, const string& desc = "") : name(n), description(desc) {}
     string getName() const { return name; }
 
-    void addInput(shared_ptr<Arrow> arrow) { inputs.push_back(arrow); arrow->setTarget(nullptr); } // РІС…РѕРґСЏС‰Р°СЏ СЃС‚СЂРµР»РєР° РёРґС‘С‚ РѕС‚ РІРЅРµС€РЅРµРіРѕ РёСЃС‚РѕС‡РЅРёРєР°
+    void addInput(shared_ptr<Arrow> arrow) { inputs.push_back(arrow); arrow->setTarget(nullptr); } // входящая стрелка идёт от внешнего источника
     void addOutput(shared_ptr<Arrow> arrow) { outputs.push_back(arrow); arrow->setSource(nullptr); }
     void addControl(shared_ptr<Arrow> arrow) { controls.push_back(arrow); }
     void addMechanism(shared_ptr<Arrow> arrow) { mechanisms.push_back(arrow); }
 
-    // Р’С‹РІРѕРґ РёРЅС„РѕСЂРјР°С†РёРё Рѕ Р±Р»РѕРєРµ
+    // Вывод информации о блоке
     void print() const {
-        cout << "в”Њв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”ђ\n";
-        cout << "в”‚ Р‘Р»РѕРє: " << name;
+        cout << "???????????????????????????????????????\n";
+        cout << "? Блок: " << name;
         if (!description.empty()) cout << " (" << description << ")";
         cout << "\n";
-        cout << "в”њв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”¤\n";
-        cout << "в”‚ Р’С…РѕРґС‹: ";
+        cout << "???????????????????????????????????????\n";
+        cout << "? Входы: ";
         for (auto& a : inputs) cout << a->getName() << " ";
-        cout << "\nв”‚ Р’С‹С…РѕРґС‹: ";
+        cout << "\n? Выходы: ";
         for (auto& a : outputs) cout << a->getName() << " ";
-        cout << "\nв”‚ РЈРїСЂР°РІР»РµРЅРёРµ: ";
+        cout << "\n? Управление: ";
         for (auto& a : controls) cout << a->getName() << " ";
-        cout << "\nв”‚ РњРµС…Р°РЅРёР·РјС‹: ";
+        cout << "\n? Механизмы: ";
         for (auto& a : mechanisms) cout << a->getName() << " ";
-        cout << "\nв””в”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”Ђв”\n";
+        cout << "\n???????????????????????????????????????\n";
     }
 };
 
-// РљРѕРЅС‚РµРєСЃС‚РЅР°СЏ РґРёР°РіСЂР°РјРјР° (A-0) Рё РґРµРєРѕРјРїРѕР·РёС†РёСЏ
+// Контекстная диаграмма (A-0) и декомпозиция
 class IDEF0Diagram {
     shared_ptr<ActivityBox> contextBox; // A0
-    vector<shared_ptr<ActivityBox>> decomposition; // РґРѕС‡РµСЂРЅРёРµ Р±Р»РѕРєРё
-    vector<shared_ptr<Arrow>> arrows;  // РІСЃРµ СЃС‚СЂРµР»РєРё
+    vector<shared_ptr<ActivityBox>> decomposition; // дочерние блоки
+    vector<shared_ptr<Arrow>> arrows;  // все стрелки
 public:
     IDEF0Diagram(const string& systemName, const string& description) {
         contextBox = make_shared<ActivityBox>(systemName, description);
     }
 
-    // РџРѕР»СѓС‡РёС‚СЊ РєРѕРЅС‚РµРєСЃС‚РЅС‹Р№ Р±Р»РѕРє
+    // Получить контекстный блок
     shared_ptr<ActivityBox> getContext() const { return contextBox; }
 
-    // Р”РѕР±Р°РІРёС‚СЊ РґРѕС‡РµСЂРЅРёР№ Р±Р»РѕРє (РґРµРєРѕРјРїРѕР·РёС†РёСЏ РєРѕРЅС‚РµРєСЃС‚Р°)
+    // Добавить дочерний блок (декомпозиция контекста)
     void addChildBox(shared_ptr<ActivityBox> box) {
         decomposition.push_back(box);
     }
 
-    // РЎРѕР·РґР°С‚СЊ СЃС‚СЂРµР»РєСѓ
+    // Создать стрелку
     shared_ptr<Arrow> createArrow(const string& name, ArrowType type) {
         auto arrow = make_shared<Arrow>(name, type);
         arrows.push_back(arrow);
         return arrow;
     }
 
-    // Р’С‹РІРѕРґ РІСЃРµР№ РјРѕРґРµР»Рё
+    // Вывод всей модели
     void printModel() const {
-        cout << "\n=== РњРћР”Р•Р›Р¬ IDEF0 ===\n";
-        cout << "РљРѕРЅС‚РµРєСЃС‚РЅС‹Р№ СѓСЂРѕРІРµРЅСЊ (A-0):\n";
+        cout << "\n=== МОДЕЛЬ IDEF0 ===\n";
+        cout << "Контекстный уровень (A-0):\n";
         contextBox->print();
 
         if (!decomposition.empty()) {
-            cout << "\nР”РµРєРѕРјРїРѕР·РёС†РёСЏ (СѓСЂРѕРІРµРЅСЊ A0):\n";
+            cout << "\nДекомпозиция (уровень A0):\n";
             for (auto& box : decomposition) {
                 box->print();
             }
         }
 
-        cout << "\nРЎРїРёСЃРѕРє СЃС‚СЂРµР»РѕРє:\n";
+        cout << "\nСписок стрелок:\n";
         for (auto& a : arrows) {
             cout << "  " << a->getName() << " (";
             switch (a->getType()) {
-            case ArrowType::Input: cout << "Р’С…РѕРґ"; break;
-            case ArrowType::Output: cout << "Р’С‹С…РѕРґ"; break;
-            case ArrowType::Control: cout << "РЈРїСЂР°РІР»РµРЅРёРµ"; break;
-            case ArrowType::Mechanism: cout << "РњРµС…Р°РЅРёР·Рј"; break;
+            case ArrowType::Input: cout << "Вход"; break;
+            case ArrowType::Output: cout << "Выход"; break;
+            case ArrowType::Control: cout << "Управление"; break;
+            case ArrowType::Mechanism: cout << "Механизм"; break;
             }
             cout << ")\n";
         }
     }
 };
 
-// Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ
+// Демонстрация
 void R30() {
     setlocale(LC_ALL, "");
 
-    // РЎРѕР·РґР°С‘Рј РєРѕРЅС‚РµРєСЃС‚РЅСѓСЋ РґРёР°РіСЂР°РјРјСѓ "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ РїСЂРѕРґСѓРєС†РёРё"
-    IDEF0Diagram diagram("РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ РїСЂРѕРґСѓРєС†РёРё", "A0: Р’С‹РїСѓСЃРє РіРѕС‚РѕРІС‹С… РёР·РґРµР»РёР№");
+    // Создаём контекстную диаграмму "Производство продукции"
+    IDEF0Diagram diagram("Производство продукции", "A0: Выпуск готовых изделий");
     auto context = diagram.getContext();
 
-    // РЎРѕР·РґР°С‘Рј РІРЅРµС€РЅРёРµ СЃС‚СЂРµР»РєРё
-    auto rawMaterial = diagram.createArrow("РЎС‹СЂСЊС‘", ArrowType::Input);
-    auto finishedProduct = diagram.createArrow("Р“РѕС‚РѕРІР°СЏ РїСЂРѕРґСѓРєС†РёСЏ", ArrowType::Output);
-    auto standards = diagram.createArrow("РЎС‚Р°РЅРґР°СЂС‚С‹ РєР°С‡РµСЃС‚РІР°", ArrowType::Control);
-    auto equipment = diagram.createArrow("РћР±РѕСЂСѓРґРѕРІР°РЅРёРµ", ArrowType::Mechanism);
+    // Создаём внешние стрелки
+    auto rawMaterial = diagram.createArrow("Сырьё", ArrowType::Input);
+    auto finishedProduct = diagram.createArrow("Готовая продукция", ArrowType::Output);
+    auto standards = diagram.createArrow("Стандарты качества", ArrowType::Control);
+    auto equipment = diagram.createArrow("Оборудование", ArrowType::Mechanism);
 
-    // РџСЂРёСЃРѕРµРґРёРЅСЏРµРј Рє РєРѕРЅС‚РµРєСЃС‚РЅРѕРјСѓ Р±Р»РѕРєСѓ
+    // Присоединяем к контекстному блоку
     context->addInput(rawMaterial);
     context->addOutput(finishedProduct);
     context->addControl(standards);
     context->addMechanism(equipment);
 
-    // Р”РµРєРѕРјРїРѕР·РёС†РёСЏ: С‚СЂРё РїРѕРґС„СѓРЅРєС†РёРё
-    auto box1 = make_shared<ActivityBox>("A1: РџРѕРґРіРѕС‚РѕРІРєР° СЃС‹СЂСЊСЏ");
-    auto box2 = make_shared<ActivityBox>("A2: РћР±СЂР°Р±РѕС‚РєР°");
-    auto box3 = make_shared<ActivityBox>("A3: РЈРїР°РєРѕРІРєР°");
+    // Декомпозиция: три подфункции
+    auto box1 = make_shared<ActivityBox>("A1: Подготовка сырья");
+    auto box2 = make_shared<ActivityBox>("A2: Обработка");
+    auto box3 = make_shared<ActivityBox>("A3: Упаковка");
 
-    // РЎС‚СЂРµР»РєРё РјРµР¶РґСѓ РїРѕРґС„СѓРЅРєС†РёСЏРјРё (РІРЅСѓС‚СЂРµРЅРЅРёРµ)
-    auto preparedMaterial = diagram.createArrow("РџРѕРґРіРѕС‚РѕРІР»РµРЅРЅРѕРµ СЃС‹СЂСЊС‘", ArrowType::Input);
-    auto processedItem = diagram.createArrow("РћР±СЂР°Р±РѕС‚Р°РЅРЅС‹Р№ РїРѕР»СѓС„Р°Р±СЂРёРєР°С‚", ArrowType::Input);
+    // Стрелки между подфункциями (внутренние)
+    auto preparedMaterial = diagram.createArrow("Подготовленное сырьё", ArrowType::Input);
+    auto processedItem = diagram.createArrow("Обработанный полуфабрикат", ArrowType::Input);
 
-    // РќР°СЃС‚СЂРѕР№РєР° СЃРІСЏР·РµР№ (СѓРїСЂРѕС‰С‘РЅРЅРѕ, Р±РµР· СЃС‚СЂРѕРіРёС… РїСЂР°РІРёР» IDEF0)
-    box1->addInput(rawMaterial);           // СЃС‹СЂСЊС‘ РІС…РѕРґРёС‚ РІ A1
-    box1->addOutput(preparedMaterial);    // РёР· A1 РІС‹С…РѕРґРёС‚ РїРѕРґРіРѕС‚РѕРІР»РµРЅРЅРѕРµ
-    box2->addInput(preparedMaterial);     // РІС…РѕРґРёС‚ РІ A2
+    // Настройка связей (упрощённо, без строгих правил IDEF0)
+    box1->addInput(rawMaterial);           // сырьё входит в A1
+    box1->addOutput(preparedMaterial);    // из A1 выходит подготовленное
+    box2->addInput(preparedMaterial);     // входит в A2
     box2->addOutput(processedItem);
     box3->addInput(processedItem);
     box3->addOutput(finishedProduct);
@@ -156,7 +156,7 @@ void R30() {
     diagram.addChildBox(box2);
     diagram.addChildBox(box3);
 
-    // Р’С‹РІРѕРґРёРј РјРѕРґРµР»СЊ
+    // Выводим модель
     diagram.printModel();
 
 }

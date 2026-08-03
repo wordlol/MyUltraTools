@@ -2,44 +2,44 @@
 //@startuml
 //left to right direction
 //
-//rectangle "РџРѕРєСѓРїР°С‚РµР»СЊ" as Customer
-//rectangle "РЎРєР»Р°РґСЃРєР°СЏ СЃРёСЃС‚РµРјР°" as Warehouse
-//rectangle "РЎРёСЃС‚РµРјР° Р·Р°РєР°Р·Р° С‚РѕРІР°СЂРѕРІ" as System
+//rectangle "Покупатель" as Customer
+//rectangle "Складская система" as Warehouse
+//rectangle "Система заказа товаров" as System
 //
-//Customer-- > System : Р—Р°РїСЂРѕСЃ РЅР° РїСЂРѕСЃРјРѕС‚СЂ С‚РѕРІР°СЂРѕРІ, Р—Р°РєР°Р·
-//System-- > Customer : РЎРїРёСЃРѕРє С‚РѕРІР°СЂРѕРІ, РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ Р·Р°РєР°Р·Р°
-//System-- > Warehouse : Р”Р°РЅРЅС‹Рµ Р·Р°РєР°Р·Р°
-//Warehouse-- > System : РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РЅР°Р»РёС‡РёСЏ, РћС‚РіСЂСѓР·РєР°
+//Customer-- > System : Запрос на просмотр товаров, Заказ
+//System-- > Customer : Список товаров, Подтверждение заказа
+//System-- > Warehouse : Данные заказа
+//Warehouse-- > System : Подтверждение наличия, Отгрузка
 //@enduml
 //
 //
 //@startuml
 //left to right direction
 //
-//rectangle "РџРѕРєСѓРїР°С‚РµР»СЊ" as Customer
-//rectangle "РЎРєР»Р°РґСЃРєР°СЏ СЃРёСЃС‚РµРјР°" as Warehouse
+//rectangle "Покупатель" as Customer
+//rectangle "Складская система" as Warehouse
 //
-//rectangle "1. РћР±СЂР°Р±РѕС‚Р°С‚СЊ\nРїСЂРѕСЃРјРѕС‚СЂ С‚РѕРІР°СЂРѕРІ" as Proc1
-//rectangle "2. РџСЂРёРЅСЏС‚СЊ\nР·Р°РєР°Р·" as Proc2
-//rectangle "3. РџСЂРѕРІРµСЂРёС‚СЊ\nРЅР°Р»РёС‡РёРµ" as Proc3
-//rectangle "4. РЎС„РѕСЂРјРёСЂРѕРІР°С‚СЊ\nР·Р°РєР°Р·" as Proc4
+//rectangle "1. Обработать\nпросмотр товаров" as Proc1
+//rectangle "2. Принять\nзаказ" as Proc2
+//rectangle "3. Проверить\nналичие" as Proc3
+//rectangle "4. Сформировать\nзаказ" as Proc4
 //
-//database "РўРѕРІР°СЂС‹" as Products
-//database "Р—Р°РєР°Р·С‹" as Orders
+//database "Товары" as Products
+//database "Заказы" as Orders
 //
-//Customer-- > Proc1 : Р—Р°РїСЂРѕСЃ СЃРїРёСЃРєР° С‚РѕРІР°СЂРѕРІ
-//Proc1-- > Customer : РЎРїРёСЃРѕРє С‚РѕРІР°СЂРѕРІ
-//Proc1-- > Products : Р§РёС‚Р°С‚СЊ С‚РѕРІР°СЂС‹
+//Customer-- > Proc1 : Запрос списка товаров
+//Proc1-- > Customer : Список товаров
+//Proc1-- > Products : Читать товары
 //
-//Customer-- > Proc2 : Р—Р°РєР°Р·
-//Proc2-- > Proc3 : Р”Р°РЅРЅС‹Рµ Р·Р°РєР°Р·Р°
-//Proc3-- > Products : РџСЂРѕРІРµСЂРёС‚СЊ РѕСЃС‚Р°С‚РєРё
-//Products-- > Proc3 : РћСЃС‚Р°С‚РєРё
-//Proc3-- > Proc4 : РџРѕРґС‚РІРµСЂР¶РґС‘РЅРЅС‹Р№ Р·Р°РєР°Р·
-//Proc4-- > Orders : РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РєР°Р·
-//Proc4-- > Warehouse : РЈРІРµРґРѕРјР»РµРЅРёРµ Рѕ Р·Р°РєР°Р·Рµ
-//Warehouse-- > Proc4 : РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РѕС‚РіСЂСѓР·РєРё
-//Proc4-- > Customer : РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ Р·Р°РєР°Р·Р°
+//Customer-- > Proc2 : Заказ
+//Proc2-- > Proc3 : Данные заказа
+//Proc3-- > Products : Проверить остатки
+//Products-- > Proc3 : Остатки
+//Proc3-- > Proc4 : Подтверждённый заказ
+//Proc4-- > Orders : Сохранить заказ
+//Proc4-- > Warehouse : Уведомление о заказе
+//Warehouse-- > Proc4 : Подтверждение отгрузки
+//Proc4-- > Customer : Подтверждение заказа
 //@enduml
 
 
@@ -52,9 +52,9 @@
 
 using namespace std;
 
-// РҐСЂР°РЅРёР»РёС‰Рµ РґР°РЅРЅС‹С… "РўРѕРІР°СЂС‹"
+// Хранилище данных "Товары"
 class ProductStore {
-    map<int, pair<string, int>> products; // id -> (РЅР°Р·РІР°РЅРёРµ, РѕСЃС‚Р°С‚РѕРє)
+    map<int, pair<string, int>> products; // id -> (название, остаток)
 public:
     void addProduct(int id, const string& name, int stock) {
         products[id] = { name, stock };
@@ -71,7 +71,7 @@ public:
     }
 };
 
-// РҐСЂР°РЅРёР»РёС‰Рµ РґР°РЅРЅС‹С… "Р—Р°РєР°Р·С‹"
+// Хранилище данных "Заказы"
 class OrderStore {
     struct Order {
         int id;
@@ -90,57 +90,57 @@ public:
     }
 };
 
-// Р’РЅРµС€РЅСЏСЏ СЃСѓС‰РЅРѕСЃС‚СЊ "РџРѕРєСѓРїР°С‚РµР»СЊ"
+// Внешняя сущность "Покупатель"
 class Customer {
 public:
     void viewProducts(const string& list) {
-        cout << "[РџРѕРєСѓРїР°С‚РµР»СЊ] РџСЂРѕСЃРјРѕС‚СЂ С‚РѕРІР°СЂРѕРІ:\n" << list;
+        cout << "[Покупатель] Просмотр товаров:\n" << list;
     }
     vector<pair<int, int>> makeOrder() {
-        // Р’ СЂРµР°Р»СЊРЅРѕСЃС‚Рё РІРІРѕРґ, Р·РґРµСЃСЊ Р·Р°РіР»СѓС€РєР°
-        cout << "[РџРѕРєСѓРїР°С‚РµР»СЊ] Р¤РѕСЂРјРёСЂСѓСЋ Р·Р°РєР°Р·...\n";
+        // В реальности ввод, здесь заглушка
+        cout << "[Покупатель] Формирую заказ...\n";
         return { {1, 2}, {2, 1} };
     }
     void receiveConfirmation(int orderId) {
-        cout << "[РџРѕРєСѓРїР°С‚РµР»СЊ] РџРѕР»СѓС‡РµРЅРѕ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ Р·Р°РєР°Р·Р° #" << orderId << endl;
+        cout << "[Покупатель] Получено подтверждение заказа #" << orderId << endl;
     }
 };
 
-// Р’РЅРµС€РЅСЏСЏ СЃСѓС‰РЅРѕСЃС‚СЊ "РЎРєР»Р°РґСЃРєР°СЏ СЃРёСЃС‚РµРјР°"
+// Внешняя сущность "Складская система"
 class WarehouseSystem {
 public:
     void notify(int orderId) {
-        cout << "[РЎРєР»Р°Рґ] РЈРІРµРґРѕРјР»РµРЅРёРµ Рѕ Р·Р°РєР°Р·Рµ #" << orderId << endl;
+        cout << "[Склад] Уведомление о заказе #" << orderId << endl;
     }
     bool confirmShipping() {
-        cout << "[РЎРєР»Р°Рґ] РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РѕС‚РіСЂСѓР·РєРё...\n";
+        cout << "[Склад] Подтверждение отгрузки...\n";
         return true;
     }
 };
 
-// РџСЂРѕС†РµСЃСЃ 1: РћР±СЂР°Р±РѕС‚Р°С‚СЊ РїСЂРѕСЃРјРѕС‚СЂ С‚РѕРІР°СЂРѕРІ
+// Процесс 1: Обработать просмотр товаров
 void processViewProducts(ProductStore& store, Customer& customer) {
     string list = store.getProductList();
     customer.viewProducts(list);
 }
 
-// РџСЂРѕС†РµСЃСЃ 2+3+4: РџСЂРёРЅСЏС‚СЊ Р·Р°РєР°Р·, РїСЂРѕРІРµСЂРёС‚СЊ РЅР°Р»РёС‡РёРµ, СЃС„РѕСЂРјРёСЂРѕРІР°С‚СЊ Р·Р°РєР°Р·
+// Процесс 2+3+4: Принять заказ, проверить наличие, сформировать заказ
 int processOrder(Customer& customer, ProductStore& store, OrderStore& orders, WarehouseSystem& warehouse) {
     auto items = customer.makeOrder();
-    // РџСЂРѕРІРµСЂРєР° РЅР°Р»РёС‡РёСЏ
+    // Проверка наличия
     for (auto& [pid, qty] : items) {
         if (!store.checkStock(pid, qty)) {
-            cout << "[РЎРёСЃС‚РµРјР°] РќРµРґРѕСЃС‚Р°С‚РѕС‡РЅРѕ С‚РѕРІР°СЂР° " << pid << endl;
+            cout << "[Система] Недостаточно товара " << pid << endl;
             return -1;
         }
     }
-    // РЎРѕР·РґР°РЅРёРµ Рё СЃРѕС…СЂР°РЅРµРЅРёРµ Р·Р°РєР°Р·Р°
+    // Создание и сохранение заказа
     int orderId = orders.createOrder(items);
     orders.confirmOrder(orderId);
-    // РЈРІРµРґРѕРјР»РµРЅРёРµ СЃРєР»Р°РґР°
+    // Уведомление склада
     warehouse.notify(orderId);
     warehouse.confirmShipping();
-    // РџРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РїРѕРєСѓРїР°С‚РµР»СЋ
+    // Подтверждение покупателю
     customer.receiveConfirmation(orderId);
     return orderId;
 }
@@ -148,22 +148,22 @@ int processOrder(Customer& customer, ProductStore& store, OrderStore& orders, Wa
 void R35() {
     setlocale(LC_ALL, "");
 
-    // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
+    // Инициализация
     ProductStore products;
-    products.addProduct(1, "РќРѕСѓС‚Р±СѓРє", 10);
-    products.addProduct(2, "РњС‹С€СЊ", 50);
+    products.addProduct(1, "Ноутбук", 10);
+    products.addProduct(2, "Мышь", 50);
 
     OrderStore orders;
     Customer customer;
     WarehouseSystem warehouse;
 
-    // РџРѕС‚РѕРє: РїСЂРѕСЃРјРѕС‚СЂ С‚РѕРІР°СЂРѕРІ (РїСЂРѕС†РµСЃСЃ 1)
-    cout << "=== РџСЂРѕС†РµСЃСЃ 1: РџСЂРѕСЃРјРѕС‚СЂ С‚РѕРІР°СЂРѕРІ ===" << endl;
+    // Поток: просмотр товаров (процесс 1)
+    cout << "=== Процесс 1: Просмотр товаров ===" << endl;
     processViewProducts(products, customer);
 
-    // РџРѕС‚РѕРє: РѕС„РѕСЂРјР»РµРЅРёРµ Р·Р°РєР°Р·Р° (РїСЂРѕС†РµСЃСЃС‹ 2-4)
-    cout << "\n=== РџСЂРѕС†РµСЃСЃС‹ 2-4: Р—Р°РєР°Р· ===" << endl;
+    // Поток: оформление заказа (процессы 2-4)
+    cout << "\n=== Процессы 2-4: Заказ ===" << endl;
     int orderId = processOrder(customer, products, orders, warehouse);
-    if (orderId != -1) cout << "Р—Р°РєР°Р· #" << orderId << " СѓСЃРїРµС€РЅРѕ РѕС„РѕСЂРјР»РµРЅ.\n";
+    if (orderId != -1) cout << "Заказ #" << orderId << " успешно оформлен.\n";
 
 }

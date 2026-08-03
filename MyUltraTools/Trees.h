@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <stdexcept>
 //9
-//Р”СЂРµРІРѕРІРёРґРЅС‹Рµ СЃС‚СЂСѓРєС‚СѓСЂС‹(РґРµСЂРµРІСЊСЏ Р±РёРЅР°СЂРЅС‹Рµ, СЃР±Р°Р»Р°РЅСЃРёСЂРѕРІР°РЅРЅС‹Рµ,
-//СЃРёР»СЊРЅРѕРІРµС‚РІСЏС‰РёРµСЃСЏ).РћРїСЂРµРґРµР»РёС‚СЊ РёС… СЃР»РѕРІРµСЃРЅРѕ РёР»Рё СЃ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµРј СЃС…РµРј
-//РћСЃРЅРѕРІРЅС‹Рµ РѕРїРµСЂР°С†РёРё РЅР°Рґ РЅРёРјРё(РїРѕРёСЃРє, РІСЃС‚Р°РІРєР°, СѓРґР°Р»РµРЅРёРµ).РџРѕРєР°Р·Р°С‚СЊ
-//РІС‹С‡РёСЃР»РёС‚РµР»СЊРЅСѓСЋ СЃР»РѕР¶РЅРѕСЃС‚СЊ.
+//Древовидные структуры(деревья бинарные, сбалансированные,
+//сильноветвящиеся).Определить их словесно или с использованием схем
+//Основные операции над ними(поиск, вставка, удаление).Показать
+//вычислительную сложность.
 
 //BST
 template <typename K, typename V>
@@ -50,7 +50,7 @@ class BST {
             node->right = removeRec(node->right, key);
         }
         else {
-            // СѓР·РµР» РЅР°Р№РґРµРЅ
+            // узел найден
             if (!node->left && !node->right) {
                 delete node;
                 --size_;
@@ -69,13 +69,13 @@ class BST {
                 return leftChild;
             }
             else {
-                // РґРІР° РїРѕС‚РѕРјРєР°: РЅР°С…РѕРґРёРј РјРёРЅРёРјР°Р»СЊРЅС‹Р№ РІ РїСЂР°РІРѕРј РїРѕРґРґРµСЂРµРІРµ
+                // два потомка: находим минимальный в правом поддереве
                 BSTNode<K, V>* minNode = node->right;
                 while (minNode->left) minNode = minNode->left;
-                // РєРѕРїРёСЂСѓРµРј РєР»СЋС‡ Рё Р·РЅР°С‡РµРЅРёРµ
+                // копируем ключ и значение
                 node->key = minNode->key;
                 node->value = minNode->value;
-                // СѓРґР°Р»СЏРµРј РјРёРЅРёРјР°Р»СЊРЅС‹Р№ СѓР·РµР» РёР· РїСЂР°РІРѕРіРѕ РїРѕРґРґРµСЂРµРІР°
+                // удаляем минимальный узел из правого поддерева
                 node->right = removeRec(node->right, minNode->key);
 
             }
@@ -166,17 +166,17 @@ class AVLTree {
     AVLNode<K, V>* balance(AVLNode<K, V>* node) {
         updateHeight(node);
         int bf = balanceFactor(node);
-        // Р›РµРІРѕРµ РїРѕРґРґРµСЂРµРІРѕ РїРµСЂРµРІРµС€РёРІР°РµС‚
+        // Левое поддерево перевешивает
         if (bf > 1) {
-            if (balanceFactor(node->left) < 0) // LR СЃР»СѓС‡Р°Р№
+            if (balanceFactor(node->left) < 0) // LR случай
                 node->left = rotateLeft(node->left);
-            return rotateRight(node); // LL РёР»Рё LR
+            return rotateRight(node); // LL или LR
         }
-        // РџСЂР°РІРѕРµ РїРѕРґРґРµСЂРµРІРѕ РїРµСЂРµРІРµС€РёРІР°РµС‚
+        // Правое поддерево перевешивает
         if (bf < -1) {
-            if (balanceFactor(node->right) > 0) // RL СЃР»СѓС‡Р°Р№
+            if (balanceFactor(node->right) > 0) // RL случай
                 node->right = rotateRight(node->right);
-            return rotateLeft(node); // RR РёР»Рё RL
+            return rotateLeft(node); // RR или RL
         }
         return node;
     }
@@ -210,13 +210,13 @@ class AVLTree {
         else {
             if (!node->left || !node->right) {
                 AVLNode<K, V>* temp = node->left ? node->left : node->right;
-                if (!temp) { // Р»РёСЃС‚
+                if (!temp) { // лист
                     delete node;
                     --size_;
                     return nullptr;
                 }
                 else {
-                    *node = *temp; // РєРѕРїРёСЂСѓРµРј СЃРѕРґРµСЂР¶РёРјРѕРµ (РѕСЃС‚РѕСЂРѕР¶РЅРѕ СЃ СѓРєР°Р·Р°С‚РµР»СЏРјРё)
+                    *node = *temp; // копируем содержимое (осторожно с указателями)
                     delete temp;
                     --size_;
                 }
@@ -257,10 +257,10 @@ struct BTreeNode {
     BTreeNode(bool leaf) : isLeaf(leaf) {}
 };
 
-// BTree.h вЂ“ РѕРєРѕРЅС‡Р°С‚РµР»СЊРЅР°СЏ СЂР°Р±РѕС‡Р°СЏ РІРµСЂСЃРёСЏ
+// BTree.h – окончательная рабочая версия
 template <typename K, typename V>
 class BTree {
-    static constexpr int T = 2;          // РјРёРЅРёРјР°Р»СЊРЅР°СЏ СЃС‚РµРїРµРЅСЊ (2-3 РґРµСЂРµРІРѕ)
+    static constexpr int T = 2;          // минимальная степень (2-3 дерево)
     struct Node {
         bool isLeaf;
         std::vector<K> keys;
@@ -271,43 +271,43 @@ class BTree {
     Node* root;
     size_t count = 0;
 
-    // Р Р°Р·РґРµР»РµРЅРёРµ Р·Р°РїРѕР»РЅРµРЅРЅРѕРіРѕ СЂРµР±С‘РЅРєР° (child РёРјРµРµС‚ 2*T-1 РєР»СЋС‡РµР№)
+    // Разделение заполненного ребёнка (child имеет 2*T-1 ключей)
     void splitChild(Node* parent, size_t idx, Node* child) {
         Node* newNode = new Node(child->isLeaf);
 
-        // РЎРѕС…СЂР°РЅСЏРµРј СЃСЂРµРґРёРЅРЅС‹Р№ РєР»СЋС‡ Рё Р·РЅР°С‡РµРЅРёРµ Р”Рћ РёР·РјРµРЅРµРЅРёСЏ child
+        // Сохраняем срединный ключ и значение ДО изменения child
         K medianKey = child->keys[T - 1];
         V medianValue = child->values[T - 1];
 
-        // РџРµСЂРµРЅРѕСЃРёРј РїСЂР°РІСѓСЋ РїРѕР»РѕРІРёРЅСѓ РєР»СЋС‡РµР№ Рё Р·РЅР°С‡РµРЅРёР№ РІ newNode
+        // Переносим правую половину ключей и значений в newNode
         newNode->keys.assign(child->keys.begin() + T, child->keys.end());
         newNode->values.assign(child->values.begin() + T, child->values.end());
 
         if (!child->isLeaf) {
-            // РџРµСЂРµРЅРѕСЃРёРј РїСЂР°РІСѓСЋ РїРѕР»РѕРІРёРЅСѓ РґРµС‚РµР№
+            // Переносим правую половину детей
             newNode->children.assign(child->children.begin() + T, child->children.end());
-            // РћСЃС‚Р°РІР»СЏРµРј Сѓ child СЂРѕРІРЅРѕ T Р»РµРІС‹С… РґРµС‚РµР№
+            // Оставляем у child ровно T левых детей
             child->children.resize(T);
         }
 
-        // РЈСЂРµР·Р°РµРј child РґРѕ T-1 РєР»СЋС‡РµР№/Р·РЅР°С‡РµРЅРёР№
+        // Урезаем child до T-1 ключей/значений
         child->keys.resize(T - 1);
         child->values.resize(T - 1);
 
-        // Р’СЃС‚Р°РІР»СЏРµРј РјРµРґРёР°РЅСѓ РІ СЂРѕРґРёС‚РµР»СЏ
+        // Вставляем медиану в родителя
         parent->keys.insert(parent->keys.begin() + idx, medianKey);
         parent->values.insert(parent->values.begin() + idx, medianValue);
         parent->children.insert(parent->children.begin() + idx + 1, newNode);
     }
 
-    // Р’СЃС‚Р°РІРєР° РІ СѓР·РµР», РєРѕС‚РѕСЂС‹Р№ РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅРѕ РЅРµ Р·Р°РїРѕР»РЅРµРЅ (РјРµРЅСЊС€Рµ 2*T-1 РєР»СЋС‡РµР№)
+    // Вставка в узел, который гарантированно не заполнен (меньше 2*T-1 ключей)
     void insertNonFull(Node* node, const K& key, const V& value) {
         if (node->isLeaf) {
-            // Р’СЃС‚Р°РІРєР° РІ Р»РёСЃС‚ СЃ СЃРѕС…СЂР°РЅРµРЅРёРµРј РїРѕСЂСЏРґРєР°
+            // Вставка в лист с сохранением порядка
             size_t i = 0;
             while (i < node->keys.size() && key > node->keys[i]) ++i;
             if (i < node->keys.size() && key == node->keys[i]) {
-                node->values[i] = value;   // РѕР±РЅРѕРІР»РµРЅРёРµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РµРіРѕ
+                node->values[i] = value;   // обновление существующего
                 return;
             }
             node->keys.insert(node->keys.begin() + i, key);
@@ -315,13 +315,13 @@ class BTree {
             ++count;
         }
         else {
-            // РС‰РµРј РґРѕС‡РµСЂРЅРёР№ СѓР·РµР»
+            // Ищем дочерний узел
             size_t i = 0;
             while (i < node->keys.size() && key > node->keys[i]) ++i;
-            // Р•СЃР»Рё РґРѕС‡РµСЂРЅРёР№ СѓР·РµР» Р·Р°РїРѕР»РЅРµРЅ вЂ“ СЂР°Р·РґРµР»СЏРµРј РµРіРѕ
+            // Если дочерний узел заполнен – разделяем его
             if (node->children[i]->keys.size() == 2 * T - 1) {
                 splitChild(node, i, node->children[i]);
-                // РџРѕСЃР»Рµ СЂР°Р·РґРµР»РµРЅРёСЏ СЂРµС€Р°РµРј, РІ РєР°РєРѕР№ РёР· РґРІСѓС… СѓР·Р»РѕРІ СЃРїСѓСЃРєР°С‚СЊСЃСЏ
+                // После разделения решаем, в какой из двух узлов спускаться
                 if (key > node->keys[i]) ++i;
             }
             insertNonFull(node->children[i], key, value);
@@ -333,7 +333,7 @@ public:
 
     void insert(const K& key, const V& value) {
         if (root->keys.size() == 2 * T - 1) {
-            // РљРѕСЂРµРЅСЊ Р·Р°РїРѕР»РЅРµРЅ вЂ“ СЃРѕР·РґР°С‘Рј РЅРѕРІС‹Р№ РєРѕСЂРµРЅСЊ Рё СЂР°Р·РґРµР»СЏРµРј СЃС‚Р°СЂС‹Р№
+            // Корень заполнен – создаём новый корень и разделяем старый
             Node* newRoot = new Node(false);
             newRoot->children.push_back(root);
             splitChild(newRoot, 0, root);
@@ -391,7 +391,7 @@ void testBSTRemoveLeaf() {
     tree.insert(3, "three");
     tree.remove(3);
     ASSERT_TRUE(tree.find(3) == nullptr);
-    ASSERT_EQUAL(1, tree.size()); // РµСЃР»Рё РґРѕР±Р°РІРёРј СЃС‡С‘С‚С‡РёРє
+    ASSERT_EQUAL(1, tree.size()); // если добавим счётчик
 }
 void testBSTRemoveOneChild() {
     BST<int, std::string> tree;
@@ -410,14 +410,14 @@ void testBSTRemoveTwoChildren() {
     tree.insert(6, "six");
     tree.remove(5);
     ASSERT_TRUE(tree.find(5) == nullptr);
-    ASSERT_EQUAL(std::string("six"), *tree.find(6)); // РїСЂРµРµРјРЅРёРє
+    ASSERT_EQUAL(std::string("six"), *tree.find(6)); // преемник
 }
 
 void testAVLInsertFind() {
     AVLTree<int, std::string> tree;
     tree.insert(10, "ten");
     tree.insert(20, "twenty");
-    tree.insert(30, "thirty"); // RR РІСЂР°С‰РµРЅРёРµ
+    tree.insert(30, "thirty"); // RR вращение
     ASSERT_EQUAL(std::string("ten"), *tree.find(10));
     ASSERT_EQUAL(std::string("twenty"), *tree.find(20));
     ASSERT_EQUAL(std::string("thirty"), *tree.find(30));
@@ -426,7 +426,7 @@ void testAVLInsertFind() {
 void testAVLBalance() {
     AVLTree<int, int> tree;
     for (int i = 0; i < 1000; ++i) tree.insert(i, i);
-    // Р’С‹СЃРѕС‚Р° AVL СЃ 1000 СЌР»РµРјРµРЅС‚Р°РјРё РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РјРµРЅСЊС€Рµ 20 (С‚РµРѕСЂРµС‚РёС‡РµСЃРєРё <= 1.44*log2(1000) ~ 14.4)
+    // Высота AVL с 1000 элементами должна быть меньше 20 (теоретически <= 1.44*log2(1000) ~ 14.4)
     ASSERT_TRUE(tree.getHeight() < 20);
 }
 

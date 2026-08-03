@@ -1,8 +1,8 @@
 #pragma once
 #include "LifeCycleModels.h"
 //2
-//РњРµС‚РѕРґРѕР»РѕРіРёРё РіРёР±РєРѕР№ СЂР°Р·СЂР°Р±РѕС‚РєРё РїСЂРѕРіСЂР°РјРјРЅРѕРіРѕ РѕР±РµСЃРїРµС‡РµРЅРёСЏ.РџРѕРЅСЏС‚РёРµ Рѕ
-//Agile, Scrum Рё Kanban.
+//Методологии гибкой разработки программного обеспечения.Понятие о
+//Agile, Scrum и Kanban.
 
 
 //Base
@@ -147,7 +147,7 @@ public:
 	{
 		for (int i = 0; i < ListTask.size(); i++)
 		{
-			std::cout << "Р—Р°РґР°РЅРёРµ: " << ListTask[i].GetName() << ": " << ListTask[i].GetStatus() << std::endl;
+			std::cout << "Задание: " << ListTask[i].GetName() << ": " << ListTask[i].GetStatus() << std::endl;
 		}
 	}
 	BackLog* GetBackLog()
@@ -191,17 +191,17 @@ public:
 	Kanban(int wip = 3) : Wip(wip) {}
 	bool canMoveTask(Task& task, StatusTask newStatus) override {
 		StatusTask cur = task.GetStatus();
-		// СЂР°Р·СЂРµС€С‘РЅРЅС‹Рµ РїРµСЂРµС…РѕРґС‹ (РјРѕР¶РЅРѕ РѕСЃС‚Р°РІРёС‚СЊ РІРѕР·РІСЂР°С‚С‹, РµСЃР»Рё С…РѕС‡РµС€СЊ РїРѕРєР°Р·Р°С‚СЊ РіРёР±РєРѕСЃС‚СЊ)
+		// разрешённые переходы (можно оставить возвраты, если хочешь показать гибкость)
 		if (cur == TODO && newStatus == INPROGRESS) { /* ok */ }
 		else if (cur == INPROGRESS && newStatus == DONE) { /* ok */ }
 		else if (cur == INPROGRESS && newStatus == TODO) { /* ok */ }
 		else if (cur == DONE && newStatus == INPROGRESS) { /* ok */ }
 		else return false;
 
-		// РџСЂРѕРІРµСЂРєР° WIP С‚РѕР»СЊРєРѕ РїСЂРё РїРµСЂРµС…РѕРґРµ Р’ INPROGRESS
+		// Проверка WIP только при переходе В INPROGRESS
 		if (newStatus == INPROGRESS) {
 			int inProgress = 0;
-			for (auto& t : *Backlog.GetListTask())   // СЂР°Р·С‹РјРµРЅРѕРІС‹РІР°РµРј СѓРєР°Р·Р°С‚РµР»СЊ
+			for (auto& t : *Backlog.GetListTask())   // разыменовываем указатель
 				if (t.GetStatus() == INPROGRESS) ++inProgress;
 			if (inProgress >= Wip) return false;
 		}
@@ -224,10 +224,10 @@ public:
 	void MoveTask(Task& task, StatusTask stTask) {
 		if (Model->canMoveTask(task, stTask)) {
 			Model->MoveTask(task, stTask);
-			std::cout << "РџРµСЂРµС…РѕРґ РІС‹РїРѕР»РЅРµРЅ.\n";
+			std::cout << "Переход выполнен.\n";
 		}
 		else {
-			std::cout << "РџРµСЂРµРјРµС‰РµРЅРёРµ Р·Р°РїСЂРµС‰РµРЅРѕ РїСЂР°РІРёР»Р°РјРё РґРѕСЃРєРё.\n";
+			std::cout << "Перемещение запрещено правилами доски.\n";
 		}
 	}
 
@@ -267,15 +267,15 @@ void RealizeBoard(std::vector<std::string> Name)
 		Commands = 1;
 		system("cls");
 		if (Board.GetSprintScram() != nullptr)
-			std::cout << "Р’Р°С€Р° РґРѕСЃС‚Р°РєР°: Scram" << std::endl;
+			std::cout << "Ваша достака: Scram" << std::endl;
 		else
-			std::cout << "Р’Р°С€Р° РґРѕСЃС‚Р°РєР°: Kanban" << std::endl;
+			std::cout << "Ваша достака: Kanban" << std::endl;
 
-		std::cout << "РљРѕРјР°РЅРґС‹: " << std::endl;
-		std::cout << "[1] РџРѕСЃРјРѕС‚СЂРµС‚СЊ СЃРїРёСЃРѕРє Р·Р°РґР°С‡/СЃРѕСЃС‚РѕСЏРЅРёРµ" << std::endl;
-		std::cout << "[2] РџСЂРѕРІРµСЂРёС‚СЊ СЃРїСЂРёРЅС‚" << std::endl;
-		std::cout << "[3] РџРµСЂРµРјРµСЃС‚РёС‚СЊ Р·Р°РґР°РЅРёРµ" << std::endl;
-		std::cout << "[4] Р’С‹Р№С‚Рё" << std::endl;
+		std::cout << "Команды: " << std::endl;
+		std::cout << "[1] Посмотреть список задач/состояние" << std::endl;
+		std::cout << "[2] Проверить спринт" << std::endl;
+		std::cout << "[3] Переместить задание" << std::endl;
+		std::cout << "[4] Выйти" << std::endl;
 		std::cin >> Commands;
 		system("cls");
 
@@ -284,7 +284,7 @@ void RealizeBoard(std::vector<std::string> Name)
 		{
 		case 1:
 		{
-			std::cout << "CРїРёСЃРѕРє Р·Р°РґР°С‡: " << std::endl;
+			std::cout << "Cписок задач: " << std::endl;
 			Board.GetRetrospective();
 			break;
 		}
@@ -296,11 +296,11 @@ void RealizeBoard(std::vector<std::string> Name)
 				Sprint* TempSpring = Board.GetSprintScram();
 				if (!TempSpring->IsActive())
 				{
-					std::cout << "Sprint РЅРµР°РєС‚РёРІРµРЅ" << std::endl;
-					std::cout << "Р”РѕСЃС‚СѓРїРЅС‹Рµ РєРѕРјР°РЅРґС‹: " << std::endl;
-					std::cout << "[1] Р—Р°РїСѓСЃС‚РёС‚СЊ СЃРїСЂРёРЅС‚" << std::endl;
-					std::cout << "[2] Р”РѕР±Р°РІРёС‚СЊ Task РІ СЃРїСЂРёРЅС‚" << std::endl;
-					std::cout << "[5] РћР±СЂР°С‚РЅРѕ РІ РјРµРЅСЋ" << std::endl;
+					std::cout << "Sprint неактивен" << std::endl;
+					std::cout << "Доступные команды: " << std::endl;
+					std::cout << "[1] Запустить спринт" << std::endl;
+					std::cout << "[2] Добавить Task в спринт" << std::endl;
+					std::cout << "[5] Обратно в меню" << std::endl;
 					std::cin >> SprintCommands;
 					system("cls");
 
@@ -309,7 +309,7 @@ void RealizeBoard(std::vector<std::string> Name)
 					case 1:
 					{
 						int time;
-						std::cout << "РЎРєРѕР»СЊРєРѕ Р±СѓРґРµС‚ РґР»РёС‚СЊСЃСЏ СЃРїСЂРёРЅС‚: ";
+						std::cout << "Сколько будет длиться спринт: ";
 						std::cin >> time;
 
 						TempSpring->StartSprint(time);
@@ -319,8 +319,8 @@ void RealizeBoard(std::vector<std::string> Name)
 					{
 						for (int i = 0; i < Board.GetSizeBackLog(); i++)
 						{
-							std::cout << "РљР°РєРѕРµ Р·Р°РґР°РЅРёРµ РґРѕР±Р°РІРёС‚СЊ РІ СЃРїСЂРёРЅС‚: " << std::endl;
-							std::cout << "Р’РІРµРґРё 0 РµСЃР»Рё РЅРµ С…РѕС‡РµС€СЊ РЅРёС‡РµРіРѕ РґРѕР±Р°РІР»СЏС‚СЊ" << std::endl;
+							std::cout << "Какое задание добавить в спринт: " << std::endl;
+							std::cout << "Введи 0 если не хочешь ничего добавлять" << std::endl;
 							Board.GetRetrospective();
 							int f = 0;
 							std::cin >> f;
@@ -343,10 +343,10 @@ void RealizeBoard(std::vector<std::string> Name)
 				else
 				{
 
-					std::cout << "РЎРµР№С‡Р°СЃ РёРґРµС‚ Sprint" << std::endl;
-					std::cout << "Р”РѕСЃС‚СѓРїРЅС‹Рµ РєРѕРјР°РЅРґС‹: " << std::endl;
-					std::cout << "[1] РћР±РЅРѕРІРёС‚СЊ РґРµРЅСЊ" << std::endl;
-					std::cout << "[2] РћР±СЂР°С‚РЅРѕ РІ РјРµРЅСЋ" << std::endl;
+					std::cout << "Сейчас идет Sprint" << std::endl;
+					std::cout << "Доступные команды: " << std::endl;
+					std::cout << "[1] Обновить день" << std::endl;
+					std::cout << "[2] Обратно в меню" << std::endl;
 					std::cin >> SprintCommands;
 
 					switch (SprintCommands)
@@ -364,7 +364,7 @@ void RealizeBoard(std::vector<std::string> Name)
 				}
 			}
 			else
-				std::cout << "РЈ РІР°СЃ РґРѕСЃС‚Р°РєР°: Kanban : РґРµР№СЃС‚РІРёРµ РЅРµРІРѕР·РјРѕР¶РЅРѕ" << std::endl;
+				std::cout << "У вас достака: Kanban : действие невозможно" << std::endl;
 
 			break;
 		}
@@ -372,23 +372,23 @@ void RealizeBoard(std::vector<std::string> Name)
 		{
 			for (int i = 0; i < Board.GetSizeBackLog(); i++)
 			{
-				std::cout << "РљР°РєРѕРµ Р·Р°РґР°РЅРёРµ РїРµСЂРµРјРµСЃС‚РёС‚СЊ? (0 - РІС‹С…РѕРґ):\n";
+				std::cout << "Какое задание переместить? (0 - выход):\n";
 				Board.GetRetrospective();
 				int f = 0;
 				std::cin >> f;
 				if (f == 0) break;
 
-				std::cout << "РќР° РєР°РєРѕР№ СЃС‚Р°С‚СѓСЃ РїРѕРјРµРЅСЏС‚СЊ:\n";
+				std::cout << "На какой статус поменять:\n";
 				std::cout << "[1]: TODO\n[2]: INPROGRESS\n[3]: DONE\n";
 				int s; std::cin >> s;
 				StatusTask newSt;
 				if (s == 1) newSt = TODO;
 				else if (s == 2) newSt = INPROGRESS;
 				else if (s == 3) newSt = DONE;
-				else { std::cout << "РќРµРІРµСЂРЅС‹Р№ СЃС‚Р°С‚СѓСЃ\n"; continue; }
+				else { std::cout << "Неверный статус\n"; continue; }
 
 				Board.MoveTask(*Board.GetBacklog()->GetTask(f), newSt);
-				std::cin.ignore(); std::cin.get(); // РїР°СѓР·Р°
+				std::cin.ignore(); std::cin.get(); // пауза
 				system("cls");
 			}
 			break;

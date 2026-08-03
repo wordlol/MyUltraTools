@@ -2,8 +2,8 @@
 #include "OOP2.h"
 #include <set>
 //6
-//РџСЂРѕРіРЅРѕР·РёСЂСѓСЋС‰РёРµ РјРµС‚РѕРґРѕР»РѕРіРёРё СЂР°Р·СЂР°Р±РѕС‚РєРё РїСЂРѕРіСЂР°РјРјРЅРѕРіРѕ РѕР±РµСЃРїРµС‡РµРЅРёСЏ.
-//РћСЃРЅРѕРІРЅС‹Рµ РїСЂРёРЅС†РёРїС‹ РјРµС‚РѕРґРѕР»РѕРіРёРё RUP.
+//Прогнозирующие методологии разработки программного обеспечения.
+//Основные принципы методологии RUP.
 
 //Artifact.h
 class Artifact {
@@ -106,15 +106,15 @@ void RUPProject::startNextIteration() {
 
     Phase_& currentPhase = phases[currentPhaseIndex];
 
-    // Р—Р°РІРµСЂС€Р°РµРј С‚РµРєСѓС‰СѓСЋ РёС‚РµСЂР°С†РёСЋ (СѓРІРµР»РёС‡РёРІР°РµРј СЃС‡С‘С‚С‡РёРє)
+    // Завершаем текущую итерацию (увеличиваем счётчик)
     currentIterationIndex++;
 
-    // Р•СЃР»Рё СЌС‚Рѕ Р±С‹Р»Р° РїРѕСЃР»РµРґРЅСЏСЏ РёС‚РµСЂР°С†РёСЏ С„Р°Р·С‹, РїСЂРѕРІРµСЂСЏРµРј РІРµС…Сѓ
+    // Если это была последняя итерация фазы, проверяем веху
     if (currentIterationIndex >= currentPhase.getCurrentIterationNumber()) {
         if (!currentPhase.isMilestoneAchieved()) {
             throw std::runtime_error("Milestone not achieved! Cannot proceed to next phase.");
         }
-        // РџРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµР№ С„Р°Р·Рµ
+        // Переход к следующей фазе
         currentPhaseIndex++;
         currentIterationIndex = 0;
     }
@@ -150,7 +150,7 @@ void testPhaseMilestoneNotAchieved() {
     Phase_ inception("Inception", 1, "Lifecycle Objectives");
     Iteration iter(1);
     iter.addArtifact(std::make_shared<Artifact>("Vision", "Document"));
-    // Р‘РёР·РЅРµСЃ-РєРµР№СЃ РЅРµ РґРѕР±Р°РІР»РµРЅ, РІРµС…Р° РЅРµ РґРѕСЃС‚РёРіРЅСѓС‚Р°
+    // Бизнес-кейс не добавлен, веха не достигнута
     inception.addIteration(iter);
     ASSERT_EQUAL(false, inception.isMilestoneAchieved());
 }
@@ -165,7 +165,7 @@ void testPhaseMilestoneAchieved() {
 void testRUPProjectCompleteSuccess() {
     RUPProject proj;
 
-    // РЎРѕР·РґР°С‘Рј С„Р°Р·С‹ Рё Р·Р°РїРѕР»РЅСЏРµРј РёС‚РµСЂР°С†РёРё СЃ Р°СЂС‚РµС„Р°РєС‚Р°РјРё
+    // Создаём фазы и заполняем итерации с артефактами
     Phase_ inception("Inception", 1, "Lifecycle Objectives");
     Iteration i1(1);
     i1.addArtifact(std::make_shared<Artifact>("Vision", "Document"));
@@ -194,10 +194,10 @@ void testRUPProjectCompleteSuccess() {
     transition.addIteration(t1);
     proj.addPhase(transition);
 
-    // Р—Р°РїСѓСЃРєР°РµРј РёС‚РµСЂР°С†РёРё
+    // Запускаем итерации
     ASSERT_EQUAL(false, proj.isFinished());
-    // Inception (1 РёС‚РµСЂР°С†РёСЏ)
-    proj.startNextIteration(); // РґРѕР»Р¶РЅР° РїСЂРѕР№С‚Рё РїСЂРѕРІРµСЂРєСѓ РІРµС…Рё Рё РїРµСЂРµР№С‚Рё Рє Elaboration
+    // Inception (1 итерация)
+    proj.startNextIteration(); // должна пройти проверку вехи и перейти к Elaboration
     ASSERT_EQUAL(false, proj.isFinished());
     // Elaboration
     proj.startNextIteration();
@@ -213,20 +213,20 @@ void testRUPProjectMilestoneFail() {
     RUPProject proj;
     Phase_ inception("Inception", 1, "Lifecycle Objectives");
     Iteration i1(1);
-    // РќРµС‚ Р°СЂС‚РµС„Р°РєС‚Р° Business Case
+    // Нет артефакта Business Case
     i1.addArtifact(std::make_shared<Artifact>("Vision", "Document"));
     inception.addIteration(i1);
     proj.addPhase(inception);
 
-    ASSERT_THROWS(proj.startNextIteration()); // РґРѕР»Р¶РЅРѕ РІС‹Р±СЂРѕСЃРёС‚СЊ РёСЃРєР»СЋС‡РµРЅРёРµ
+    ASSERT_THROWS(proj.startNextIteration()); // должно выбросить исключение
 }
 
-//4 С„Р°Р·С‹(Inception, Elaboration, Construction, Transition) СЃ Р·Р°РґР°РЅРЅС‹РјРё РёС‚РµСЂР°С†РёСЏРјРё.
+//4 фазы(Inception, Elaboration, Construction, Transition) с заданными итерациями.
 //
-//РџСЂРѕРіРЅРѕР·РёСЂСѓРµРјРѕСЃС‚СЊ вЂ“ С‡РёСЃР»Рѕ РёС‚РµСЂР°С†РёР№ Рё РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ Р°СЂС‚РµС„Р°РєС‚С‹ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅС‹ Р·Р°СЂР°РЅРµРµ, РїРµСЂРµС…РѕРґ Рє СЃР»РµРґСѓСЋС‰РµР№ С„Р°Р·Рµ РЅРµРІРѕР·РјРѕР¶РµРЅ Р±РµР· РґРѕСЃС‚РёР¶РµРЅРёСЏ РІРµС…Рё.
+//Прогнозируемость – число итераций и обязательные артефакты зафиксированы заранее, переход к следующей фазе невозможен без достижения вехи.
 //
-//РЈРїСЂР°РІР»РµРЅРёРµ СЂРёСЃРєР°РјРё вЂ“ РґРѕР±Р°РІР»РµРЅРёРµ, СЃРЅРёР¶РµРЅРёРµ, Р·Р°РєСЂС‹С‚РёРµ.
+//Управление рисками – добавление, снижение, закрытие.
 //
-//РљРѕРЅС‚СЂРѕР»СЊРЅС‹Рµ С‚РѕС‡РєРё(milestones) вЂ“ РїСЂРѕРІРµСЂРєР° РїРѕ РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рј Р°СЂС‚РµС„Р°РєС‚Р°Рј.
+//Контрольные точки(milestones) – проверка по обязательным артефактам.
 //
-//РСЃРєР»СЋС‡РёС‚РµР»СЊРЅС‹Рµ СЃРёС‚СѓР°С†РёРё вЂ“ РЅРµРІРѕР·РјРѕР¶РЅРѕСЃС‚СЊ Р·Р°РІРµСЂС€РёС‚СЊ С„Р°Р·Сѓ Р±РµР· РІРµС…Рё.
+//Исключительные ситуации – невозможность завершить фазу без вехи.

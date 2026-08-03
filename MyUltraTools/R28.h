@@ -1,5 +1,5 @@
 #pragma once
-// РњРѕРЅРѕР»РёС‚: РІСЃРµ РІ РѕРґРЅРѕР№ С„СѓРЅРєС†РёРё
+// Монолит: все в одной функции
 #include <iostream>
 #include <vector>
 #include <string>
@@ -11,19 +11,19 @@ void R128() {
     string task;
 
     while (true) {
-        cout << "1. Р”РѕР±Р°РІРёС‚СЊ\n2. РЈРґР°Р»РёС‚СЊ\n3. РџРѕРєР°Р·Р°С‚СЊ\n4. Р’С‹С…РѕРґ\n> ";
+        cout << "1. Добавить\n2. Удалить\n3. Показать\n4. Выход\n> ";
         cin >> choice;
         if (choice == 4) break;
 
         if (choice == 1) {
-            cout << "Р—Р°РґР°С‡Р°: ";
+            cout << "Задача: ";
             cin.ignore();
             getline(cin, task);
             tasks.push_back(task);
         }
         else if (choice == 2) {
             int idx;
-            cout << "РќРѕРјРµСЂ: ";
+            cout << "Номер: ";
             cin >> idx;
             if (idx > 0 && idx <= tasks.size()) tasks.erase(tasks.begin() + idx - 1);
         }
@@ -57,14 +57,14 @@ public:
 class TaskView {
 public:
     void showMenu() const {
-        cout << "\nРњРµРЅСЋ:\n1. Р”РѕР±Р°РІРёС‚СЊ\n2. РЈРґР°Р»РёС‚СЊ\n3. РџРѕРєР°Р·Р°С‚СЊ\n4. Р’С‹С…РѕРґ\n> ";
+        cout << "\nМеню:\n1. Добавить\n2. Удалить\n3. Показать\n4. Выход\n> ";
     }
 
     void displayTasks(const vector<string>& tasks) const {
-        cout << "\nРЎРїРёСЃРѕРє Р·Р°РґР°С‡:\n";
+        cout << "\nСписок задач:\n";
         for (size_t i = 0; i < tasks.size(); ++i)
             cout << i + 1 << ". " << tasks[i] << endl;
-        if (tasks.empty()) cout << "(РїСѓСЃС‚Рѕ)\n";
+        if (tasks.empty()) cout << "(пусто)\n";
     }
 
     string getInput(const string& prompt) const {
@@ -77,7 +77,7 @@ public:
     int getChoice() const {
         int choice;
         cin >> choice;
-        cin.ignore(); // РѕС‡РёСЃС‚РєР° Р±СѓС„РµСЂР°
+        cin.ignore(); // очистка буфера
         return choice;
     }
 };
@@ -94,24 +94,24 @@ public:
             choice = view.getChoice();
             switch (choice) {
             case 1: {
-                string task = view.getInput("Р’РІРµРґРёС‚Рµ Р·Р°РґР°С‡Сѓ: ");
+                string task = view.getInput("Введите задачу: ");
                 model.addTask(task);
                 break;
             }
             case 2: {
-                size_t index = stoi(view.getInput("РќРѕРјРµСЂ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ: "));
+                size_t index = stoi(view.getInput("Номер для удаления: "));
                 if (!model.removeTask(index - 1))
-                    cout << "РќРµРІРµСЂРЅС‹Р№ РЅРѕРјРµСЂ.\n";
+                    cout << "Неверный номер.\n";
                 break;
             }
             case 3:
                 view.displayTasks(model.getTasks());
                 break;
             case 4:
-                cout << "Р’С‹С…РѕРґ.\n";
+                cout << "Выход.\n";
                 break;
             default:
-                cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ.\n";
+                cout << "Неверный выбор.\n";
             }
         } while (choice != 4);
     }

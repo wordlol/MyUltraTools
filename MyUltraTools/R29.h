@@ -4,40 +4,40 @@
 #include <vector>
 using namespace std;
 
-//3. РЎСЂР°РІРЅРёС‚РµР»СЊРЅС‹Р№ Р°РЅР°Р»РёР·(С‚Р°Р±Р»РёС†Р°)
-//РҐР°СЂР°РєС‚РµСЂРёСЃС‚РёРєР°	SOA	Microservices
-//Р Р°Р·РјРµСЂ СЃРµСЂРІРёСЃРѕРІ	РљСЂСѓРїРЅС‹Рµ(Р±РёР·РЅРµСЃ - С„СѓРЅРєС†РёРё)	РњРµР»РєРёРµ(РѕРґРЅР° Р·Р°РґР°С‡Р°)
-//РРЅС‚РµРіСЂР°С†РёСЏ	Р§Р°СЃС‚Рѕ С‡РµСЂРµР· ESB, SOAP / WSDL	Р›РµРіРєРѕРІРµСЃРЅР°СЏ(REST, gRPC, СЃРѕР±С‹С‚РёСЏ)
-//Р”Р°РЅРЅС‹Рµ	РњРѕРіСѓС‚ СЂР°Р·РґРµР»СЏС‚СЊСЃСЏ(РѕР±С‰Р°СЏ Р‘Р”)	РљР°Р¶РґС‹Р№ СЃРµСЂРІРёСЃ РІР»Р°РґРµРµС‚ СЃРІРѕРµР№ Р‘Р”
-//РЈРїСЂР°РІР»РµРЅРёРµ	Р¦РµРЅС‚СЂР°Р»РёР·РѕРІР°РЅРЅРѕРµ	Р”РµС†РµРЅС‚СЂР°Р»РёР·РѕРІР°РЅРЅРѕРµ
-//Р Р°Р·РІС‘СЂС‚С‹РІР°РЅРёРµ	РћР±С‹С‡РЅРѕ РјРѕРЅРѕР»РёС‚РЅРѕРµ	РќРµР·Р°РІРёСЃРёРјРѕРµ СЂР°Р·РІС‘СЂС‚С‹РІР°РЅРёРµ
-//РЎРІСЏР·Р°РЅРЅРѕСЃС‚СЊ	Р’С‹СЃРѕРєР°СЏ(СЃРµСЂРІРёСЃ Р·РЅР°РµС‚ Рѕ РґСЂСѓРіРёС…)	РќРёР·РєР°СЏ(РЅРµР·Р°РІРёСЃРёРјС‹Рµ РєРѕРЅС‚СЂР°РєС‚С‹)
+//3. Сравнительный анализ(таблица)
+//Характеристика	SOA	Microservices
+//Размер сервисов	Крупные(бизнес - функции)	Мелкие(одна задача)
+//Интеграция	Часто через ESB, SOAP / WSDL	Легковесная(REST, gRPC, события)
+//Данные	Могут разделяться(общая БД)	Каждый сервис владеет своей БД
+//Управление	Централизованное	Децентрализованное
+//Развёртывание	Обычно монолитное	Независимое развёртывание
+//Связанность	Высокая(сервис знает о других)	Низкая(независимые контракты)
 
-// SOA: РѕРґРёРЅ РєСЂСѓРїРЅС‹Р№ СЃРµСЂРІРёСЃ СѓРїСЂР°РІР»СЏРµС‚ РІСЃРµРј
+// SOA: один крупный сервис управляет всем
 class OrderService {
 public:
     void processOrder(const string& orderId) {
-        cout << "[SOA] РЎРѕР·РґР°РЅРёРµ Р·Р°РєР°Р·Р° " << orderId << endl;
+        cout << "[SOA] Создание заказа " << orderId << endl;
         reserveInventory(orderId);
         processPayment(orderId);
-        sendNotification(orderId, "Р—Р°РєР°Р· СЃРѕР·РґР°РЅ");
+        sendNotification(orderId, "Заказ создан");
     }
 private:
-    // Р’ SOA РІСЃРµ С„СѓРЅРєС†РёРё РІРЅСѓС‚СЂРё РѕРґРЅРѕРіРѕ СЃРµСЂРІРёСЃР° (РёР»Рё С‡РµСЂРµР· ESB)
+    // В SOA все функции внутри одного сервиса (или через ESB)
     void reserveInventory(const string& orderId) {
-        cout << "  Р РµР·РµСЂРІРёСЂРѕРІР°РЅРёРµ С‚РѕРІР°СЂР° РґР»СЏ " << orderId << endl;
+        cout << "  Резервирование товара для " << orderId << endl;
     }
     void processPayment(const string& orderId) {
-        cout << "  РћР±СЂР°Р±РѕС‚РєР° РїР»Р°С‚РµР¶Р° РґР»СЏ " << orderId << endl;
+        cout << "  Обработка платежа для " << orderId << endl;
     }
     void sendNotification(const string& orderId, const string& msg) {
-        cout << "  РЈРІРµРґРѕРјР»РµРЅРёРµ: " << msg << " РїРѕ Р·Р°РєР°Р·Сѓ " << orderId << endl;
+        cout << "  Уведомление: " << msg << " по заказу " << orderId << endl;
     }
 };
 
-// РџСЂРёРјРµСЂ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ
+// Пример использования
 void SOA() {
-    cout << "=== Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ SOA ===" << endl;
+    cout << "=== Демонстрация SOA ===" << endl;
     OrderService service;
     service.processOrder("Order-001");
 }
@@ -51,7 +51,7 @@ void SOA() {
 #include <functional>
 using namespace std;
 
-// РђСЃРёРЅС…СЂРѕРЅРЅР°СЏ С€РёРЅР° СЃРѕРѕР±С‰РµРЅРёР№ (СѓРїСЂРѕС‰С‘РЅРЅС‹Р№ Р±СЂРѕРєРµСЂ)
+// Асинхронная шина сообщений (упрощённый брокер)
 class MessageBus {
     unordered_map<string, vector<function<void(const string&)>>> subscribers;
 public:
@@ -64,52 +64,52 @@ public:
     }
 };
 
-// РњРёРєСЂРѕСЃРµСЂРІРёСЃ Р·Р°РєР°Р·РѕРІ
+// Микросервис заказов
 class OrderMicroservice {
     shared_ptr<MessageBus> bus;
 public:
     OrderMicroservice(shared_ptr<MessageBus> bus) : bus(bus) {
         bus->subscribe("order.created", [this](const string& orderId) {
-            cout << "[OrderService] РЎРѕР·РґР°РЅ Р·Р°РєР°Р·: " << orderId << endl;
+            cout << "[OrderService] Создан заказ: " << orderId << endl;
             });
     }
     void createOrder(const string& orderId) {
-        cout << "[OrderService] РРЅРёС†РёРёСЂСѓСЋ СЃРѕР·РґР°РЅРёРµ Р·Р°РєР°Р·Р° " << orderId << endl;
-        bus->publish("order.created", orderId); // Р°СЃРёРЅС…СЂРѕРЅРЅРѕРµ СѓРІРµРґРѕРјР»РµРЅРёРµ
+        cout << "[OrderService] Инициирую создание заказа " << orderId << endl;
+        bus->publish("order.created", orderId); // асинхронное уведомление
     }
 };
 
-// РњРёРєСЂРѕСЃРµСЂРІРёСЃ РїР»Р°С‚РµР¶РµР№
+// Микросервис платежей
 class PaymentMicroservice {
     shared_ptr<MessageBus> bus;
 public:
     PaymentMicroservice(shared_ptr<MessageBus> bus) : bus(bus) {
         bus->subscribe("order.created", [this](const string& orderId) {
-            cout << "[PaymentService] РћР±СЂР°Р±Р°С‚С‹РІР°СЋ РїР»Р°С‚РµР¶ РґР»СЏ " << orderId << endl;
-            this->bus->publish("payment.completed", orderId);  // РёСЃРїРѕР»СЊР·СѓРµРј РїРѕР»Рµ РєР»Р°СЃСЃР°
+            cout << "[PaymentService] Обрабатываю платеж для " << orderId << endl;
+            this->bus->publish("payment.completed", orderId);  // используем поле класса
             });
     }
 };
 
-// РњРёРєСЂРѕСЃРµСЂРІРёСЃ СѓРІРµРґРѕРјР»РµРЅРёР№
+// Микросервис уведомлений
 class NotificationMicroservice {
     shared_ptr<MessageBus> bus;
 public:
     NotificationMicroservice(shared_ptr<MessageBus> bus) : bus(bus) {
         bus->subscribe("payment.completed", [this](const string& orderId) {
-            cout << "[NotificationService] РЈРІРµРґРѕРјР»РµРЅРёРµ: Р·Р°РєР°Р· " << orderId << " РѕРїР»Р°С‡РµРЅ." << endl;
+            cout << "[NotificationService] Уведомление: заказ " << orderId << " оплачен." << endl;
             });
     }
 };
 void Microservice() {
-    cout << "\n=== Р”РµРјРѕРЅСЃС‚СЂР°С†РёСЏ Microservices ===" << endl;
+    cout << "\n=== Демонстрация Microservices ===" << endl;
     auto bus = make_shared<MessageBus>();
 
     OrderMicroservice orderService(bus);
     PaymentMicroservice paymentService(bus);
     NotificationMicroservice notificationService(bus);
 
-    // РЎРѕР·РґР°С‘Рј Р·Р°РєР°Р· вЂ“ РєР°Р¶РґС‹Р№ СЃРµСЂРІРёСЃ СЂРµР°РіРёСЂСѓРµС‚ РЅРµР·Р°РІРёСЃРёРјРѕ
+    // Создаём заказ – каждый сервис реагирует независимо
     orderService.createOrder("Order-002");
 
 }
