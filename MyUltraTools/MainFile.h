@@ -248,6 +248,7 @@ std::string OpenFileDialog(const std::wstring& filter = L"All Files (*.*)\0*.*\0
 }
 std::string SaveFileDialog(const std::wstring& defaultFileName = L"logfile.log", const std::wstring& filter = L"All Files (*.*)\0*.*\0")
 {
+
 	std::wstring result;
 	HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 	if (FAILED(hr) && hr != S_FALSE)
@@ -320,7 +321,16 @@ std::string formatTimestamp(time_t timestamp) {
 	strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
 	return std::string(buffer);
 }
+std::string formatTimestampWithWeekday(time_t timestamp) {
+	struct tm timeinfo;
+	localtime_s(&timeinfo, &timestamp);
 
+	char buffer[128];
+	// %A - полное название дня недели (например, "Monday")
+	// %d - день месяца, %B - полное название месяца, %Y - год, %H:%M:%S - время
+	strftime(buffer, sizeof(buffer), "%A, %d %B %Y %H:%M:%S", &timeinfo);
+	return std::string(buffer);
+}
 time_t lastScan = 0;
 
 
@@ -712,7 +722,7 @@ std::unordered_map<int, Item> loadItemfromLua(const std::string& filename)
 int Size_ = 0;
 int PickItem = -1;
 bool IsBuyMode;
-
+int i1 = 2;
 
 
 // Выгода – оставляем как есть (использует последнюю минимальную цену)
@@ -855,7 +865,7 @@ void ViewTimeHistory()
 {
 	for (int i = 0; i < sortedItems[PickItem].Time_History.size(); i++)
 	{
-		std::string s = std::to_string(i) + "    " + formatTimestamp((time_t)sortedItems[PickItem].Time_History[i]);
+		std::string s = std::to_string(i) + "    " + formatTimestampWithWeekday((time_t)sortedItems[PickItem].Time_History[i]);
 
 		ImGui::Text(s.c_str());
 	}
@@ -890,7 +900,7 @@ void LoadItems(const std::string& filename)
 	for (auto& pair : Items) {
 		const Item& item = pair.second;
 		if (item.id == 0 || item.Name == "Unknown") continue;
-		if (item.Price_History.size() < 2) continue;
+		if (item.Price_History.size() < i1) continue;
 
 		RawMetrics metrics;
 		metrics.benefit = Benefit(item, IsBuyMode);
@@ -1098,10 +1108,6 @@ void ViewIndicators()
 	else
 		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Стабильна");
 }
-
-
-
-
 void ExportLog()
 {
 	if (sortedItems.empty()) {
@@ -1239,19 +1245,6 @@ void ExportDebugLog()
 	ImGui::OpenPopup("Export Success");
 }
 
-class Craft
-{
-public:
-	Craft() {}
-	~Craft() {}
-};
-
-class AnalizeMarket
-{
-public:
-	AnalizeMarket() {}
-	~AnalizeMarket() {}
-};
 
 class UserInterface
 {
@@ -1282,21 +1275,19 @@ public:
 
 		if (ImGui::BeginMainMenuBar())
 		{
-			if (ImGui::BeginMenu("View"))
-			{
-				ImGui::RadioButton("100",  &Size_, 100);
-				ImGui::RadioButton("500",  &Size_, 500);
-				ImGui::RadioButton("1000", &Size_, 1000);
-				ImGui::RadioButton("FULL", &Size_, sortedItems.size());
-				ImGui::Checkbox("Режим продажи", &IsBuyMode);
-				ImGui::EndMenu();
-			}
-			if (ImGui::BeginMenu("Export"))
+			if (ImGui::BeginMenu("File"))
 			{
 				if (ImGui::Button("Export Log"))
 					ExportLog();
 				if(ImGui::Button("Export Debug Log"))
 					ExportDebugLog();
+				if (ImGui::Button("Import Lua"))
+				{
+					std::string filename = OpenFileDialog();
+					if (filename != "")
+						LoadItems(filename);
+				}
+
 
 				ImGui::EndMenu();
 			}
@@ -1312,25 +1303,13 @@ public:
 			if (ImGui::Button("Craft Menu"))
 				Data.mod = MOD::CRAFT_MENU;
 			ImGui::SameLine();
-			if (ImGui::Button("Import Lua"))
-			{
-				std::string filename = OpenFileDialog();
-				if(filename != "")
-					LoadItems(filename);
-			}
-			ImGui::SameLine();
-			//if (ImGui::Button("Export Lua"))
-			//{
-			//	ExportLog();
-			//	//ExportDebugLog();
-			//}
-			ImGui::SameLine();
-			ImGui::Text(formatTimestamp(lastScan).c_str());
-			ImGui::SameLine();
 			if(IsBuyMode == true)
-			ImGui::Text("Сейчас режим ПРОДАЖИ");
+				ImGui::Checkbox("Сейчас режим ПРОДАЖИ", &IsBuyMode);
 			else
-			ImGui::Text("Сейчас режим ПОКУПКИ");
+				ImGui::Checkbox("Сейчас режим ПОКУПКИ", &IsBuyMode);
+
+			ImGui::SameLine();
+			ImGui::Text("%s", formatTimestampWithWeekday(lastScan).c_str());
 		}
 		ImGui::End();
 
@@ -1350,11 +1329,14 @@ public:
 					ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed, 0.0f);
 					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 0.0f);
 					ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 0.0f);
-					ImGui::TableSetupColumn("Score", ImGuiTableColumnFlags_WidthFixed, 0.0f);
+					ImGui::TableSetupColumn("Profit", ImGuiTableColumnFlags_WidthFixed, 0.0f);
 					ImGui::TableSetupScrollFreeze(0, 1);
 					ImGui::TableHeadersRow();
 					for (int i = 0; i < Size_; i++)
 					{
+						int lastMin = sortedItems[i].MinPrice.empty() ? 0 : sortedItems[i].MinPrice.back();
+						int mid = sortedItems[i].MidlePrice;
+						int profitCopper = 0;
 						if (!sortedItems[i].Name.find(str0))
 						{
 								ImGui::PushID(sortedItems[i].id);
@@ -1369,7 +1351,20 @@ public:
 									PickItem = i;
 								}
 								ImGui::TableNextColumn();
-								ImGui::Text("%.2f", sortedItems[i].Score);
+
+								if (IsBuyMode) {
+									profitCopper = mid - lastMin;   // покупаем по минимальной, продаём по средней
+								}
+								else {
+									profitCopper = lastMin - mid;   // продаём по средней (если она выше минимальной)
+								}
+
+								float profitGold = profitCopper / 10000.0f;
+								if(profitGold > 0)
+									ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%.2f", profitGold);
+								else
+									ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%.2f", profitGold);
+
 								ImGui::PopID();
 						}
 					}
@@ -1382,6 +1377,8 @@ public:
 
 		ImGui::Begin("Analize Market");
 		{
+			ImGui::SameLine();
+			ImGui::SliderInt("Слайдер истории", &i1, 0, 10);
 			switch (Data.mod)
 			{
 				case MOD::MAIN_MENU:
@@ -1389,7 +1386,7 @@ public:
 					if (sortedItems.empty())
 					{
 						ImGui::Text("Нужно открыть файл по пути ../World of Warcraft Sirus/WTF/Account/USERNAME/SavedVariables/Auctionator.lua");
-						ImGui::Text("Используй кнопку Import Lua");
+						ImGui::Text("Используй кнопку Import Lua в разделе File");
 					}
 
 					if (PickItem != -1)

@@ -15,13 +15,13 @@
     {
         "Entry"
         {
-        "MsmKey" = "8:_27FFA081427F401FB6BF4A46928D3136"
+        "MsmKey" = "8:_0162490AEB4F4CAC8FABEFA27B7E2945"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
         {
-        "MsmKey" = "8:_6D62136B8F6746BF8EC3F99288D3D211"
+        "MsmKey" = "8:_27FFA081427F401FB6BF4A46928D3136"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
         }
@@ -144,10 +144,10 @@
         }
         "File"
         {
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_27FFA081427F401FB6BF4A46928D3136"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_0162490AEB4F4CAC8FABEFA27B7E2945"
             {
-            "SourcePath" = "8:..\\MyUltraTools\\items_ru.csv"
-            "TargetName" = "8:items_ru.csv"
+            "SourcePath" = "8:..\\MyUltraTools\\imgui.ini"
+            "TargetName" = "8:imgui.ini"
             "Tag" = "8:"
             "Folder" = "8:_A947DDA55C514DB08BE143956BAC0A43"
             "Condition" = "8:"
@@ -164,10 +164,10 @@
             "IsDependency" = "11:FALSE"
             "IsolateTo" = "8:"
             }
-            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_6D62136B8F6746BF8EC3F99288D3D211"
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_27FFA081427F401FB6BF4A46928D3136"
             {
-            "SourcePath" = "8:..\\MyUltraTools\\imgui.ini"
-            "TargetName" = "8:imgui.ini"
+            "SourcePath" = "8:..\\MyUltraTools\\items_ru.csv"
+            "TargetName" = "8:items_ru.csv"
             "Tag" = "8:"
             "Folder" = "8:_A947DDA55C514DB08BE143956BAC0A43"
             "Condition" = "8:"
