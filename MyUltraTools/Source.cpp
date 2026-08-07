@@ -1,10 +1,7 @@
-#include "Boarder.h"
+#include "R17.h"
 
 
 int main() {
-
-
-    std::vector<std::string> s = { "222","dasd","dwdw" };
-    RealizeBoard<Scrum>(s);
+    R17();
     return 0;
 }

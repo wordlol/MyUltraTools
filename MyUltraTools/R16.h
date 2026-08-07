@@ -44,8 +44,7 @@ struct CompareNode {
 };
 
 // Рекурсивное построение таблицы кодов
-void buildCodes(const shared_ptr<HuffmanNode>& node, const string& code,
-    unordered_map<char, string>& huffCode) {
+void buildCodes(const shared_ptr<HuffmanNode>& node, const string& code, unordered_map<char, string>& huffCode) {
     if (!node) return;
     if (!node->left && !node->right) { // лист
         huffCode[node->ch] = code;

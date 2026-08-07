@@ -49,16 +49,20 @@ vector<size_t> computeLPS(const string& pattern) {
     size_t len = 0; // длина предыдущего наибольшего префикса-суффикса
     size_t i = 1;
     while (i < m) {
-        if (pattern[i] == pattern[len]) {
+        if (pattern[i] == pattern[len]) 
+        {
             ++len;
             lps[i] = len;
             ++i;
         }
-        else {
-            if (len != 0) {
+        else 
+        {
+            if (len != 0) 
+            {
                 len = lps[len - 1];   // пытаемся найти более короткий префикс-суффикс
             }
-            else {
+            else 
+            {
                 lps[i] = 0;
                 ++i;
             }
@@ -99,6 +103,7 @@ vector<size_t> KMPSearch(const string& text, const string& pattern) {
 
 void R12()
 {
+    setlocale(0, "Russian");
     string text = "ABABABCABABABCABABABC";
     string pattern = "ABABABC";
 
