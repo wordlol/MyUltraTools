@@ -302,6 +302,27 @@ std::string SaveFileDialog(const std::wstring& defaultFileName = L"logfile.log",
 }
 
 
+std::string ReadMemoryURL() {
+	std::ifstream in("MemoryURL.mr");
+	if (!in.is_open()) return "";
+	std::string path;
+	std::getline(in, path);
+	// Удаляем возможные пробелы и символы возврата каретки
+	while (!path.empty() && (path.back() == '\r' || path.back() == '\n' || path.back() == ' '))
+		path.pop_back();
+	return path;
+}
+
+void WriteMemoryURL(const std::string& path) {
+	std::ofstream out("MemoryURL.mr");
+	if (out.is_open()) {
+		out << path;
+	}
+}
+
+
+
+
 int MaxLots = 0;
 
 #include <fstream>
@@ -968,6 +989,17 @@ void LoadItems(const std::string& filename)
 	Size_ = sortedItems.size();
 }
 
+std::string formatNumber(double value) {
+	std::ostringstream oss;
+	oss.imbue(std::locale("C")); // гарантирует вывод с точкой
+	oss << value;
+	std::string str = oss.str();
+	std::replace(str.begin(), str.end(), '.', ','); // меняем точку на запятую
+	return str;
+}
+
+
+
 // Глобальные переменные для настройки порогов (вынесите в отдельный файл или в структуру настроек)
 float MinProfitGold = 0.5f;   // минимальная прибыль в золоте для "интересной" сделки
 float MinDemand = 0.4f;       // минимальный спрос (0..1)
@@ -1124,7 +1156,10 @@ void ExportLog()
 		return;
 	}
 
-	// Заголовок с временем последнего сканирования
+	// 1. BOM для правильного отображения кириллицы в Excel
+	out << "\xEF\xBB\xBF";
+
+	// Заголовок с временем
 	struct tm timeinfo;
 	if (localtime_s(&timeinfo, &lastScan) == 0) {
 		char timeBuf[80];
@@ -1144,7 +1179,6 @@ void ExportLog()
 		int totalLots = 0;
 		for (int l : item.Lots) totalLots += l;
 
-		// Средняя минимальная цена за весь период (для проверки)
 		float avgMin = 0.0f;
 		if (!item.MinPrice.empty()) {
 			float sum = 0.0f;
@@ -1157,13 +1191,13 @@ void ExportLog()
 			<< item.MidlePrice << ";"
 			<< lastMin << ";"
 			<< lastMax << ";"
-			<< avgMin << ";"
+			<< formatNumber(avgMin) << ";"
 			<< totalLots << ";"
-			<< item.Item_benefit << ";"
-			<< item.Item_cv << ";"
-			<< item.Item_rarity << ";"
-			<< item.Item_trend << ";"
-			<< item.Score << "\n";
+			<< formatNumber(item.Item_benefit) << ";"
+			<< formatNumber(item.Item_cv) << ";"
+			<< formatNumber(item.Item_rarity) << ";"
+			<< formatNumber(item.Item_trend) << ";"
+			<< formatNumber(item.Score) << "\n";
 	}
 
 	out.close();
@@ -1281,13 +1315,24 @@ public:
 					ExportLog();
 				if(ImGui::Button("Export Debug Log"))
 					ExportDebugLog();
-				if (ImGui::Button("Import Lua"))
-				{
-					std::string filename = OpenFileDialog();
-					if (filename != "")
-						LoadItems(filename);
-				}
+				if (ImGui::Button("Import Lua")) {
+					std::string filename;
+					std::string savedPath = ReadMemoryURL();
 
+					if (!savedPath.empty() && std::filesystem::exists(savedPath)) {
+						filename = savedPath;
+					}
+					else {
+						filename = OpenFileDialog();
+						if (filename.empty()) return;
+					}
+
+					LoadItems(filename);
+					WriteMemoryURL(filename);
+				}
+				if (ImGui::Button("Clear Path")) {
+					std::filesystem::remove("MemoryURL.mr");
+				}
 
 				ImGui::EndMenu();
 			}
