@@ -88,6 +88,134 @@ void StyleGui()
 		style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
 }
 
+#include <imgui.h>
+#include <cstdio>
+#include <cstdlib>
+
+static bool stopwatchRunning = false;      // запущен ли отсчёт
+static bool stopwatchPaused = false;       // на паузе (если running)
+static double stopwatchTime = 0.0;         // накопленное время в секундах
+
+void UpdateStopwatch(float deltaTime) {
+	if (stopwatchRunning && !stopwatchPaused) {
+		stopwatchTime += deltaTime;
+	}
+}
+
+static void ShowStopwatchWindow() {
+	ImGuiWindowFlags flags =
+		ImGuiWindowFlags_NoTitleBar |
+		ImGuiWindowFlags_AlwaysAutoResize |
+		ImGuiWindowFlags_NoCollapse |
+		ImGuiWindowFlags_NoResize |
+		ImGuiWindowFlags_NoScrollbar |
+		ImGuiWindowFlags_NoDocking;
+
+	static bool firstTime = true;
+	static ImVec2 windowPos(100, 100);
+	if (firstTime) {
+		// Центрируем окно на экране
+		RECT rect;
+		GetClientRect(GetDesktopWindow(), &rect);
+		ImVec2 size(300, 80); // примерный размер
+		windowPos.x = (rect.right - size.x) / 2;
+		windowPos.y = (rect.bottom - size.y) / 2;
+		firstTime = false;
+	}
+	ImGui::SetNextWindowPos(windowPos, ImGuiCond_FirstUseEver);
+
+	bool open = true;
+	if (ImGui::Begin("Stopwatch", &open, flags)) {
+
+		// Перетаскивание
+		if (ImGui::IsWindowHovered() && ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+			ImVec2 delta = ImGui::GetMouseDragDelta(ImGuiMouseButton_Left);
+			windowPos.x += delta.x;
+			windowPos.y += delta.y;
+			ImGui::SetWindowPos(windowPos);
+			ImGui::ResetMouseDragDelta(ImGuiMouseButton_Left);
+		}
+
+		// Время
+		int hours = (int)(stopwatchTime / 3600);
+		int minutes = (int)((stopwatchTime - hours * 3600) / 60);
+		int seconds = (int)(stopwatchTime - hours * 3600 - minutes * 60);
+		char timeText[32];
+		sprintf_s(timeText, sizeof(timeText), "%02d:%02d:%02d", hours, minutes, seconds);
+		ImGui::Text("%s", timeText);
+
+		// Кнопки
+		ImGui::SameLine();
+		if (ImGui::Button("Пауза")) {
+			if (!stopwatchRunning) {
+				stopwatchRunning = true;
+				stopwatchPaused = false;
+			}
+			else if (stopwatchPaused) {
+				stopwatchPaused = false;
+			}
+			else {
+				stopwatchPaused = true;
+			}
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Сброс")) {
+			stopwatchTime = 0.0;
+			stopwatchRunning = false;
+			stopwatchPaused = false;
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Выход")) {
+			std::exit(0);
+		}
+
+		// ---------- Применяем стиль и показываем окно ----------
+		ImGuiViewport* viewport = ImGui::GetWindowViewport();
+		if (viewport && viewport->PlatformHandle) {
+			HWND hwnd = (HWND)viewport->PlatformHandle;
+
+			// Убираем рамки и системное меню (делаем один раз, но можно и каждый кадр)
+			static bool styleApplied = false;
+			if (!styleApplied) {
+				LONG_PTR style = GetWindowLongPtr(hwnd, GWL_STYLE);
+				style &= ~(WS_CAPTION | WS_THICKFRAME | WS_SYSMENU);
+				SetWindowLongPtr(hwnd, GWL_STYLE, style);
+
+				SetWindowLongPtr(hwnd, GWL_EXSTYLE, WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
+				SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+					SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+				styleApplied = true;
+			}
+
+			// ----- ЯВНО ПОКАЗЫВАЕМ ОКНО -----
+			if (!IsWindowVisible(hwnd)) {
+				ShowWindow(hwnd, SW_SHOW);
+				SetForegroundWindow(hwnd);
+			}
+		}
+	}
+	ImGuiViewport* viewport = ImGui::GetWindowViewport();
+	if (viewport && viewport->PlatformHandle) {
+		HWND hwndStopwatch = (HWND)viewport->PlatformHandle;
+		// Применяем стили (без рамок, поверх всех)
+		static bool styleApplied = false;
+		if (!styleApplied) {
+			SetWindowLong(hwndStopwatch, GWL_STYLE, GetWindowLong(hwndStopwatch, GWL_STYLE) & ~(WS_CAPTION | WS_THICKFRAME | WS_SYSMENU));
+			SetWindowLong(hwndStopwatch, GWL_EXSTYLE, GetWindowLong(hwndStopwatch, GWL_EXSTYLE) | WS_EX_TOOLWINDOW | WS_EX_TOPMOST);
+			SetWindowPos(hwndStopwatch, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_FRAMECHANGED);
+			styleApplied = true;
+		}
+		// Принудительно показываем, если скрыто
+		if (!IsWindowVisible(hwndStopwatch)) {
+			ShowWindow(hwndStopwatch, SW_SHOW);
+			SetForegroundWindow(hwndStopwatch);
+		}
+	}
+
+	ImGui::End();
+}
+
+
 class UserInterface {
 public:
 	static void ViewGUI() {
@@ -109,10 +237,14 @@ public:
 
 		ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
+		ShowStopwatchWindow();
 	}
 };
 
 void Update() {
+	static float deltaTime = 0.0f;
+	deltaTime = ImGui::GetIO().DeltaTime;
+	UpdateStopwatch(deltaTime);
 	UserInterface::ViewGUI();
 }
 
