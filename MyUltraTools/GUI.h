@@ -88,17 +88,13 @@ void StyleGui()
 		style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
 }
 
-class UserInterface
-{
-
+class UserInterface {
 public:
-	static void ViewGUI()
-	{
+	static void ViewGUI() {
 		ImGuiID dockspace_id = ImGui::GetID("My Dockspace");
 		ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-		if (ImGui::DockBuilderGetNode(dockspace_id) == nullptr)
-		{
+		if (ImGui::DockBuilderGetNode(dockspace_id) == nullptr) {
 			ImGui::DockBuilderAddNode(dockspace_id, ImGuiDockNodeFlags_DockSpace);
 			ImGui::DockBuilderSetNodeSize(dockspace_id, viewport->Size);
 			ImGuiID dock_id_left = 0;
@@ -113,10 +109,13 @@ public:
 
 		ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
-
-
 	}
 };
+
+void Update() {
+	UserInterface::ViewGUI();
+}
+
 
 void Init()
 {
@@ -131,11 +130,3 @@ void Init()
 }
 
 
-void Update()
-{
-	UserInterface::ViewGUI();
-
-
-
-
-}
