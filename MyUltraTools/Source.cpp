@@ -1,3 +1,22 @@
+#pragma comment	(lib, "d3d11.lib")
+#pragma comment	(lib, "d3dx11.lib")
+#pragma comment (lib, "DXGI.lib")
+
+#include <windows.h>
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "implot3d.h"
+#include "implot3d_internal.h"
+#include "implot.h"
+#include "implot_internal.h"
+#include "imnodes.h"
+#include "imnodes_internal.h"
+#include "ImGuizmo.h"
+#include "ImSequencer.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+#include <d3d11.h>
+#include <tchar.h>
 #include "GUI.h"
 // Data
 static ID3D11Device* g_pd3dDevice = nullptr;
@@ -6,6 +25,11 @@ static IDXGISwapChain* g_pSwapChain = nullptr;
 static bool                     g_SwapChainOccluded = false;
 static UINT                     g_ResizeWidth = 0, g_ResizeHeight = 0;
 static ID3D11RenderTargetView* g_mainRenderTargetView = nullptr;
+
+struct
+{
+    HWND hwnd;
+} win_proj;
 
 // Forward declarations of helper functions
 bool CreateDeviceD3D(HWND hWnd);
@@ -25,7 +49,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WNDCLASSEXW wc = { sizeof(wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"ImGui Example", nullptr };
     ::RegisterClassExW(&wc);
     HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"Dear ImGui DirectX11 Example", WS_OVERLAPPEDWINDOW, 100, 100, (int)(1280 * main_scale), (int)(800 * main_scale), nullptr, nullptr, wc.hInstance, nullptr);
-
+    
     // Initialize Direct3D
     if (!CreateDeviceD3D(hwnd))
     {
@@ -159,6 +183,8 @@ bool CreateDeviceD3D(HWND hWnd)
     sd.SampleDesc.Quality = 0;
     sd.Windowed = TRUE;
     sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+
+    win_proj.hwnd = hWnd;
 
     UINT createDeviceFlags = 0;
     //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;

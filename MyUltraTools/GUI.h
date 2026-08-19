@@ -1,21 +1,97 @@
-#pragma once
-#pragma comment	(lib, "d3d11.lib")
-#pragma comment	(lib, "d3dx11.lib")
-#pragma comment (lib, "DXGI.lib")
 
-#include <windows.h>
-#include "imgui.h"
-#include "imgui_impl_win32.h"
-#include "imgui_impl_dx11.h"
-#include <d3d11.h>
-#include <tchar.h>
-#include <string>
+void StyleGui()
+{
+		ImGuiStyle& style = ImGui::GetStyle();
+
+		style.Alpha = 1.0f;
+		style.DisabledAlpha = 0.6f;
+		style.WindowPadding = ImVec2(8.0f, 8.0f);
+		style.WindowRounding = 0.0f;
+		style.WindowBorderSize = 1.0f;
+		style.WindowMinSize = ImVec2(32.0f, 32.0f);
+		style.WindowTitleAlign = ImVec2(0.0f, 0.5f);
+		style.WindowMenuButtonPosition = ImGuiDir_Left;
+		style.ChildRounding = 0.0f;
+		style.ChildBorderSize = 1.0f;
+		style.PopupRounding = 0.0f;
+		style.PopupBorderSize = 1.0f;
+		style.FramePadding = ImVec2(4.0f, 3.0f);
+		style.FrameRounding = 0.0f;
+		style.FrameBorderSize = 1.0f;
+		style.ItemSpacing = ImVec2(8.0f, 4.0f);
+		style.ItemInnerSpacing = ImVec2(4.0f, 4.0f);
+		style.CellPadding = ImVec2(4.0f, 2.0f);
+		style.IndentSpacing = 21.0f;
+		style.ColumnsMinSpacing = 6.0f;
+		style.ScrollbarSize = 14.0f;
+		style.ScrollbarRounding = 0.0f;
+		style.GrabMinSize = 10.0f;
+		style.GrabRounding = 0.0f;
+		style.TabRounding = 0.0f;
+		style.TabBorderSize = 0.0f;
+		style.ColorButtonPosition = ImGuiDir_Right;
+		style.ButtonTextAlign = ImVec2(0.5f, 0.5f);
+		style.SelectableTextAlign = ImVec2(0.0f, 0.0f);
+
+		style.Colors[ImGuiCol_Text] = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+		style.Colors[ImGuiCol_TextDisabled] = ImVec4(0.49803922f, 0.49803922f, 0.49803922f, 1.0f);
+		style.Colors[ImGuiCol_WindowBg] = ImVec4(0.28627452f, 0.3372549f, 0.25882354f, 1.0f);
+		style.Colors[ImGuiCol_ChildBg] = ImVec4(0.28627452f, 0.3372549f, 0.25882354f, 1.0f);
+		style.Colors[ImGuiCol_PopupBg] = ImVec4(0.23921569f, 0.26666668f, 0.2f, 1.0f);
+		style.Colors[ImGuiCol_Border] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 0.5f);
+		style.Colors[ImGuiCol_BorderShadow] = ImVec4(0.13725491f, 0.15686275f, 0.10980392f, 0.52f);
+		style.Colors[ImGuiCol_FrameBg] = ImVec4(0.23921569f, 0.26666668f, 0.2f, 1.0f);
+		style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.26666668f, 0.29803923f, 0.22745098f, 1.0f);
+		style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.29803923f, 0.3372549f, 0.25882354f, 1.0f);
+		style.Colors[ImGuiCol_TitleBg] = ImVec4(0.23921569f, 0.26666668f, 0.2f, 1.0f);
+		style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.28627452f, 0.3372549f, 0.25882354f, 1.0f);
+		style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.0f, 0.0f, 0.0f, 0.51f);
+		style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.23921569f, 0.26666668f, 0.2f, 1.0f);
+		style.Colors[ImGuiCol_ScrollbarBg] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 1.0f);
+		style.Colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.2784314f, 0.31764707f, 0.23921569f, 1.0f);
+		style.Colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.24705882f, 0.29803923f, 0.21960784f, 1.0f);
+		style.Colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.22745098f, 0.26666668f, 0.20784314f, 1.0f);
+		style.Colors[ImGuiCol_CheckMark] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 1.0f);
+		style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 0.5f);
+		style.Colors[ImGuiCol_Button] = ImVec4(0.28627452f, 0.3372549f, 0.25882354f, 0.4f);
+		style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 1.0f);
+		style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 0.5f);
+		style.Colors[ImGuiCol_Header] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 1.0f);
+		style.Colors[ImGuiCol_HeaderHovered] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 0.6f);
+		style.Colors[ImGuiCol_HeaderActive] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 0.5f);
+		style.Colors[ImGuiCol_Separator] = ImVec4(0.13725491f, 0.15686275f, 0.10980392f, 1.0f);
+		style.Colors[ImGuiCol_SeparatorHovered] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 1.0f);
+		style.Colors[ImGuiCol_SeparatorActive] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_ResizeGrip] = ImVec4(0.1882353f, 0.22745098f, 0.1764706f, 0.0f);
+		style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 1.0f);
+		style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_Tab] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 1.0f);
+		style.Colors[ImGuiCol_TabHovered] = ImVec4(0.5372549f, 0.5686275f, 0.50980395f, 0.78f);
+		style.Colors[ImGuiCol_TabActive] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_TabUnfocused] = ImVec4(0.23921569f, 0.26666668f, 0.2f, 1.0f);
+		style.Colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.34901962f, 0.41960785f, 0.30980393f, 1.0f);
+		style.Colors[ImGuiCol_PlotLines] = ImVec4(0.60784316f, 0.60784316f, 0.60784316f, 1.0f);
+		style.Colors[ImGuiCol_PlotLinesHovered] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_PlotHistogram] = ImVec4(1.0f, 0.7764706f, 0.2784314f, 1.0f);
+		style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.0f, 0.6f, 0.0f, 1.0f);
+		style.Colors[ImGuiCol_TableHeaderBg] = ImVec4(0.1882353f, 0.1882353f, 0.2f, 1.0f);
+		style.Colors[ImGuiCol_TableBorderStrong] = ImVec4(0.30980393f, 0.30980393f, 0.34901962f, 1.0f);
+		style.Colors[ImGuiCol_TableBorderLight] = ImVec4(0.22745098f, 0.22745098f, 0.24705882f, 1.0f);
+		style.Colors[ImGuiCol_TableRowBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+		style.Colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.0f, 1.0f, 1.0f, 0.06f);
+		style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_DragDropTarget] = ImVec4(0.7294118f, 0.6666667f, 0.23921569f, 1.0f);
+		style.Colors[ImGuiCol_NavHighlight] = ImVec4(0.5882353f, 0.5372549f, 0.1764706f, 1.0f);
+		style.Colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.0f, 1.0f, 1.0f, 0.7f);
+		style.Colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.2f);
+		style.Colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.8f, 0.8f, 0.8f, 0.35f);
+}
 
 class UserInterface
 {
 
 public:
-
 	static void ViewGUI()
 	{
 		ImGuiID dockspace_id = ImGui::GetID("My Dockspace");
@@ -38,172 +114,12 @@ public:
 		ImGui::DockSpaceOverViewport(dockspace_id, viewport, ImGuiDockNodeFlags_PassthruCentralNode);
 
 
-		if (ImGui::BeginMainMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::Button("Export Log"))
-					ExportLog();
-				if (ImGui::Button("Export Debug Log"))
-					ExportDebugLog();
-				if (ImGui::Button("Import Lua")) {
-					std::string filename;
-					std::string savedPath = ReadMemoryURL();
-
-					if (!savedPath.empty() && std::filesystem::exists(savedPath)) {
-						filename = savedPath;
-					}
-					else {
-						filename = OpenFileDialog();
-						if (filename.empty()) return;
-					}
-
-					LoadItems(filename);
-					WriteMemoryURL(filename);
-				}
-				if (ImGui::Button("Clear Path")) {
-					std::filesystem::remove("MemoryURL.mr");
-				}
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMainMenuBar();
-		}
-
-		ImGui::Begin("Panel Tools");
-		{
-			if (ImGui::Button("Analize Menu"))
-				Data.mod = MOD::MAIN_MENU;
-			ImGui::SameLine();
-			if (ImGui::Button("Craft Menu"))
-				Data.mod = MOD::CRAFT_MENU;
-			ImGui::SameLine();
-			if (IsBuyMode == true)
-				ImGui::Checkbox("Сейчас режим ПРОДАЖИ", &IsBuyMode);
-			else
-				ImGui::Checkbox("Сейчас режим ПОКУПКИ", &IsBuyMode);
-
-			ImGui::SameLine();
-			ImGui::Text("%s", formatTimestampWithWeekday(lastScan).c_str());
-		}
-		ImGui::End();
-
-
-		ImGui::Begin("List Items");
-		{
-			static ImGuiTableFlags flags =
-				ImGuiTableFlags_Resizable | ImGuiTableFlags_Reorderable | ImGuiTableFlags_Hideable | ImGuiTableFlags_Sortable | ImGuiTableFlags_SortMulti
-				| ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersOuter | ImGuiTableFlags_BordersV | ImGuiTableFlags_NoBordersInBody
-				| ImGuiTableFlags_ScrollY;
-			static char str0[128] = "";
-			ImGui::InputText("Find Item", str0, IM_COUNTOF(str0));
-			if (!sortedItems.empty())
-			{
-				if (ImGui::BeginTable("table_sorting", 4, flags, ImVec2(0.0f, 40 * 15), 0.0f))
-				{
-					ImGui::TableSetupColumn("ID", ImGuiTableColumnFlags_DefaultSort | ImGuiTableColumnFlags_WidthFixed, 0.0f);
-					ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 0.0f);
-					ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_NoSort | ImGuiTableColumnFlags_WidthFixed, 0.0f);
-					ImGui::TableSetupColumn("Profit", ImGuiTableColumnFlags_WidthFixed, 0.0f);
-					ImGui::TableSetupScrollFreeze(0, 1);
-					ImGui::TableHeadersRow();
-					for (int i = 0; i < Size_; i++)
-					{
-						int lastMin = sortedItems[i].MinPrice.empty() ? 0 : sortedItems[i].MinPrice.back();
-						int mid = sortedItems[i].MidlePrice;
-						int profitCopper = 0;
-						if (!sortedItems[i].Name.find(str0))
-						{
-							ImGui::PushID(sortedItems[i].id);
-							ImGui::TableNextRow();
-							ImGui::TableNextColumn();
-							ImGui::Text("%04d", sortedItems[i].id);
-							ImGui::TableNextColumn();
-							ImGui::TextUnformatted(sortedItems[i].Name.c_str());
-							ImGui::TableNextColumn();
-							if (ImGui::SmallButton("Look"))
-							{
-								PickItem = i;
-							}
-							ImGui::TableNextColumn();
-
-							if (IsBuyMode) {
-								profitCopper = mid - lastMin;   // покупаем по минимальной, продаём по средней
-							}
-							else {
-								profitCopper = lastMin - mid;   // продаём по средней (если она выше минимальной)
-							}
-
-							float profitGold = profitCopper / 10000.0f;
-							if (profitGold > 0)
-								ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "%.2f", profitGold);
-							else
-								ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%.2f", profitGold);
-
-							ImGui::PopID();
-						}
-					}
-					ImGui::EndTable();
-				}
-			}
-		}
-		ImGui::End();
-
-
-		ImGui::Begin("Analize Market");
-		{
-			ImGui::SameLine();
-			ImGui::SliderInt("Слайдер истории", &i1, 0, 10);
-			switch (Data.mod)
-			{
-			case MOD::MAIN_MENU:
-			{
-				if (sortedItems.empty())
-				{
-					ImGui::Text("Нужно открыть файл по пути ../World of Warcraft Sirus/WTF/Account/USERNAME/SavedVariables/Auctionator.lua");
-					ImGui::Text("Используй кнопку Import Lua в разделе File");
-				}
-
-				if (PickItem != -1)
-				{
-					ImGui::Text(sortedItems[PickItem].Name.c_str());
-					ViewMidlePrice();
-					ViewScore();
-					ViewIndicators();
-					ImGui::SeparatorText("Общие показатели о товаре");
-					ViewLots();
-					ViewMinPrice();
-					ViewMaxPrice();
-					ViewPriceHistory();
-					ViewQuantityHistory();
-					ViewTimeHistory();
-				}
-				break;
-			}
-			case MOD::CRAFT_MENU:
-			{
-
-				break;
-			}
-			case MOD::LIDER_MENU:
-			{
-
-				break;
-			}
-			}
-		}
-		ImGui::End();
 
 	}
 };
 
-
-
 void Init()
 {
-	g_itemNames = loadItemsFromCSV("items_ru.csv");
-
 	ImGuiIO& io = ImGui::GetIO();
 	ImFont* font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/arial.ttf", 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 	if (!font)
@@ -211,7 +127,7 @@ void Init()
 		font = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/tahoma.ttf", 16.0f, nullptr, io.Fonts->GetGlyphRangesCyrillic());
 	}
 	io.Fonts->Build();
-	StyleGui1();
+	StyleGui();
 }
 
 
