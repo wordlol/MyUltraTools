@@ -1,4 +1,5 @@
 #include "Windows.h"
+#pragma comment(lib, "Msimg32.lib") // нужна дл€ TransparentBlt
 
 //обрезка изображени€
 #define BEGIN_CLIP(hdc, x, y, w, h)                       \
@@ -106,23 +107,37 @@ void InitWindow()
 }
 
 //отрисовка изображений .bmp
-void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall)
+void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmap, bool alpha = false)
 {
 	HBITMAP hbm, hOldbm;
 	HDC hMemDC;
 	BITMAP bm;
 
-	hMemDC = CreateCompatibleDC(hDC);
-	hOldbm = (HBITMAP)SelectObject(hMemDC, hBitmapBall);
+	hMemDC = CreateCompatibleDC(hDC); // —оздаем контекст пам€ти, совместимый с контекстом отображени€
+	hOldbm = (HBITMAP)SelectObject(hMemDC, hBitmap);// ¬ыбираем изображение bitmap в контекст пам€ти
 
-	if (hOldbm)
+	if (hOldbm) // ≈сли не было ошибок, продолжаем работу
 	{
-		GetObject(hBitmapBall, sizeof(BITMAP), (LPSTR)&bm);
-		StretchBlt(hDC, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
-		SelectObject(hMemDC, hOldbm);
+		GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&bm); // ќпредел€ем размеры изображени€
+
+		if (alpha)
+		{
+			TransparentBlt(window.contx, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, RGB(255, 255, 255));//все пиксели белого цвета будут интепретированы как прозрачные
+		}
+		else
+		{
+			StretchBlt(hDC, x, y, x1, y1, hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY); // –исуем изображение bitmap
+		}
+
+		SelectObject(hMemDC, hOldbm);// ¬осстанавливаем контекст пам€ти
 	}
 
-	DeleteDC(hMemDC);
+	DeleteDC(hMemDC); // ”дал€ем контекст пам€ти
+}
+
+HBITMAP GetHBITMAP(const LPCSTR& NameImage)
+{
+	return (HBITMAP)LoadImageA(NULL, NameImage, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
 }
 
 //рисование заливкой
@@ -174,7 +189,7 @@ void UpdateImage()
 {
 	BitBlt(window.dev_cont, 0, 0, window.width, window.height, window.contx, 0, 0, SRCCOPY);
 	//отрисовка заднего фона
-	ShowBitmap(window.contx, 0, 0, window.width, window.height, (HBITMAP)LoadImageA(NULL, "back.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE));
+	ShowBitmap(window.contx, 0, 0, window.width, window.height, GetHBITMAP("back.bmp"));
 }
 
 //вход в программу
