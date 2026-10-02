@@ -1,5 +1,6 @@
 #include "Windows.h"
-#pragma comment(lib, "Msimg32.lib") // нужна дл€ TransparentBlt
+#include "string"
+#pragma comment(lib, "Msimg32.lib") // библиотека нужна дл€ работы метода TransparentBlt
 
 //стурктура где хран€тьс€ данные о windows окне
 struct
@@ -154,12 +155,47 @@ void FillTile(HDC hdc, int px, int py, int size, COLORREF color)
 	DeleteObject(br);
 }
 
+//ковертирует число в текст дл€ WriteText
+LPCSTR ConvertNumInText(float num)
+{
+	static char txt[32];
+	_snprintf_s(txt, sizeof(txt), _TRUNCATE, "%.2f", num);
+	return txt;
+}
+
+//печатает текст
+void WriteText(int x, int y, LPCSTR Text, COLORREF color = RGB(255,255,255))
+{
+	//поиграем шрифтами и цветами
+	SetTextColor(window.contx, color);
+	SetBkColor(window.contx, RGB(0, 0, 0));
+	SetBkMode(window.contx, TRANSPARENT);
+	HFONT hFont = CreateFontW(
+		70, 0, 0, 0, FW_BOLD,0, 0, 0,
+		RUSSIAN_CHARSET,
+		OUT_DEFAULT_PRECIS,
+		CLIP_DEFAULT_PRECIS,
+		DEFAULT_QUALITY,
+		DEFAULT_PITCH | FF_DONTCARE,
+		L"CALIBRI"
+	);
+
+	auto hTmp = (HFONT)SelectObject(window.contx, hFont);
+
+	TextOutA(window.contx, x, y, Text, strlen(Text));
+
+	SelectObject(window.contx, hTmp);
+	DeleteObject(hFont);
+}
+
 //обновление изображений
 void UpdateImage()
 {
 	BitBlt(window.dev_cont, 0, 0, window.width, window.height, window.contx, 0, 0, SRCCOPY);
 	//отрисовка заднего фона
 	ShowBitmap(window.contx, 0, 0, window.width, window.height, GetHBITMAP("back.bmp"));
+
+	WriteText(100, 60, "ѕривет Windows!");
 }
 
 
