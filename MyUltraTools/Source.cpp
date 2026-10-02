@@ -1,17 +1,6 @@
 #include "Windows.h"
 #pragma comment(lib, "Msimg32.lib") // нужна для TransparentBlt
 
-//обрезка изображения
-#define BEGIN_CLIP(hdc, x, y, w, h)                       \
-    {                                                     \
-        HRGN _clip_rgn = CreateRectRgn((x), (y), (x)+(w), (y)+(h)); \
-        SelectClipRgn((hdc), _clip_rgn);
-//конец обрезки изображений
-#define END_CLIP(hdc)                                     \
-        SelectClipRgn((hdc), NULL);                       \
-        DeleteObject(_clip_rgn);                          \
-    }
-
 //стурктура где храняться данные о windows окне
 struct
 {
@@ -106,6 +95,21 @@ void InitWindow()
 	ShowWindow(window.hWnd, SW_SHOW);
 }
 
+//начало обрезки изображения
+HRGN BEGIN_CLIP(HDC hdc, int x, int y, int w, int h)
+{
+	HRGN _clip_rgn = CreateRectRgn((x), (y), (x)+(w), (y)+(h));
+		SelectClipRgn((hdc), _clip_rgn);
+
+		return _clip_rgn;
+}
+//конец обрезки изображения
+void END_CLIP(HDC hdc, HRGN _clip_rgn)
+{
+	SelectClipRgn((hdc), NULL);
+	DeleteObject(_clip_rgn);
+}
+
 //отрисовка изображений .bmp
 void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmap, bool alpha = false)
 {
@@ -135,6 +139,7 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmap, bool alp
 	DeleteDC(hMemDC); // Удаляем контекст памяти
 }
 
+//загрузка данных из файла .bmp
 HBITMAP GetHBITMAP(const LPCSTR& NameImage)
 {
 	return (HBITMAP)LoadImageA(NULL, NameImage, IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
@@ -148,6 +153,15 @@ void FillTile(HDC hdc, int px, int py, int size, COLORREF color)
 	FillRect(hdc, &r, br);
 	DeleteObject(br);
 }
+
+//обновление изображений
+void UpdateImage()
+{
+	BitBlt(window.dev_cont, 0, 0, window.width, window.height, window.contx, 0, 0, SRCCOPY);
+	//отрисовка заднего фона
+	ShowBitmap(window.contx, 0, 0, window.width, window.height, GetHBITMAP("back.bmp"));
+}
+
 
 //загрузка модулей приложения
 void InitApp()
@@ -174,6 +188,7 @@ void UpdateApp()
 
 }
 
+
 //обработка команд устройств ввода
 void UpdateKeyCode()
 {
@@ -182,14 +197,6 @@ void UpdateKeyCode()
 	{
 		window.msg.message = WM_QUIT;
 	}
-}
-
-//обновление изображений
-void UpdateImage()
-{
-	BitBlt(window.dev_cont, 0, 0, window.width, window.height, window.contx, 0, 0, SRCCOPY);
-	//отрисовка заднего фона
-	ShowBitmap(window.contx, 0, 0, window.width, window.height, GetHBITMAP("back.bmp"));
 }
 
 //вход в программу
