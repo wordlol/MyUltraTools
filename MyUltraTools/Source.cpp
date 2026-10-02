@@ -1,5 +1,16 @@
 #include "Windows.h"
 
+//обрезка изображения
+#define BEGIN_CLIP(hdc, x, y, w, h)                       \
+    {                                                     \
+        HRGN _clip_rgn = CreateRectRgn((x), (y), (x)+(w), (y)+(h)); \
+        SelectClipRgn((hdc), _clip_rgn);
+//конец обрезки изображений
+#define END_CLIP(hdc)                                     \
+        SelectClipRgn((hdc), NULL);                       \
+        DeleteObject(_clip_rgn);                          \
+    }
+
 //стурктура где храняться данные о windows окне
 struct
 {
@@ -13,6 +24,9 @@ struct
 
 	//определяет размер экрана в вашей сиситеме
 	int width = GetSystemMetrics(SM_CXSCREEN), height = GetSystemMetrics(SM_CYSCREEN);
+	int startPosX = 0, startPosY = 0;
+	bool fullscreen = false;
+
 } window;
 
 //обработка потока сообщений
@@ -47,25 +61,45 @@ void InitWindow()
 	wc.lpszClassName = NameClass;
 	wc.hInstance = window.hIns;
 	wc.lpfnWndProc = &WindowProc;
+	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 
 	//регистрация класса окна
 	auto NameClassId = RegisterClassEx(&wc);
 
-	//деструктор окна
-	window.hWnd = CreateWindowEx(
-		NULL,
-		MAKEINTATOM(NameClassId),
-		"practicum5",
-		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-		CW_USEDEFAULT,
-		CW_USEDEFAULT,
-		window.rc.right - window.rc.left,
-		window.rc.bottom - window.rc.top,
-		NULL,
-		NULL,
-		window.hIns,
-		NULL
-	);
+	// диструкторы окна
+	if (window.fullscreen)
+	{
+		window.hWnd = CreateWindowEx(
+			WS_EX_TOPMOST,                
+			MAKEINTATOM(NameClassId),
+			"project_test",
+			WS_POPUP | WS_VISIBLE,        
+			window.startPosX, window.startPosY,
+			window.rc.right - window.rc.left,
+			window.rc.bottom - window.rc.top,
+			NULL,
+			NULL,
+			window.hIns,
+			NULL
+		);
+	}
+	else
+	{
+		window.hWnd = CreateWindowEx(
+			NULL,
+			MAKEINTATOM(NameClassId),
+			"project_test",
+			WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+			window.startPosX,
+			window.startPosY,
+			window.rc.right - window.rc.left,
+			window.rc.bottom - window.rc.top,
+			NULL,
+			NULL,
+			window.hIns,
+			NULL
+		);
+	}
 
 	//показ окна
 	ShowWindow(window.hWnd, SW_SHOW);
@@ -91,6 +125,15 @@ void ShowBitmap(HDC hDC, int x, int y, int x1, int y1, HBITMAP hBitmapBall)
 	DeleteDC(hMemDC);
 }
 
+//рисование заливкой
+void FillTile(HDC hdc, int px, int py, int size, COLORREF color)
+{
+	RECT r = { px, py, px + size, py + size };
+	HBRUSH br = CreateSolidBrush(color);
+	FillRect(hdc, &r, br);
+	DeleteObject(br);
+}
+
 //загрузка модулей приложения
 void InitApp()
 {
@@ -103,7 +146,7 @@ void InitApp()
 //обновление приложения
 void UpdateApp()
 {
-
+	
 
 
 
@@ -141,6 +184,7 @@ int CALLBACK WinMain(
 	LPSTR lpCmdLine,
 	int nShowCmd)
 {
+	window.hIns = hInstance;
 	InitWindow();
 	InitApp();
 
