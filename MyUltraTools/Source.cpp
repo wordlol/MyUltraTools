@@ -14,7 +14,7 @@ struct
 	BOOL gbool = true;
 
 	//определяет размер экрана в вашей сиситеме
-	int width = GetSystemMetrics(SM_CXSCREEN), height = GetSystemMetrics(SM_CYSCREEN);
+	int width, height;
 	int startPosX = 0, startPosY = 0;
 	bool fullscreen = false;
 
@@ -36,64 +36,17 @@ static LRESULT CALLBACK WindowProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 //создания windows окна
 void InitWindow()
 {
-	//имя класса окна
-	const char* NameClass = "Window";
+	SetProcessDPIAware();
+	window.hWnd = CreateWindow("edit", 0, WS_POPUP | WS_VISIBLE | WS_MAXIMIZE, 0, 0, 0, 0, 0, 0, 0, 0);
 
-	//размер окна
-	window.rc = { 0,0,window.width,window.height
-	};
-
-	//учет размера
-	AdjustWindowRect(&window.rc, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
-
-	//дескриптор класса окна
-	WNDCLASSEX wc = { 0 };
-	wc.cbSize = sizeof(wc);
-	wc.lpszClassName = NameClass;
-	wc.hInstance = window.hIns;
-	wc.lpfnWndProc = &WindowProc;
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-
-	//регистрация класса окна
-	auto NameClassId = RegisterClassEx(&wc);
-
-	// диструкторы окна
-	if (window.fullscreen)
-	{
-		window.hWnd = CreateWindowEx(
-			WS_EX_TOPMOST,                
-			MAKEINTATOM(NameClassId),
-			"project_test",
-			WS_POPUP | WS_VISIBLE,        
-			window.startPosX, window.startPosY,
-			window.rc.right - window.rc.left,
-			window.rc.bottom - window.rc.top,
-			NULL,
-			NULL,
-			window.hIns,
-			NULL
-		);
-	}
-	else
-	{
-		window.hWnd = CreateWindowEx(
-			NULL,
-			MAKEINTATOM(NameClassId),
-			"project_test",
-			WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
-			window.startPosX,
-			window.startPosY,
-			window.rc.right - window.rc.left,
-			window.rc.bottom - window.rc.top,
-			NULL,
-			NULL,
-			window.hIns,
-			NULL
-		);
-	}
-
-	//показ окна
-	ShowWindow(window.hWnd, SW_SHOW);
+	RECT r;
+	GetClientRect(window.hWnd, &r);
+	window.dev_cont = GetDC(window.hWnd);//из хэндла окна достаем хэндл контекста устройства для рисования
+	window.width = r.right - r.left;//определяем размеры и сохраняем
+	window.height = r.bottom - r.top;
+	window.contx = CreateCompatibleDC(window.dev_cont);//второй буфер
+	SelectObject(window.contx, CreateCompatibleBitmap(window.dev_cont, window.width, window.height));//привязываем окно к контексту
+	GetClientRect(window.hWnd, &r);
 }
 
 //начало обрезки изображения
